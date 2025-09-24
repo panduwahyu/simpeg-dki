@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Contracts\Auth\CanResetPassword;
 
 class User extends Authenticatable
 {
@@ -25,6 +24,8 @@ class User extends Authenticatable
         'location',
         'phone',
         'about',
+        'role',           // tambahkan role
+        'photo',          // tambahkan photo
         'password_confirmation'
     ];
 
@@ -47,9 +48,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
     
+    /**
+     * Automatically hash password when setting it
+     */
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = bcrypt($password);
+        if ($password) {
+            $this->attributes['password'] = bcrypt($password);
+        }
     }
-
 }
