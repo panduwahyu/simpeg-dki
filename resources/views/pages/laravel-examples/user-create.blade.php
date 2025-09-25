@@ -59,8 +59,11 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Role</label>
-                                    <input type="text" name="role" class="form-control"
-                                           placeholder="misal: admin / user" value="{{ old('role') }}" required>
+                                    <select name="role" class="form-control" required>
+                                        <option value="Pegawai" {{ old('role') == 'Pegawai' ? 'selected' : '' }}>Pegawai</option>
+                                        <option value="Supervisor" {{ old('role') == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
+                                        <option value="Admin" {{ old('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
+                                    </select>
                                     @error('role')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
