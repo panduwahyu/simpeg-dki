@@ -25,7 +25,9 @@ class RegisterController extends Controller
         $attributes = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:5|confirmed', // harus ada password_confirmation
+            'password' => 'required|min:5|max:255',
+            // 'email_verified_at' => now(),
+            // 'password' => 'required|string|min:5|confirmed', // harus ada password_confirmation
         ]);
 
         // Set role default 'Pegawai'
