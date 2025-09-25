@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
@@ -18,6 +19,42 @@ class UserManagementController extends Controller
 
         // Kirim data ke view
         return view('pages.laravel-examples.user-management', compact('users'));
+    }
+
+    // EDIT user
+    public function edit(User $user)
+    {
+        return view('pages.laravel-examples.user-edit', compact('user'));
+    }
+
+    // UPDATE user
+    public function update(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required','email', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:6|confirmed',
+            'role' => 'required|string|max:50',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('user-management')->with('status', 'User berhasil diupdate!');
+    }
+
+    // DELETE user
+    public function destroy(User $user)
+    {
+        $user->delete();
+        return redirect()->route('user-management')->with('status', 'User berhasil dihapus!');
     }
 
     /**

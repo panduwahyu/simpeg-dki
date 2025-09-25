@@ -45,10 +45,10 @@ Route::post('user-profile', [ProfileController::class, 'update'])->middleware('a
 // Group routes yang butuh login
 Route::middleware('auth')->group(function () {
 
-    // dashboard
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // static pages
+    // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
     Route::get('tables', fn() => view('pages.tables'))->name('tables');
     Route::get('rtl', fn() => view('pages.rtl'))->name('rtl');
@@ -57,11 +57,20 @@ Route::middleware('auth')->group(function () {
     Route::get('static-sign-in', fn() => view('pages.static-sign-in'))->name('static-sign-in');
     Route::get('static-sign-up', fn() => view('pages.static-sign-up'))->name('static-sign-up');
 
-    // User Management
-    Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
-    Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
-    Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+    // User Management (hanya Admin & Supervisor)
+    Route::middleware('role:Admin,Supervisor')->group(function () {
+        Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
+        Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
+        Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
 
-    // halaman profil user
+        // Edit user
+        Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
+        Route::put('user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');
+
+        // Delete user
+        Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+    });
+
+    // Halaman profil user
     Route::get('user-profile', fn() => view('pages.laravel-examples.user-profile'))->name('user-profile');
 });
