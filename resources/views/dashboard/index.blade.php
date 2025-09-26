@@ -33,14 +33,23 @@
                                 <i class="material-icons opacity-10">person</i>
                             </div>
                             <div class="text-end pt-1">
-                                <p class="text-sm mb-0 text-capitalize">Today's Users</p>
-                                <h4 class="mb-0">2,300</h4>
+                                <p class="text-sm mb-0 text-capitalize">Jumlah Pegawai</p>
+                                <h4 class="mb-0">{{ $totalUsers }}</h4>
                             </div>
                         </div>
                         <hr class="dark horizontal my-0">
                         <div class="card-footer p-3">
-                            <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+3% </span>than
-                                lask month</p>
+                            <p class="mb-0">
+                                @php
+                                    // tentukan warna otomatis
+                                    $growthClass = $growth >= 0 ? 'text-success' : 'text-danger';
+                                @endphp
+
+                                <span class="{{ $growthClass }} text-sm font-weight-bolder">
+                                    {{ $growth >= 0 ? '+' : '' }}{{ number_format($growth, 1) }}%
+                                </span>
+                                dari bulan lalu
+                            </p>
                         </div>
                     </div>
                 </div>
