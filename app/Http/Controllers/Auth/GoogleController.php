@@ -26,8 +26,8 @@ class GoogleController extends Controller
             ['email' => $googleUser->getEmail()], // cari berdasarkan email
             [
                 'name'     => $googleUser->getName(),
-                'password' => bcrypt(Str::random(16)), // supaya field password tidak null
-                'role'     => 'Pegawai'               // isi default role kalau perlu
+                'password' => bcrypt(Str::random(16)),         // isi default role kalau perlu
+                'location' => 'BPS Provinsi DKI Jakarta'
             ]
         );
 
