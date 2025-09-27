@@ -28,7 +28,7 @@
                     <div class="col-auto my-auto">
                         <div class="h-100">
                             <h5 class="mb-1">{{ auth()->user()->name }}</h5>
-                            <p class="mb-0 font-weight-normal text-sm">{{ auth()->user()->role ?? 'Member' }}</p>
+                            <p class="mb-0 font-weight-normal text-sm">{{ auth()->user()->role ?? 'Pegawai' }}</p>
                         </div>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                                 <div class="mb-3 col-md-6">
                                     <label class="form-label">Role</label>
                                     <input type="text" name="role" class="form-control border border-2 p-2"
-                                        value="{{ auth()->user()->role ?? 'Member' }}" readonly>
+                                        value="{{ auth()->user()->role ?? 'Pegawai' }}" readonly>
                                 </div>
 
                                 <div class="mb-3 col-md-6">

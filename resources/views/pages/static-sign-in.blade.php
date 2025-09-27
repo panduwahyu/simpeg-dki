@@ -31,7 +31,7 @@
                                             </a>
                                         </div>
                                         <div class="col-2 text-center me-auto">
-                                            <a class="btn btn-link px-3" href="javascript:;">
+                                            <a class="btn btn-link px-3" href="{{ route('google.login') }}">
                                                 <i class="fa fa-google text-white text-lg"></i>
                                             </a>
                                         </div>
@@ -56,6 +56,12 @@
                                     <div class="text-center">
                                         <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">Sign
                                             in</button>
+
+                                        {{-- Tambahan tombol login Google --}}
+                                        <a href="{{ route('google.login') }}" class="btn btn-link w-100 my-2">
+                                            <i class="fa fa-google text-danger text-lg me-2"></i>
+                                            Sign in with Google
+                                        </a>
                                     </div>
                                     <p class="mt-4 text-sm text-center">
                                         Don't have an account?

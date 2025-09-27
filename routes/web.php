@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Auth\GoogleController; // Controller Google SSO
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,7 @@ Route::get('/', function () {
     return redirect('sign-in');
 })->middleware('guest');
 
-// Auth routes
+// === Auth routes ===
 Route::get('sign-up', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 Route::post('sign-up', [RegisterController::class, 'store'])->middleware('guest');
 
@@ -38,11 +39,20 @@ Route::get('/reset-password/{token}', function ($token) {
 
 Route::post('sign-out', [SessionsController::class, 'destroy'])->middleware('auth')->name('logout');
 
-// Profile routes
+// === Google SSO routes ===
+Route::get('/auth/google', [GoogleController::class, 'redirect'])
+    ->middleware('guest')
+    ->name('google.login');
+
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
+    ->middleware('guest')
+    ->name('google.callback');
+
+// === Profile routes ===
 Route::get('profile', [ProfileController::class, 'create'])->middleware('auth')->name('profile');
 Route::post('user-profile', [ProfileController::class, 'update'])->middleware('auth');
 
-// Group routes yang butuh login
+// === Group routes yang butuh login ===
 Route::middleware('auth')->group(function () {
 
     // Dashboard
@@ -57,7 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('static-sign-in', fn() => view('pages.static-sign-in'))->name('static-sign-in');
     Route::get('static-sign-up', fn() => view('pages.static-sign-up'))->name('static-sign-up');
 
-    // User Management (hanya Admin & Supervisor)
+    // User Management (Admin & Supervisor)
     Route::middleware('role:Admin,Supervisor')->group(function () {
         Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
@@ -71,6 +81,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
     });
 
-    // Halaman profil user
+    // Halaman profil user contoh
     Route::get('user-profile', fn() => view('pages.laravel-examples.user-profile'))->name('user-profile');
 });
