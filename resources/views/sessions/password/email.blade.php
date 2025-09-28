@@ -18,51 +18,39 @@
                             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                                 <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
                                     <h4 class="text-white font-weight-bolder text-center mt-2 mb-0">
-                                        Change your password
+                                        Forgot Password
                                     </h4>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <form method="POST" action="{{ route('password.update') }}" class="text-start">
-                                    @csrf
-                                    <input type="hidden" name="token" value="{{ $token }}">
+                                @if (session('status'))
+                                    <div class="alert alert-success">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif
 
+                                <form method="POST" action="{{ route('password.email') }}">
+                                    @csrf
                                     <div class="input-group input-group-outline mb-3">
                                         <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" name="email" required>
+                                        <input type="email" name="email" class="form-control" required>
                                     </div>
                                     @error('email')
                                         <p class='text-danger inputerror'>{{ $message }}</p>
                                     @enderror
 
-                                    <div class="input-group input-group-outline my-3">
-                                        <label class="form-label">New password</label>
-                                        <input type="password" class="form-control" name="password" required>
-                                    </div>
-                                    @error('password')
-                                        <p class='text-danger inputerror'>{{ $message }}</p>
-                                    @enderror
-
-                                    <div class="input-group input-group-outline my-3">
-                                        <label class="form-label">Confirm Password</label>
-                                        <input type="password" class="form-control" name="password_confirmation" required>
-                                    </div>
-                                    @error('password_confirmation')
-                                        <p class='text-danger inputerror'>{{ $message }}</p>
-                                    @enderror
-
                                     <div class="text-center">
                                         <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">
-                                            Change password
+                                            Send Password Reset Link
                                         </button>
                                     </div>
-
-                                    <p class="mt-4 text-sm text-center">
-                                        Don't have an account?
-                                        <a href="{{ route('register') }}"
-                                           class="text-primary text-gradient font-weight-bold">Sign up</a>
-                                    </p>
                                 </form>
+
+                                <p class="mt-4 text-sm text-center">
+                                    Remember your password?
+                                    <a href="{{ route('login') }}"
+                                       class="text-primary text-gradient font-weight-bold">Sign in</a>
+                                </p>
                             </div>
                         </div>
                     </div>

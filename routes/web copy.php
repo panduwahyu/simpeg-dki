@@ -6,8 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Controllers\PdfController;
+use App\Http\Controllers\Auth\GoogleController; // Controller Google SSO
 
 /*
 |--------------------------------------------------------------------------
@@ -84,13 +83,4 @@ Route::middleware('auth')->group(function () {
 
     // Contoh halaman profil user
     Route::get('user-profile', fn() => view('pages.laravel-examples.user-profile'))->name('user-profile');
-
-    // === Tambahan: route untuk tanda tangan PDF (butuh login) ===
-    // GET untuk menampilkan form
-    Route::get('/sign-pdf', function () {
-        return view('pdf.sign');
-    })->name('pdf.sign.form');
-
-    // POST untuk memproses tanda tangan
-    Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
 });

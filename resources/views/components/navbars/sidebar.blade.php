@@ -64,6 +64,16 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link text-white {{ $activePage == 'pdf-sign' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('pdf.sign.form') }}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">picture_as_pdf</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Tanda Tangan PDF</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link text-white {{ $activePage == 'billing' ? 'active bg-gradient-primary' : '' }}"
                     href="{{ route('billing') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
