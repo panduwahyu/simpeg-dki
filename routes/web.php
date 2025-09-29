@@ -97,9 +97,10 @@ Route::middleware('auth')->group(function () {
 
     // === Tambahan: route untuk tanda tangan PDF (butuh login) ===
     // GET untuk menampilkan form
-    Route::get('/sign-pdf', function () {
-        return view('pdf.sign');
-    })->name('pdf.sign.form');
+    Route::get('/sign-pdf', [PdfController::class, 'index'])->name('pdf.sign.form');
+    // Route::get('/sign-pdf', function () {
+    //     return view('pdf.sign');
+    // })->name('pdf.sign.form');
 
     // POST untuk memproses tanda tangan
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');

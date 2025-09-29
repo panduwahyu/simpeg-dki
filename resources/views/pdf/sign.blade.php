@@ -6,7 +6,7 @@
         <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
-            <div class="row">
+            <div class="row">  
                 <div class="col-lg-10 mx-auto">
                     <div class="card">
                         <div class="card-header pb-0 px-3">
@@ -17,6 +17,32 @@
                             <form id="signForm" action="{{ route('pdf.sign') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
 
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                    <label for="dokumenSelect" class="form-label block text-gray-700 font-semibold mb-2">
+                                            Dokumen
+                                        </label>
+                                        <select id="dokumenSelect"
+                                            class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
+                                            <option value="0" >-- Pilih Dokumen --</option>
+                                            @foreach($belumUpload as $dokumen)
+                                                <option value="{{ $dokumen->id }}">{{ $dokumen->nama_dokumen }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                    <label for="periodeSelect" class="form-label block text-gray-700 font-semibold mb-2">
+                                            Periode
+                                        </label>
+                                        <select id="periodeSelect"
+                                            class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
+                                            <option value="0">-- Pilih Periode --</option>
+                                            @foreach($belumUpload as $periode)
+                                                <option value="{{ $periode->id }}">{{ $periode->periode_key }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Pilih file PDF</label>
