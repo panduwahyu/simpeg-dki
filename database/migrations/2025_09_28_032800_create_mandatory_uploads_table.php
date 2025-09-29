@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dokumen', function (Blueprint $table) {
+        Schema::create('mandatory_uploads', function (Blueprint $table) {
             $table->id();
-            $table->string('path');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('jenis_dokumen_id')->constrained('jenis_dokumen')->onDelete('cascade');
-            $table->string('tahun')->nullable();
-            $table->string('bulan')->nullable();
-            $table->string('tanggal')->nullable();
+            $table->foreignId('periode_id')->constrained('periode')->onDelete('cascade');
+            $table->boolean('is_uploaded')->default(false);
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dokumen');
+        Schema::dropIfExists('mandatory_uploads');
     }
 };

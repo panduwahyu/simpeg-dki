@@ -6,6 +6,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\PegawaiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,17 +53,26 @@ Route::middleware('auth')->group(function () {
     // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
     Route::get('tables', fn() => view('pages.tables'))->name('tables');
+    // Route::get('monitoring', fn() => view('pages.monitoring'))->name('monitoring');
     Route::get('rtl', fn() => view('pages.rtl'))->name('rtl');
     Route::get('virtual-reality', fn() => view('pages.virtual-reality'))->name('virtual-reality');
     Route::get('notifications', fn() => view('pages.notifications'))->name('notifications');
     Route::get('static-sign-in', fn() => view('pages.static-sign-in'))->name('static-sign-in');
     Route::get('static-sign-up', fn() => view('pages.static-sign-up'))->name('static-sign-up');
 
+    Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai.dashboard');
+
     // User Management (hanya Admin & Supervisor)
     Route::middleware('role:Admin,Supervisor')->group(function () {
         Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+
+        // Monitoring dokumen
+        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+        Route::get('/monitoring/filter', [MonitoringController::class, 'filter'])->name('monitoring.filter');
+        Route::get('/monitoring/detail-pegawai', [MonitoringController::class, 'detailPegawai']);
+
 
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');

@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jenis_dokumen', function (Blueprint $table) {
+        Schema::create('periode', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_dokumen');
-            $table->string('periode_tipe'); // tahunan, bulanan, dll
-            $table->text('deskripsi')->nullable();
+            $table->string('periode_key')->unique();
+            $table->integer('tahun');
+            $table->integer('bulan')->nullable();
+            $table->string('tipe'); // tahunan/bulanan
+            $table->string('label')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jenis_dokumen');
+        Schema::dropIfExists('periode');
     }
 };
