@@ -13,34 +13,20 @@ class PdfController extends Controller
 {
     public function index(){
        // Panggil method untuk ambil semua dokumen yang belum diupload user
-        $belumUpload = $this->getDokumenBelum();
+        // Ambil semua dokumen & periode
+        $dokumenList = DB::table('jenis_dokumen')->get();
+        $periodeList = DB::table('periode')->get();
 
-        return view('pdf.sign', [
-            'belumUpload' => $belumUpload
-        ]);
-    }
-
-    private function getDokumenBelum()
-    {
-        $userId = Auth::id(); // Ambil ID user yang login
-
-       // Ambil semua dokumen-periode yang belum diupload
-        $belumUpload = DB::table('mandatory_uploads')
-            ->join('jenis_dokumen', 'jenis_dokumen.id', '=', 'mandatory_uploads.jenis_dokumen_id')
-            ->join('periode', 'periode.id', '=', 'mandatory_uploads.periode_id')
-            ->where('mandatory_uploads.user_id', $userId)
-            ->where('mandatory_uploads.is_uploaded', 0)
-            ->select(
-                'mandatory_uploads.id',
-                'jenis_dokumen.nama_dokumen',
-                'periode.periode_key'
-            )
-            ->orderBy('periode.periode_key')
-            ->orderBy('jenis_dokumen.nama_dokumen')
+        $mapping = DB::table('mandatory_uploads')
+            ->select('id as mandatory_id', 'jenis_dokumen_id', 'periode_id')
+            ->where('user_id', Auth::id())
             ->get();
 
-        // Ambil hanya yang belum diupload
-        return $belumUpload;
+        return view('pdf.sign', [
+            'dokumenList' => $dokumenList,
+            'periodeList' => $periodeList,
+            'mapping' => $mapping
+        ]);
     }
 
     public function signPdf(Request $request)
@@ -54,6 +40,13 @@ class PdfController extends Controller
             'y_percent' => 'required|numeric|min:0|max:1',
             'width_percent' => 'required|numeric|min:0|max:1',
         ]);
+
+        // Ambil data mandatory_uploads untuk referensi dokumen & periode
+        $mandatory = DB::table('mandatory_uploads')->where('id', $request->mandatory_id)->first();
+        if (!$mandatory) {
+            return back()->withErrors(['mandatory_id' => 'Data mandatory tidak ditemukan.']);
+        }
+
 
         // Simpan sementara
         $pdfFile = $request->file('pdf');
@@ -123,15 +116,25 @@ class PdfController extends Controller
             @unlink($sigFullPath);
         } catch (\Throwable $e) { /* ignore */ }
 
-        // download & hapus file hasil setelah dikirim
-        return response()->download($outPath, $outName)->deleteFileAfterSend(false);
+        // Simpan ke tabel dokumen
+        DB::table('dokumen')->insert([
+            'path' => $outPath,
+            'user_id' => Auth::id(),
+            'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
+            'periode_id' => $mandatory->periode_id,
+            'tanggal_unggah' => now(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
 
-         // Update status upload
+        // Update mandatory_uploads jadi is_uploaded = 1
         DB::table('mandatory_uploads')
             ->where('id', $request->mandatory_id)
             ->update([
                 'is_uploaded' => 1,
                 'updated_at' => now()
             ]);
+
+        return response()->download($outPath, $outName)->deleteFileAfterSend(false);
     }
 }

@@ -1,3 +1,8 @@
+<script>
+    const mandatoryMapping = @json($mapping);
+</script>
+
+
 {{-- resources/views/pdf/sign.blade.php --}}
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="pdf-sign"></x-navbars.sidebar>
@@ -7,7 +12,7 @@
 
         <div class="container-fluid py-4">
             <div class="row">  
-                <div class="col-lg-10 mx-auto">
+                <div class="col-lg-11 mx-auto">
                     <div class="card">
                         <div class="card-header pb-0 px-3">
                             <h6 class="mb-0">Upload & Tandatangani PDF (Drag tanda tangan langsung di viewer)</h6>
@@ -25,7 +30,7 @@
                                         <select id="dokumenSelect"
                                             class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
                                             <option value="0" >-- Pilih Dokumen --</option>
-                                            @foreach($belumUpload as $dokumen)
+                                            @foreach($dokumenList as $dokumen)
                                                 <option value="{{ $dokumen->id }}">{{ $dokumen->nama_dokumen }}</option>
                                             @endforeach
                                         </select>
@@ -37,7 +42,7 @@
                                         <select id="periodeSelect"
                                             class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
                                             <option value="0">-- Pilih Periode --</option>
-                                            @foreach($belumUpload as $periode)
+                                            @foreach($periodeList as $periode)
                                                 <option value="{{ $periode->id }}">{{ $periode->periode_key }}</option>
                                             @endforeach
                                         </select>
@@ -72,6 +77,7 @@
                                 <input type="hidden" name="x_percent" id="inputX" value="0">
                                 <input type="hidden" name="y_percent" id="inputY" value="0">
                                 <input type="hidden" name="width_percent" id="inputW" value="0">
+                                <input type="hidden" name="mandatory_id" id="mandatoryId">
 
                                 {{-- PDF viewer --}}
                                 <div id="viewerWrap" class="border" style="height:70vh; overflow:auto; position:relative; background:#efefef;">
@@ -120,6 +126,7 @@
     </style>
 
     <script>
+        
     document.addEventListener('DOMContentLoaded', function () {
         const pdfFileInput = document.getElementById('pdfFile');
         const sigFileInput = document.getElementById('sigFile');
@@ -155,6 +162,25 @@
             inputPage.value = 1;
             inputX.value = 0; inputY.value = 0; inputW.value = 0;
         }
+
+        const dokumenSelect = document.getElementById('dokumenSelect');
+        const periodeSelect = document.getElementById('periodeSelect');
+        const mandatoryInput = document.getElementById('mandatoryId');
+
+        function updateMandatoryId() {
+            const dokumenId = dokumenSelect.value;
+            const periodeId = periodeSelect.value;
+
+            const found = mandatoryMapping.find(item =>
+                item.jenis_dokumen_id == dokumenId && item.periode_id == periodeId
+            );
+
+            mandatoryInput.value = found ? found.mandatory_id : '';
+        }
+
+        dokumenSelect.addEventListener('change', updateMandatoryId);
+        periodeSelect.addEventListener('change', updateMandatoryId);
+
 
         clearPreviewBtn.addEventListener('click', () => {
             resetPreview();
