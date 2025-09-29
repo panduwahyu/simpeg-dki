@@ -14,10 +14,7 @@ class UserManagementController extends Controller
      */
     public function index()
     {
-        // Ambil semua data user
         $users = User::all();
-
-        // Kirim data ke view
         return view('pages.laravel-examples.user-management', compact('users'));
     }
 
@@ -26,7 +23,6 @@ class UserManagementController extends Controller
      */
     public function create()
     {
-        // Tampilkan form create user
         return view('pages.laravel-examples.user-create');
     }
 
@@ -35,47 +31,72 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi inputan
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|string|max:50'
+            'name'       => 'required|string|max:255',
+            'email'      => 'required|email|unique:users,email',
+            'password'   => 'required|string|min:6|confirmed',
+            'role'       => 'required|string|max:50',
+
+            // field tambahan:
+            'nip'        => 'nullable|string|max:50',
+            'unit_kerja' => 'nullable|string|max:255',
+            'jabatan'    => 'nullable|string|max:255',
+            'pangkat'    => 'nullable|string|max:255',
+            'golongan'   => 'nullable|string|max:255',
         ]);
 
-        // Simpan ke tabel users
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'role' => $validated['role'],
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'role'       => $validated['role'],
+            'nip'        => $validated['nip'] ?? null,
+            'unit_kerja' => $validated['unit_kerja'] ?? null,
+            'jabatan'    => $validated['jabatan'] ?? null,
+            'pangkat'    => $validated['pangkat'] ?? null,
+            'golongan'   => $validated['golongan'] ?? null,
         ]);
 
-        // Redirect balik ke halaman user-management dengan pesan sukses
-        return redirect()
-            ->route('user-management')
+        return redirect()->route('user-management')
             ->with('status', 'User baru berhasil ditambahkan!');
     }
 
-    // EDIT user
+    /**
+     * Edit user
+     */
     public function edit(User $user)
     {
         return view('pages.laravel-examples.user-edit', compact('user'));
     }
 
-    // UPDATE user
+    /**
+     * Update user
+     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required','email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|string|max:50',
+            'name'       => 'required|string|max:255',
+            'email'      => ['required','email', Rule::unique('users')->ignore($user->id)],
+            'password'   => 'nullable|string|min:6|confirmed',
+            'role'       => 'required|string|max:50',
+
+            // field tambahan:
+            'nip'        => 'nullable|string|max:50',
+            'unit_kerja' => 'nullable|string|max:255',
+            'jabatan'    => 'nullable|string|max:255',
+            'pangkat'    => 'nullable|string|max:255',
+            'golongan'   => 'nullable|string|max:255',
         ]);
 
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-        $user->role = $validated['role'];
+        // update field dasar
+        $user->name       = $validated['name'];
+        $user->email      = $validated['email'];
+        $user->role       = $validated['role'];
+        $user->nip        = $validated['nip'] ?? null;
+        $user->unit_kerja = $validated['unit_kerja'] ?? null;
+        $user->jabatan    = $validated['jabatan'] ?? null;
+        $user->pangkat    = $validated['pangkat'] ?? null;
+        $user->golongan   = $validated['golongan'] ?? null;
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
@@ -83,13 +104,17 @@ class UserManagementController extends Controller
 
         $user->save();
 
-        return redirect()->route('user-management')->with('status', 'User berhasil diupdate!');
+        return redirect()->route('user-management')
+            ->with('status', 'User berhasil diupdate!');
     }
 
-    // DELETE user
+    /**
+     * Hapus user
+     */
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('user-management')->with('status', 'User berhasil dihapus!');
+        return redirect()->route('user-management')
+            ->with('status', 'User berhasil dihapus!');
     }
 }

@@ -24,6 +24,11 @@ class User extends Authenticatable
         'location',
         'phone',
         'about',
+        'nip',
+        'unit_kerja',
+        'jabatan',
+        'pangkat',
+        'golongan',
         'role',           // tambahkan role
         'photo',          // tambahkan photo
         'password_confirmation'

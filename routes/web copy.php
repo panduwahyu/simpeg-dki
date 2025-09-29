@@ -6,10 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\PegawaiController;
-use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Controllers\PdfController;
+use App\Http\Controllers\Auth\GoogleController; // Controller Google SSO
 
 /*
 |--------------------------------------------------------------------------
@@ -64,7 +61,6 @@ Route::middleware('auth')->group(function () {
     // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
     Route::get('tables', fn() => view('pages.tables'))->name('tables');
-    // Route::get('monitoring', fn() => view('pages.monitoring'))->name('monitoring');
     Route::get('rtl', fn() => view('pages.rtl'))->name('rtl');
     Route::get('virtual-reality', fn() => view('pages.virtual-reality'))->name('virtual-reality');
     Route::get('notifications', fn() => view('pages.notifications'))->name('notifications');
@@ -77,12 +73,6 @@ Route::middleware('auth')->group(function () {
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
 
-        // Monitoring dokumen
-        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-        Route::get('/monitoring/filter', [MonitoringController::class, 'filter'])->name('monitoring.filter');
-        Route::get('/monitoring/detail-pegawai', [MonitoringController::class, 'detailPegawai']);
-
-
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
         Route::put('user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');
@@ -93,13 +83,4 @@ Route::middleware('auth')->group(function () {
 
     // Contoh halaman profil user
     Route::get('user-profile', fn() => view('pages.laravel-examples.user-profile'))->name('user-profile');
-
-    // === Tambahan: route untuk tanda tangan PDF (butuh login) ===
-    // GET untuk menampilkan form
-    Route::get('/sign-pdf', function () {
-        return view('pdf.sign');
-    })->name('pdf.sign.form');
-
-    // POST untuk memproses tanda tangan
-    Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
 });
