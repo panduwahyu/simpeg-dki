@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class PdfController extends Controller
 {
-    public function index(){
-       // Panggil method untuk ambil semua dokumen yang belum diupload user
+    public function index()
+    {
         $belumUpload = $this->getDokumenBelum();
 
         return view('pdf.sign', [
@@ -22,10 +22,9 @@ class PdfController extends Controller
 
     private function getDokumenBelum()
     {
-        $userId = Auth::id(); // Ambil ID user yang login
+        $userId = Auth::id();
 
-       // Ambil semua dokumen-periode yang belum diupload
-        $belumUpload = DB::table('mandatory_uploads')
+        return DB::table('mandatory_uploads')
             ->join('jenis_dokumen', 'jenis_dokumen.id', '=', 'mandatory_uploads.jenis_dokumen_id')
             ->join('periode', 'periode.id', '=', 'mandatory_uploads.periode_id')
             ->where('mandatory_uploads.user_id', $userId)
@@ -38,100 +37,75 @@ class PdfController extends Controller
             ->orderBy('periode.periode_key')
             ->orderBy('jenis_dokumen.nama_dokumen')
             ->get();
-
-        // Ambil hanya yang belum diupload
-        return $belumUpload;
     }
 
     public function signPdf(Request $request)
     {
         $request->validate([
             'mandatory_id' => 'required|exists:mandatory_uploads,id',
-            'pdf' => 'required|file|mimes:pdf|max:10240', // max 10MB
-            'signature' => 'required|image|mimes:png,jpg,jpeg|max:5120', // max 5MB
-            'page' => 'required|integer|min:1',
-            'x_percent' => 'required|numeric|min:0|max:1',
-            'y_percent' => 'required|numeric|min:0|max:1',
-            'width_percent' => 'required|numeric|min:0|max:1',
+            'pdf' => 'required|file|mimes:pdf|max:10240', 
+            'signatures' => 'required|array|min:1',
+            'signatures.*.file' => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
+            'signatures.*.page' => 'required|integer|min:1',
+            'signatures.*.x' => 'required|numeric|min:0|max:1',
+            'signatures.*.y' => 'required|numeric|min:0|max:1',
+            'signatures.*.w' => 'required|numeric|min:0|max:1',
         ]);
 
-        // Simpan sementara
         $pdfFile = $request->file('pdf');
-        $sigFile = $request->file('signature');
-
         $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
-        $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
+        $pdfPath = $pdfFile->storeAs('private/tmp', $pdfName);
+        $pdfFullPath = storage_path('app/' . $pdfPath);
 
-        $pdfPath = $pdfFile->storeAs('tmp', $pdfName);
-        $sigPath = $sigFile->storeAs('tmp', $sigName);
-
-        $pdfFullPath = storage_path('app/private/' . $pdfPath);
-        $sigFullPath = storage_path('app/private/' . $sigPath);
-
-        // Ambil nilai relative dari request
-        $pageNumber = (int) $request->input('page', 1);
-        $xPercent = (float) $request->input('x_percent');
-        $yPercent = (float) $request->input('y_percent');
-        $wPercent = (float) $request->input('width_percent');
-
-        // Mulai proses FPDI
         $pdf = new Fpdi();
-
-        // set source
         $pageCount = $pdf->setSourceFile($pdfFullPath);
 
-        // safety: jika pageNumber > pageCount, set ke pageCount
-        if ($pageNumber > $pageCount) {
-            $pageNumber = $pageCount;
+        $signatures = $request->input('signatures', []);
+        $sigTempPaths = [];
+
+        // simpan sementara semua signature
+        foreach ($request->file('signatures', []) as $i => $sigFile) {
+            $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
+            $sigPath = $sigFile->storeAs('private/tmp', $sigName);
+            $sigTempPaths[$i] = storage_path('app/' . $sigPath);
         }
 
-        // import semua halaman, dan tandai halaman dimana akan ditempel tanda tangan
+        // import semua halaman dan tempel tanda tangan
         for ($i = 1; $i <= $pageCount; $i++) {
             $tplId = $pdf->importPage($i);
             $size = $pdf->getTemplateSize($tplId);
             $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
-
-            // buat page baru dengan ukuran sama
             $pdf->AddPage($orientation, [$size['width'], $size['height']]);
             $pdf->useTemplate($tplId);
 
-            // kalau halaman target -> gambar signature
-            if ($i === $pageNumber) {
-                // ukuran halaman (mm)
-                $pageW = $size['width'];
-                $pageH = $size['height'];
+            foreach ($signatures as $idx => $sig) {
+                if ((int)$sig['page'] === $i) {
+                    $sigFullPath = $sigTempPaths[$idx];
+                    $xMm = $sig['x'] * $size['width'];
+                    $yMm = $sig['y'] * $size['height'];
+                    $wMm = $sig['w'] * $size['width'];
 
-                // hitung posisi mm berdasarkan percent
-                $xMm = $xPercent * $pageW;
-                $yMm = $yPercent * $pageH;
-                $sigWidthMm = $wPercent * $pageW;
-
-                // menempel gambar; hanya set width supaya height skala otomatis
-                $pdf->Image($sigFullPath, $xMm, $yMm, $sigWidthMm);
+                    $pdf->Image($sigFullPath, $xMm, $yMm, $wMm);
+                }
             }
         }
 
-        // buat file output
         $outName = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
         $outPath = storage_path('app/private/tmp/' . $outName);
-        // simpan ke file
         $pdf->Output($outPath, 'F');
 
-        // hapus file input sementara (orig + sig), biar tidak menumpuk
-        try {
-            @unlink($pdfFullPath);
-            @unlink($sigFullPath);
-        } catch (\Throwable $e) { /* ignore */ }
+        // hapus sementara file orig & signature
+        @unlink($pdfFullPath);
+        foreach ($sigTempPaths as $p) { @unlink($p); }
 
-        // download & hapus file hasil setelah dikirim
-        return response()->download($outPath, $outName)->deleteFileAfterSend(false);
-
-         // Update status upload
+        // update status upload
         DB::table('mandatory_uploads')
             ->where('id', $request->mandatory_id)
             ->update([
                 'is_uploaded' => 1,
                 'updated_at' => now()
             ]);
+
+        return response()->download($outPath, $outName)->deleteFileAfterSend(true);
     }
 }
