@@ -30,8 +30,8 @@ class PdfController extends Controller
         $pdfPath = $pdfFile->storeAs('tmp', $pdfName);
         $sigPath = $sigFile->storeAs('tmp', $sigName);
 
-        $pdfFullPath = storage_path('app/' . $pdfPath);
-        $sigFullPath = storage_path('app/' . $sigPath);
+        $pdfFullPath = storage_path('app/private/' . $pdfPath);
+        $sigFullPath = storage_path('app/private/' . $sigPath);
 
         // Ambil nilai relative dari request
         $pageNumber = (int) $request->input('page', 1);
@@ -78,7 +78,7 @@ class PdfController extends Controller
 
         // buat file output
         $outName = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
-        $outPath = storage_path('app/tmp/' . $outName);
+        $outPath = storage_path('app/private/tmp/' . $outName);
         // simpan ke file
         $pdf->Output($outPath, 'F');
 

@@ -43,16 +43,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     summaryBody.innerHTML += `
                         <tr>
                             <td>
-                                <a href="#" class="dokumen-link" data-dokumen="${item.dokumen_id}" data-periode="${item.periode_id}">
-                                    ${item.nama_dokumen}
-                                </a>
+                                <h6 class="mx-3  mb-0 text-sm">
+                                    <a href="#" class="dokumen-link" data-dokumen="${item.dokumen_id}" data-periode="${item.periode_id}">
+                                        ${item.nama_dokumen}
+                                    </a>
+                                </h6>
                             </td>
-                            <td>${item.periode}</td>
-                            <td>${item.done}</td>
-                            <td>${item.total}</td>
                             <td>
-                                
-                                <small>${item.percent}%</small>
+                                <h6 class="mx-3  mb-0 text-sm">
+                                ${item.periode}
+                                </h6>
+                            </td>
+                            <td>
+                                <h6 class="mx-3  mb-0 text-sm">
+                                ${item.done}
+                                </h6>
+                            </td>
+                            <td>
+                                <h6 class="mx-3  mb-0 text-sm">
+                                ${item.total}
+                                </h6>
+                            </td>
+                            <td>
+                                <h6 class="mx-3  mb-0 text-sm">
+                                    <small>${item.percent}%</small>
+                                </h6>
                             </td>
                         </tr>
                     `;
@@ -103,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row mb-4">
                 <div class="col-md-6">
                    <label for="dokumenSelect" class="form-label block text-gray-700 font-semibold mb-2">
-                        Pilih Dokumen
+                        Dokumen
                     </label>
                     <select id="dokumenSelect"
                         class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
@@ -115,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="col-md-6">
                    <label for="periodeSelect" class="form-label block text-gray-700 font-semibold mb-2">
-                        Pilih Periode
+                        Periode
                     </label>
                     <select id="periodeSelect"
                         class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
