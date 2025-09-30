@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log; // ✅ Tambahan ini
+use Illuminate\Support\Facades\Log; // ✅ tambahan ini
 use Exception;
 
 class PdfController extends Controller
@@ -44,37 +44,37 @@ class PdfController extends Controller
     public function signPdf(Request $request)
     {
         $request->validate([
-            'mandatory_id' => 'required|exists:mandatory_uploads,id',
-            'pdf' => 'required|file|mimes:pdf|max:10240',
-            'signatures' => 'required|array|min:1',
-            'signatures.*.page' => 'required|integer|min:1',
-            'signatures.*.x' => 'required|numeric|min:0|max:1',
-            'signatures.*.y' => 'required|numeric|min:0|max:1',
-            'signatures.*.w' => 'required|numeric|min:0|max:1',
-            'files' => 'required|array|min:1',
-            'files.*' => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
+            'mandatory_id'       => 'required|exists:mandatory_uploads,id',
+            'pdf'                => 'required|file|mimes:pdf|max:10240',
+            'signatures'         => 'required|array|min:1',
+            'signatures.*.page'  => 'required|integer|min:1',
+            'signatures.*.x'     => 'required|numeric|min:0|max:1',
+            'signatures.*.y'     => 'required|numeric|min:0|max:1',
+            'signatures.*.w'     => 'required|numeric|min:0|max:1',
+            'files'              => 'required|array|min:1',
+            'files.*'            => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
         ]);
 
         // Simpan PDF asli ke storage/app/public/tmp
         $pdfFile = $request->file('pdf');
         $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
         $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
-        $pdfFullPath = Storage::path($pdfStoredPath);
-
+        $pdfFullPath   = Storage::path($pdfStoredPath);
         Log::info("📄 PDF asli disimpan: $pdfFullPath");
 
         // Siapkan FPDI
-        $pdf = new Fpdi();
+        $pdf       = new Fpdi();
         $pageCount = $pdf->setSourceFile($pdfFullPath);
 
-        // Simpan sementara file signature (juga ke public/tmp)
+        // Simpan sementara file signature (ke public/tmp juga)
         $sigStoredPaths = [];
-        $sigTempPaths = [];
+        $sigTempPaths   = [];
+
         foreach ($request->file('files', []) as $i => $sigFile) {
-            $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
-            $sigStored = $sigFile->storeAs('public/tmp', $sigName);
+            $sigName       = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
+            $sigStored     = $sigFile->storeAs('public/tmp', $sigName);
             $sigStoredPaths[$i] = $sigStored;
-            $sigTempPaths[$i] = Storage::path($sigStored);
+            $sigTempPaths[$i]   = Storage::path($sigStored);
 
             Log::info("🖊️ Signature ke-$i disimpan: " . $sigTempPaths[$i]);
         }
@@ -85,15 +85,15 @@ class PdfController extends Controller
             // Tempelkan signature ke tiap halaman
             for ($p = 1; $p <= $pageCount; $p++) {
                 $tplId = $pdf->importPage($p);
-                $size = $pdf->getTemplateSize($tplId);
+                $size  = $pdf->getTemplateSize($tplId);
                 $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+
                 $pdf->AddPage($orientation, [$size['width'], $size['height']]);
                 $pdf->useTemplate($tplId);
 
                 foreach ($signatures as $idx => $sig) {
                     if ((int)$sig['page'] === $p && isset($sigTempPaths[$idx])) {
                         $sigFullPath = $sigTempPaths[$idx];
-
                         $x = floatval($sig['x']) * $size['width'];
                         $y = floatval($sig['y']) * $size['height'];
                         $w = floatval($sig['w']) * $size['width'];
@@ -107,11 +107,11 @@ class PdfController extends Controller
             }
 
             // Buat file output di public/tmp
-            $outName = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
-            $outStored = 'public/tmp/' . $outName;
+            $outName     = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
+            $outStored   = 'public/tmp/' . $outName;
             $outFullPath = Storage::path($outStored);
-            $pdf->Output($outFullPath, 'F');
 
+            $pdf->Output($outFullPath, 'F');
             Log::info("✅ PDF hasil ditulis: $outFullPath");
 
             // Update DB
@@ -120,7 +120,7 @@ class PdfController extends Controller
                     ->where('id', $request->mandatory_id)
                     ->update([
                         'is_uploaded' => 1,
-                        'updated_at' => now()
+                        'updated_at'  => now()
                     ]);
             });
 
@@ -130,7 +130,8 @@ class PdfController extends Controller
                 Storage::delete($sigStoredPaths);
             }
 
-            return response()->download($outFullPath, $outName)->deleteFileAfterSend(true);
+            return response()->download($outFullPath, $outName)
+                ->deleteFileAfterSend(true);
 
         } catch (Exception $e) {
             Storage::delete($pdfStoredPath);
