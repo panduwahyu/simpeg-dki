@@ -3,7 +3,7 @@
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
         <div class="container-fluid py-4">
-            <div class="row">  
+            <div class="row">
                 <div class="col-lg-10 mx-auto">
                     <div class="card">
                         <div class="card-header pb-0 px-3">
@@ -15,35 +15,29 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                    <label for="dokumenSelect" class="form-label block text-gray-700 font-semibold mb-2">
-                                            Dokumen
-                                        </label>
-                                        <select id="dokumenSelect"
-                                            class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
-                                            <option value="0" >-- Pilih Dokumen --</option>
+                                        <label for="dokumenSelect" class="form-label">Dokumen</label>
+                                        <select id="dokumenSelect" name="mandatory_id" class="form-select" required>
+                                            <option value="">-- Pilih Dokumen --</option>
                                             @foreach($belumUpload as $dokumen)
                                                 <option value="{{ $dokumen->id }}">{{ $dokumen->nama_dokumen }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                    <label for="periodeSelect" class="form-label block text-gray-700 font-semibold mb-2">
-                                            Periode
-                                        </label>
-                                        <select id="periodeSelect"
-                                            class="form-select appearance-none rounded-xl border-gray-300 bg-white text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition ease-in-out duration-150 w-full p-2">
-                                            <option value="0">-- Pilih Periode --</option>
+                                        <label for="periodeSelect" class="form-label">Periode</label>
+                                        <select id="periodeSelect" name="periode_id" class="form-select" required>
+                                            <option value="">-- Pilih Periode --</option>
                                             @foreach($belumUpload as $periode)
                                                 <option value="{{ $periode->id }}">{{ $periode->periode_key }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
-                                
+
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Pilih file PDF</label>
-                                        <input type="file" id="pdfFile" accept="application/pdf" class="form-control" required>
+                                        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pilih tanda tangan (PNG/JPG)</label>
@@ -51,7 +45,7 @@
                                     </div>
                                 </div>
 
-                                <input type="hidden" name="mandatory_id" value="{{ $belumUpload->first()->id ?? 0 }}">
+                                {{-- signatures hasil JS (metadata) --}}
                                 <input type="hidden" name="signatures" id="signaturesInput">
 
                                 <div id="viewerWrap" class="border" style="height:70vh; overflow:auto; position:relative; background:#efefef;">
@@ -95,6 +89,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const pdfFileInput = document.getElementById('pdfFile');
         const sigFileInput = document.getElementById('sigFile');
+        const dokumenSelect = document.getElementById('dokumenSelect');
         const pdfContainer = document.getElementById('pdf-container');
         const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
         const signaturesInput = document.getElementById('signaturesInput');
@@ -116,6 +111,7 @@
             signatures = [];
         }
 
+        // Load PDF preview
         pdfFileInput.addEventListener('change', async (e) => {
             resetPreview();
             const file = e.target.files[0];
@@ -150,6 +146,7 @@
             }
         });
 
+        // Enable drag for signature
         function enableDragFor(el) {
             let isDragging = false, startX=0, startY=0, origLeft=0, origTop=0;
             el.addEventListener('pointerdown', (ev)=>{
@@ -179,6 +176,7 @@
             });
         }
 
+        // Tambahkan signature image
         sigFileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             files.forEach(file => {
@@ -219,7 +217,7 @@
                 });
                 pdfContainer.appendChild(btn);
 
-                // slider resize individual
+                // slider resize
                 const idx = signatures.length;
                 const sliderDiv = document.createElement('div');
                 sliderDiv.id = `slider-${idx}`;
@@ -230,15 +228,19 @@
                 const slider = sliderDiv.querySelector('input');
                 slider.addEventListener('input', ()=>{ img.style.width = slider.value + 'px'; });
 
-                signatures.push({file, imgElem: img, page: 1, x:0, y:0, w:0, slider});
+                // push signature object (file is File object)
+                signatures.push({ file, imgElem: img, page: 1, x:0, y:0, w:0, slider });
             });
         });
 
-        placeAndSubmitBtn.addEventListener('click', ()=>{
-            if(!pdfFileInput.files[0]) { alert('Pilih file PDF'); return; }
-            if(signatures.length===0){ alert('Pilih minimal 1 tanda tangan'); return; }
+        // Submit
+        placeAndSubmitBtn.addEventListener('click', async ()=> {
+            if (!dokumenSelect.value) { alert('Pilih dokumen terlebih dahulu'); return; }
+            if (!pdfFileInput.files[0]) { alert('Pilih file PDF'); return; }
+            if (signatures.length===0) { alert('Pilih minimal 1 tanda tangan'); return; }
+            if (pageViews.length === 0) { alert('Pastikan PDF telah dipreview terlebih dahulu'); return; }
 
-            // hitung posisi & width relative
+            // Hitung posisi relatif signature
             signatures.forEach(s=>{
                 const rect = s.imgElem.getBoundingClientRect();
                 const sigCenterX = rect.left + rect.width/2;
@@ -265,27 +267,36 @@
                 s.w = relW;
             });
 
-            // buat FormData untuk setiap file tanda tangan
+            // Buat FormData — NOTE: files[] untuk file image, signatures[] untuk metadata
             const formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
-            formData.append('mandatory_id', '{{ $belumUpload->first()->id ?? 0 }}');
+            formData.append('mandatory_id', dokumenSelect.value);
             formData.append('pdf', pdfFileInput.files[0]);
+
             signatures.forEach((s,i)=>{
-                formData.append(`signatures[${i}][file]`, s.file);
+                // kirim file sebagai files[0], files[1], ...
+                formData.append(`files[${i}]`, s.file);
+                // kirim metadata posisi / halaman di signatures[i][...]
                 formData.append(`signatures[${i}][page]`, s.page);
                 formData.append(`signatures[${i}][x]`, s.x);
                 formData.append(`signatures[${i}][y]`, s.y);
                 formData.append(`signatures[${i}][w]`, s.w);
             });
 
-            // kirim via fetch
-            fetch('{{ route("pdf.sign") }}', {
-                method:'POST',
-                body: formData
-            }).then(res=>{
-                if(res.ok) return res.blob();
-                else throw new Error('Upload gagal');
-            }).then(blob=>{
+            // Kirim via fetch dengan error handling yang menampilkan pesan server jika ada
+            try {
+                const res = await fetch('{{ route("pdf.sign") }}', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Upload gagal');
+                }
+
+                const blob = await res.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -293,7 +304,11 @@
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
-            }).catch(err=>alert(err.message));
+
+            } catch (err) {
+                alert('Error: ' + err.message);
+                console.error(err);
+            }
         });
     });
     </script>

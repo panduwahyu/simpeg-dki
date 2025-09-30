@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log; // ✅ Tambahan ini
+use Exception;
 
 class PdfController extends Controller
 {
@@ -43,69 +45,103 @@ class PdfController extends Controller
     {
         $request->validate([
             'mandatory_id' => 'required|exists:mandatory_uploads,id',
-            'pdf' => 'required|file|mimes:pdf|max:10240', 
+            'pdf' => 'required|file|mimes:pdf|max:10240',
             'signatures' => 'required|array|min:1',
-            'signatures.*.file' => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
             'signatures.*.page' => 'required|integer|min:1',
             'signatures.*.x' => 'required|numeric|min:0|max:1',
             'signatures.*.y' => 'required|numeric|min:0|max:1',
             'signatures.*.w' => 'required|numeric|min:0|max:1',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
         ]);
 
+        // Simpan PDF asli ke storage/app/public/tmp
         $pdfFile = $request->file('pdf');
         $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
-        $pdfPath = $pdfFile->storeAs('private/tmp', $pdfName);
-        $pdfFullPath = storage_path('app/' . $pdfPath);
+        $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
+        $pdfFullPath = Storage::path($pdfStoredPath);
 
+        Log::info("📄 PDF asli disimpan: $pdfFullPath");
+
+        // Siapkan FPDI
         $pdf = new Fpdi();
         $pageCount = $pdf->setSourceFile($pdfFullPath);
 
-        $signatures = $request->input('signatures', []);
+        // Simpan sementara file signature (juga ke public/tmp)
+        $sigStoredPaths = [];
         $sigTempPaths = [];
-
-        // simpan sementara semua signature
-        foreach ($request->file('signatures', []) as $i => $sigFile) {
+        foreach ($request->file('files', []) as $i => $sigFile) {
             $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
-            $sigPath = $sigFile->storeAs('private/tmp', $sigName);
-            $sigTempPaths[$i] = storage_path('app/' . $sigPath);
+            $sigStored = $sigFile->storeAs('public/tmp', $sigName);
+            $sigStoredPaths[$i] = $sigStored;
+            $sigTempPaths[$i] = Storage::path($sigStored);
+
+            Log::info("🖊️ Signature ke-$i disimpan: " . $sigTempPaths[$i]);
         }
 
-        // import semua halaman dan tempel tanda tangan
-        for ($i = 1; $i <= $pageCount; $i++) {
-            $tplId = $pdf->importPage($i);
-            $size = $pdf->getTemplateSize($tplId);
-            $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
-            $pdf->AddPage($orientation, [$size['width'], $size['height']]);
-            $pdf->useTemplate($tplId);
+        $signatures = $request->input('signatures', []);
 
-            foreach ($signatures as $idx => $sig) {
-                if ((int)$sig['page'] === $i) {
-                    $sigFullPath = $sigTempPaths[$idx];
-                    $xMm = $sig['x'] * $size['width'];
-                    $yMm = $sig['y'] * $size['height'];
-                    $wMm = $sig['w'] * $size['width'];
+        try {
+            // Tempelkan signature ke tiap halaman
+            for ($p = 1; $p <= $pageCount; $p++) {
+                $tplId = $pdf->importPage($p);
+                $size = $pdf->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplId);
 
-                    $pdf->Image($sigFullPath, $xMm, $yMm, $wMm);
+                foreach ($signatures as $idx => $sig) {
+                    if ((int)$sig['page'] === $p && isset($sigTempPaths[$idx])) {
+                        $sigFullPath = $sigTempPaths[$idx];
+
+                        $x = floatval($sig['x']) * $size['width'];
+                        $y = floatval($sig['y']) * $size['height'];
+                        $w = floatval($sig['w']) * $size['width'];
+
+                        if (file_exists($sigFullPath)) {
+                            Log::info("✔️ Tempel signature ke-$idx di halaman $p (x=$x, y=$y, w=$w)");
+                            $pdf->Image($sigFullPath, $x, $y, $w);
+                        }
+                    }
                 }
             }
+
+            // Buat file output di public/tmp
+            $outName = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
+            $outStored = 'public/tmp/' . $outName;
+            $outFullPath = Storage::path($outStored);
+            $pdf->Output($outFullPath, 'F');
+
+            Log::info("✅ PDF hasil ditulis: $outFullPath");
+
+            // Update DB
+            DB::transaction(function () use ($request) {
+                DB::table('mandatory_uploads')
+                    ->where('id', $request->mandatory_id)
+                    ->update([
+                        'is_uploaded' => 1,
+                        'updated_at' => now()
+                    ]);
+            });
+
+            // Hapus file input sementara
+            Storage::delete($pdfStoredPath);
+            if (!empty($sigStoredPaths)) {
+                Storage::delete($sigStoredPaths);
+            }
+
+            return response()->download($outFullPath, $outName)->deleteFileAfterSend(true);
+
+        } catch (Exception $e) {
+            Storage::delete($pdfStoredPath);
+            if (!empty($sigStoredPaths)) {
+                Storage::delete($sigStoredPaths);
+            }
+            if (isset($outFullPath) && file_exists($outFullPath)) {
+                @unlink($outFullPath);
+            }
+            Log::error("❌ Error saat proses tanda tangan PDF: " . $e->getMessage());
+            throw $e;
         }
-
-        $outName = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
-        $outPath = storage_path('app/private/tmp/' . $outName);
-        $pdf->Output($outPath, 'F');
-
-        // hapus sementara file orig & signature
-        @unlink($pdfFullPath);
-        foreach ($sigTempPaths as $p) { @unlink($p); }
-
-        // update status upload
-        DB::table('mandatory_uploads')
-            ->where('id', $request->mandatory_id)
-            ->update([
-                'is_uploaded' => 1,
-                'updated_at' => now()
-            ]);
-
-        return response()->download($outPath, $outName)->deleteFileAfterSend(true);
     }
 }
