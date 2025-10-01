@@ -15,6 +15,7 @@
                             </div>
                             <div class="card-body px-0 pb-2">
                                 <div class="table-responsive p-0">
+                                    @if(($dokumen ?? null) && $dokumen->count())
                                     <table class="table align-items-center mb-0">
                                         <thead>
                                             <tr>
@@ -67,9 +68,12 @@
                                                     </a>
                                                 </td>
                                             </tr>
-                                        @endforeach    
+                                            @endforeach    
                                         </tbody>
                                     </table>
+                                     @else
+                                        <p>Tidak ada data dokumen.</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
