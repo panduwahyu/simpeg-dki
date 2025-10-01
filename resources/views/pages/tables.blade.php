@@ -15,30 +15,30 @@
                             </div>
                             <div class="card-body px-0 pb-2">
                                 <div class="table-responsive p-0">
-                                    @if(($dokumen ?? null) && $dokumen->count())
                                     <table class="table align-items-center mb-0">
                                         <thead>
                                             <tr>
                                                 <th
-                                                    class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                                    Jenis Dokumen</th>
+                                                class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                Jenis Dokumen</th>
                                                 <th
-                                                    class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                                    Periode</th>
+                                                class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                                Periode</th>
                                                 <th
-                                                    class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                                    Tahun</th>    
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                Tahun</th>    
                                                 <th
-                                                    class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                                    Tanggal Unggah</th>
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                Tanggal Unggah</th>
                                                 {{-- <th
-                                                    class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                                    Status</th>
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                Status</th>
                                                 <th class="text-secondary opacity-7"></th> --}}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($dokumen as $d)
+                                            @if(($dokumens ?? null) && $dokumens->count())
+                                            @foreach($dokumens as $d)
                                             <tr>
                                                 <td>
                                                     <div class="d-flex px-2 py-1">
@@ -70,10 +70,12 @@
                                             </tr>
                                             @endforeach    
                                         </tbody>
+                                        @else
+                                           <div class="justify-content-center d-flex px-2 py-1">
+                                                Tidak ada dokumen
+                                            </div>
+                                       @endif
                                     </table>
-                                     @else
-                                        <p>Tidak ada data dokumen.</p>
-                                    @endif
                                 </div>
                             </div>
                         </div>

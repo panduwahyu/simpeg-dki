@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Dokumen;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class DokumenController extends Controller
 {
     public function index()
     {
-        $dokumen = Dokumen::all();
-        return view('pages.tables', compact('dokumen'));
+        $dokumens = Dokumen::orderBy('tanggal_unggah', 'desc')->get();
+        return view('pages.tables', compact('dokumens'));
     }
 }
