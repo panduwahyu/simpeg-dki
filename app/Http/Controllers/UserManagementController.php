@@ -32,6 +32,8 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'name'       => 'required|string|max:255',
+            'email'      => 'required|email|unique:users,email',
             'password'   => 'required|string|min:6|confirmed',
             'role'       => 'required|string|max:50',
 
@@ -46,7 +48,7 @@ class UserManagementController extends Controller
         User::create([
             'name'       => $validated['name'],
             'email'      => $validated['email'],
-            'password'   => Hash::make($validated['password']),
+            'password'   => $validated['password'],
             'role'       => $validated['role'],
             'nip'        => $validated['nip'] ?? null,
             'unit_kerja' => $validated['unit_kerja'] ?? null,
@@ -97,7 +99,7 @@ class UserManagementController extends Controller
         $user->golongan   = $validated['golongan'] ?? null;
 
         if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+            $user->password = $validated['password'];
         }
 
         $user->save();

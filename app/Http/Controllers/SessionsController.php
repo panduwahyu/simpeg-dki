@@ -2,86 +2,107 @@
 
 namespace App\Http\Controllers;
 
-Use Str;
-Use Hash;
-use Illuminate\Auth\Events\PasswordReset;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
+use App\Models\User;
 
 class SessionsController extends Controller
 {
+    /**
+     * Tampilkan halaman login
+     */
     public function create()
     {
         return view('sessions.create');
     }
 
-    public function store()
+    /**
+     * Proses login
+     */
+    public function store(Request $request)
     {
-        $attributes = request()->validate([
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        if (! auth()->attempt($attributes)) {
+        // Hanya email dan password
+        if (! auth()->attempt([
+            'email' => $credentials['email'],
+            'password' => $credentials['password']
+        ])) {
             throw ValidationException::withMessages([
                 'email' => 'Your provided credentials could not be verified.'
             ]);
         }
 
-        session()->regenerate();
+        $request->session()->regenerate();
 
         return redirect('/dashboard');
-
     }
 
-    public function show(){
-        request()->validate([
+    /**
+     * Kirim link reset password
+     */
+    public function show(Request $request)
+    {
+        $request->validate([
             'email' => 'required|email',
         ]);
 
         $status = Password::sendResetLink(
-            request()->only('email')
+            $request->only('email')
         );
-    
+
         return $status === Password::RESET_LINK_SENT
-                    ? back()->with(['status' => __($status)])
-                    : back()->withErrors(['email' => __($status)]);
-        
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
     }
 
-    public function update(){
-        
-        request()->validate([
+    /**
+     * Proses reset password
+     */
+    public function update(Request $request)
+    {
+        $request->validate([
             'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|min:8|confirmed',
-        ]); 
-          
+        ]);
+
         $status = Password::reset(
-            request()->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, $password) {
+                // Hash password sebelum disimpan
                 $user->forceFill([
-                    'password' => ($password)
+                    'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
-    
+
                 $user->save();
-    
+
                 event(new PasswordReset($user));
             }
         );
-    
+
         return $status === Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withErrors(['email' => [__($status)]]);
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
     }
 
-    public function destroy()
+    /**
+     * Logout user
+     */
+    public function destroy(Request $request)
     {
         auth()->logout();
 
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect('/sign-in');
     }
-
 }

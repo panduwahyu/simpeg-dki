@@ -11,6 +11,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,9 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
 
         // Monitoring dokumen
-        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-        Route::get('/monitoring/filter', [MonitoringController::class, 'filter'])->name('monitoring.filter');
-        Route::get('/monitoring/detail-pegawai', [MonitoringController::class, 'detailPegawai']);
+        Route::get('/dashboard/filter', [DashboardController::class, 'filter'])->name('monitoring.filter');
 
 
         // Edit user
