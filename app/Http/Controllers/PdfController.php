@@ -13,22 +13,32 @@ use Exception;
 
 class PdfController extends Controller
 {
-    public function index(){
-       // Panggil method untuk ambil semua dokumen yang belum diupload user
-        // Ambil semua dokumen & periode
-        $dokumenList = DB::table('jenis_dokumen')->get();
-        $periodeList = DB::table('periode')->get();
-
-        $mapping = DB::table('mandatory_uploads')
-            ->select('id as mandatory_id', 'jenis_dokumen_id', 'periode_id')
-            ->where('user_id', Auth::id())
-            ->get();
+    public function index()
+    {
+        $belumUpload = $this->getDokumenBelum();
 
         return view('pdf.sign', [
-            'dokumenList' => $dokumenList,
-            'periodeList' => $periodeList,
-            'mapping' => $mapping
+            'belumUpload' => $belumUpload
         ]);
+    }
+
+    private function getDokumenBelum()
+    {
+        $userId = Auth::id();
+
+        return DB::table('mandatory_uploads')
+            ->join('jenis_dokumen', 'jenis_dokumen.id', '=', 'mandatory_uploads.jenis_dokumen_id')
+            ->join('periode', 'periode.id', '=', 'mandatory_uploads.periode_id')
+            ->where('mandatory_uploads.user_id', $userId)
+            ->where('mandatory_uploads.is_uploaded', 0)
+            ->select(
+                'mandatory_uploads.id',
+                'jenis_dokumen.nama_dokumen',
+                'periode.periode_key'
+            )
+            ->orderBy('periode.periode_key')
+            ->orderBy('jenis_dokumen.nama_dokumen')
+            ->get();
     }
 
     public function signPdf(Request $request)
@@ -47,8 +57,6 @@ class PdfController extends Controller
 
         // Simpan PDF asli ke storage/app/public/tmp
         $pdfFile = $request->file('pdf');
-        $sigFile = $request->file('signature');
-
         $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
         $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
         $pdfFullPath   = Storage::path($pdfStoredPath);

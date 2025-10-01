@@ -1,23 +1,14 @@
-<script>
-    const mandatoryMapping = @json($mapping);
-</script>
-
-
-{{-- resources/views/pdf/sign.blade.php --}}
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="pdf-sign"></x-navbars.sidebar>
-
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
-
         <div class="container-fluid py-4">
             <div class="row">
                 <div class="col-lg-10 mx-auto">
                     <div class="card">
                         <div class="card-header pb-0 px-3">
-                            <h6 class="mb-0">Upload & Tandatangani PDF (Drag tanda tangan langsung di viewer)</h6>
+                            <h6 class="mb-0">Upload & Tandatangani PDF (Drag & Resize multiple tanda tangan)</h6>
                         </div>
-
                         <div class="card-body pt-4 p-3">
                             <form id="signForm" action="{{ route('pdf.sign') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
@@ -41,44 +32,32 @@
                                         </select>
                                     </div>
                                 </div>
+
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Pilih file PDF</label>
                                         <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Pilih tanda tangan (PNG)</label>
-                                        <input type="file" id="sigFile" name="signature" accept="image/*" class="form-control" required>
+                                        <label class="form-label">Pilih tanda tangan (PNG/JPG)</label>
+                                        <input type="file" id="sigFile" accept="image/*" class="form-control" multiple>
                                     </div>
                                 </div>
 
                                 {{-- signatures hasil JS (metadata) --}}
                                 <input type="hidden" name="signatures" id="signaturesInput">
 
-                                    <div class="col-md-8 d-flex align-items-end justify-content-end">
-                                        <button type="button" id="clearPreview" class="btn btn-outline-secondary me-2">Reset Preview</button>
-                                        <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
-                                    </div>
-                                </div>
-
-                                {{-- Hidden inputs akan diisi oleh JS sebelum submit --}}
-                                <input type="hidden" name="page" id="inputPage" value="1">
-                                <input type="hidden" name="x_percent" id="inputX" value="0">
-                                <input type="hidden" name="y_percent" id="inputY" value="0">
-                                <input type="hidden" name="width_percent" id="inputW" value="0">
-                                <input type="hidden" name="mandatory_id" id="mandatoryId">
-
-                                {{-- PDF viewer --}}
                                 <div id="viewerWrap" class="border" style="height:70vh; overflow:auto; position:relative; background:#efefef;">
                                     <div id="pdf-container" style="position:relative; width:fit-content; margin:16px;"></div>
                                 </div>
 
-                                <p class="mt-3 text-muted small">
-                                    Cara pakai: pilih PDF & PNG → tanda tangan muncul di atas PDF → geser (drag) ke posisi yang diinginkan → atur ukuran dengan slider → klik "Simpan & Download".
-                                </p>
+                                <div id="signature-controls" class="mt-3"></div>
+
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
+                                </div>
                             </form>
 
-                            {{-- pesan error/done --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger mt-3">
                                     <ul class="mb-0">
@@ -88,17 +67,10 @@
                                     </ul>
                                 </div>
                             @endif
-
-                            @if (session('success'))
-                                <div class="alert alert-success mt-3">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
                         </div>
                     </div>
                 </div>
             </div>
-
             <x-footers.auth></x-footers.auth>
         </div>
     </main>
