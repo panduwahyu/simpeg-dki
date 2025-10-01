@@ -334,7 +334,10 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'signed.pdf';
+                    const dokumenName = dokumenSelect.options[dokumenSelect.selectedIndex].text;
+                    const periodeName = periodeSelect.options[periodeSelect.selectedIndex].text;
+                    const filename = `${dokumenName}_${periodeName}.pdf`.replace(/\s+/g, '_');
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
