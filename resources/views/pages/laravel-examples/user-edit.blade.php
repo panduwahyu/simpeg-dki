@@ -11,28 +11,16 @@
                         @csrf
                         @method('PUT')
 
-                        {{-- Data dasar --}}
                         <div class="mb-3">
                             <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}">
-                            @error('name')<p class="text-danger">{{ $message }}</p>@enderror
+                            <input type="text" class="form-control" value="{{ $user->name }}" disabled>
+                            <input type="hidden" name="name" value="{{ $user->name }}">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}">
-                            @error('email')<p class="text-danger">{{ $message }}</p>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Password (kosongkan jika tidak diubah)</label>
-                            <input type="password" name="password" class="form-control">
-                            @error('password')<p class="text-danger">{{ $message }}</p>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control">
+                            <input type="email" class="form-control" value="{{ $user->email }}" disabled>
+                            <input type="hidden" name="email" value="{{ $user->email }}">
                         </div>
 
                         <div class="mb-3">

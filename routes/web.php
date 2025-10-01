@@ -11,6 +11,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 use App\Models\Dokumen;
 
 /*
@@ -63,11 +64,8 @@ Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
 Route::middleware('auth')->group(function () {
     
     // Dashboard
+    Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard');
-    
-    // View table dokumen
-    // Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
 
     // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
@@ -86,11 +84,9 @@ Route::middleware('auth')->group(function () {
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
         
         // Monitoring dokumen
-        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-        Route::get('/monitoring/filter', [MonitoringController::class, 'filter'])->name('monitoring.filter');
-        Route::get('/monitoring/detail-pegawai', [MonitoringController::class, 'detailPegawai']);
-        
-        
+        Route::get('/dashboard/filter', [DashboardController::class, 'filter'])->name('monitoring.filter');
+
+
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
         Route::put('user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');

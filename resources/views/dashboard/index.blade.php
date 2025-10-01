@@ -1,3 +1,109 @@
+<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const dokumenSelect = document.getElementById('dokumenSelect');
+                const periodeSelect = document.getElementById('periodeSelect');
+                const showDetailsBtn = document.getElementById('showDetails');
+                
+                // Jika belum dipilih, sembunyikan ringkasan & detail
+                function toggleShowDetailsButton() {
+                    if (dokumenSelect.value !=0 && periodeSelect.value != 0) {
+                        showDetailsBtn.classList.remove('d-none');
+                    } else {
+                        showDetailsBtn.classList.add('d-none');
+                    }
+                }
+
+                [dokumenSelect, periodeSelect].forEach(select => {
+                    select.addEventListener('change', () => {
+                        toggleShowDetailsButton();
+                        loadData();
+                    });
+                });
+
+
+                function loadData() {
+                    const dokumenId = dokumenSelect.value;
+                    const periodeId = periodeSelect.value;
+
+                    fetch(`/dashboard/filter?dokumen_id=${dokumenId}&periode_id=${periodeId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            // Update progres
+                            document.querySelector('.progress-bar').style.width = data.progressSummary.percent + '%';
+                            document.querySelector('.progress-bar').setAttribute('aria-valuenow', data.progressSummary.percent);
+                            document.getElementById('progressText').innerText = data.progressSummary.percent + '% Sudah Mengumpulkan';
+                            document.getElementById('progressCount').innerText = `Total: ${data.progressSummary.done} / ${data.progressSummary.total} pegawai`;
+
+                            // Update tabel ringkasan
+                            const summaryBody = document.querySelector('#summaryTable tbody');
+                            summaryBody.innerHTML = '';
+                            data.summaryData.forEach(item => {
+                                summaryBody.innerHTML += `
+                                    <tr>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                                <a href="#" class="dokumen-link" data-dokumen="${item.dokumen_id}" data-periode="${item.periode_id}">
+                                                    ${item.nama_dokumen}
+                                                </a>
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                            ${item.periode}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                            ${item.done}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                            ${item.total}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                                <small>${item.percent}%</small>
+                                            </h6>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+
+                            // Event klik nama dokumen untuk tampilkan detail pegawai
+                            document.querySelectorAll('.dokumen-link').forEach(link => {
+                                link.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    const dokumenId = this.dataset.dokumen;
+                                    const periodeId = this.dataset.periode;
+                                    loadPegawai(dokumenId, periodeId);
+                                });
+                            });
+
+                            // Update tabel pegawai
+                            const tbody = document.querySelector('#pegawaiCard tbody');
+                            tbody.innerHTML = '';
+                            data.pegawaiData.forEach(p => {
+                                tbody.innerHTML += `
+                                    <tr>
+                                        <td><h6 class="mx-3  mb-0 text-sm"> ${p.nama}</h6></td>
+                                        <td><h6 class="mb-0 text-sm"> ${p.unit_kerja}</h6></td>
+                                        <td>
+                                            ${p.is_uploaded === 1
+                                                ? '<span class="mx-1 badge bg-success">Sudah</span>' 
+                                                : '<span class="mx-1 badge bg-danger">Belum</span>'}
+                                        </td>
+                                        <td class="text-center">${p.tanggal_upload ?? '-'}</td>
+                                    </tr>
+                                `;
+                            });
+                        })
+                        .catch(err => console.error('Fetch error:', err));
+                }
+            });
+</script>
+
 <x-layout bodyClass="g-sidenav-show  bg-gray-200">
     <x-navbars.sidebar activePage="monitoring"></x-navbars.sidebar>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
@@ -155,113 +261,9 @@
                     </div>
                 </div>
             </div>
-
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const dokumenSelect = document.getElementById('dokumenSelect');
-                const periodeSelect = document.getElementById('periodeSelect');
-                const showDetailsBtn = document.getElementById('showDetails');
-                
-                // Jika belum dipilih, sembunyikan ringkasan & detail
-                function toggleShowDetailsButton() {
-                    if (dokumenSelect.value !=0 && periodeSelect.value != 0) {
-                        showDetailsBtn.classList.remove('d-none');
-                    } else {
-                        showDetailsBtn.classList.add('d-none');
-                    }
-                }
-
-                [dokumenSelect, periodeSelect].forEach(select => {
-                    select.addEventListener('change', () => {
-                        toggleShowDetailsButton();
-                        loadData();
-                    });
-                });
-
-
-                function loadData() {
-                    const dokumenId = dokumenSelect.value;
-                    const periodeId = periodeSelect.value;
-
-                    fetch(`/monitoring/filter?dokumen_id=${dokumenId}&periode_id=${periodeId}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            // Update progres
-                            document.querySelector('.progress-bar').style.width = data.progressSummary.percent + '%';
-                            document.querySelector('.progress-bar').setAttribute('aria-valuenow', data.progressSummary.percent);
-                            document.getElementById('progressText').innerText = data.progressSummary.percent + '% Sudah Mengumpulkan';
-                            document.getElementById('progressCount').innerText = `Total: ${data.progressSummary.done} / ${data.progressSummary.total} pegawai`;
-
-                            // Update tabel ringkasan
-                            const summaryBody = document.querySelector('#summaryTable tbody');
-                            summaryBody.innerHTML = '';
-                            data.summaryData.forEach(item => {
-                                summaryBody.innerHTML += `
-                                    <tr>
-                                        <td>
-                                            <h6 class="mx-3  mb-0 text-sm">
-                                                <a href="#" class="dokumen-link" data-dokumen="${item.dokumen_id}" data-periode="${item.periode_id}">
-                                                    ${item.nama_dokumen}
-                                                </a>
-                                            </h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="mx-3  mb-0 text-sm">
-                                            ${item.periode}
-                                            </h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="mx-3  mb-0 text-sm">
-                                            ${item.done}
-                                            </h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="mx-3  mb-0 text-sm">
-                                            ${item.total}
-                                            </h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="mx-3  mb-0 text-sm">
-                                                <small>${item.percent}%</small>
-                                            </h6>
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-
-                            // Event klik nama dokumen untuk tampilkan detail pegawai
-                            document.querySelectorAll('.dokumen-link').forEach(link => {
-                                link.addEventListener('click', function (e) {
-                                    e.preventDefault();
-                                    const dokumenId = this.dataset.dokumen;
-                                    const periodeId = this.dataset.periode;
-                                    loadPegawai(dokumenId, periodeId);
-                                });
-                            });
-
-                            // Update tabel pegawai
-                            const tbody = document.querySelector('#pegawaiCard tbody');
-                            tbody.innerHTML = '';
-                            data.pegawaiData.forEach(p => {
-                                tbody.innerHTML += `
-                                    <tr>
-                                        <td><h6 class="mx-3  mb-0 text-sm"> ${p.nama}</h6></td>
-                                        <td><h6 class="mb-0 text-sm"> ${p.unit_kerja}</h6></td>
-                                        <td>
-                                            ${p.is_uploaded === 1
-                                                ? '<span class="mx-1 badge bg-success">Sudah</span>' 
-                                                : '<span class="mx-1 badge bg-danger">Belum</span>'}
-                                        </td>
-                                        <td class="text-center">${p.tanggal_upload ?? '-'}</td>
-                                    </tr>
-                                `;
-                            });
-                        })
-                        .catch(err => console.error('Fetch error:', err));
-                }
-            });
-            </script>
         </div>
+
+        {{-- Monitoring --}}
         <div class="container-fluid py-4">
             <!-- Filter Dokumen & Periode -->
             <div class="row mb-4">
