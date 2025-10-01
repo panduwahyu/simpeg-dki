@@ -3,7 +3,7 @@
     <x-navbars.sidebar activePage="billing"></x-navbars.sidebar>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
         <!-- Navbar -->
-        <x-navbars.navs.auth titlePage="Billing"></x-navbars.navs.auth>
+        <x-navbars.navs.auth titlePage="Dokumen"></x-navbars.navs.auth>
         <!-- End Navbar -->
         <div class="container-fluid py-4">
             <div class="row">
@@ -86,8 +86,7 @@
                                         </div>
                                         <div class="col-6 text-end">
                                             <a class="btn bg-gradient-dark mb-0" href="javascript:;"><i
-                                                    class="material-icons text-sm">add</i>&nbsp;&nbsp;Add New
-                                                Card</a>
+                                                    class="material-icons text-sm">add</i>&nbsp;&nbsp;Input Dokumen</a>
                                         </div>
                                     </div>
                                 </div>
