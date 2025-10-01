@@ -32,8 +32,6 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
             'password'   => 'required|string|min:6|confirmed',
             'role'       => 'required|string|max:50',
 
