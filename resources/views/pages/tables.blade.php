@@ -15,6 +15,7 @@
                             </div>
                             <div class="card-body px-0 pb-2">
                                 <div class="table-responsive p-0">
+                                    @if(($dokumens ?? null) && $dokumens->count())
                                     <table class="table align-items-center mb-0">
                                         <thead>
                                             <tr>
@@ -37,27 +38,26 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if(($dokumens ?? null) && $dokumens->count())
                                             @foreach($dokumens as $d)
                                             <tr>
                                                 <td>
                                                     <div class="d-flex px-2 py-1">
-                                                        {{ $d->jenis_dokumen_id }}
+                                                        {{ $d->jenisDokumen->nama_dokumen }}
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex px-2 py-1">
-                                                        {{ $d->periode_id }}
+                                                        {{ $d->periode->tipe }}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="justify-content-center d-flex px-2 py-1">
+                                                        {{ $d->periode->tahun }}
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="justify-content-center d-flex px-2 py-1">
                                                         {{ $d->tanggal_unggah }}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="justify-content-center d-flex px-2 py-1">
-                                                        2025-09-30 22:43:48
                                                     </div>
                                                 </td>
                                                 <td class="align-middle">
@@ -70,12 +70,12 @@
                                             </tr>
                                             @endforeach    
                                         </tbody>
-                                        @else
-                                           <div class="justify-content-center d-flex px-2 py-1">
-                                                Tidak ada dokumen
-                                            </div>
-                                       @endif
                                     </table>
+                                    @else
+                                       <div class="justify-content-center d-flex px-2 py-1">
+                                            Tidak ada dokumen
+                                        </div>
+                                   @endif
                                 </div>
                             </div>
                         </div>

@@ -58,7 +58,6 @@ Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
 Route::get('profile', [ProfileController::class, 'create'])->middleware('auth')->name('profile');
 Route::post('user-profile', [ProfileController::class, 'update'])->middleware('auth');
 
-Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
 
 // === Group routes yang butuh login ===
 Route::middleware('auth')->group(function () {
@@ -66,7 +65,9 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    
+    //Dokumen
+    Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
     // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
     // Route::get('tables', fn() => view('pages.tables'))->name('tables');
