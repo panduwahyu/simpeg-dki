@@ -39,15 +39,23 @@
                         <table class="table align-items-center mb-0">
                             <thead>
                                 <tr>
-                                    <th>Nama Dokumen</th>
-                                    <th>Periode</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nama Dokumen</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Periode</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($belumUpload as $item)
                                     <tr>
-                                        <td>{{ $item->nama_dokumen }}</td>
-                                        <td>{{ $item->periode_key }}</td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm">     
+                                                {{ $item->nama_dokumen }}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="mx-3  mb-0 text-sm"> 
+                                                {{ $item->periode_key }}
+                                            </h6>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -70,25 +78,33 @@
                         <table class="table align-items-center mb-0">
                             <thead>
                                 <tr>
-                                    <th>Nama Dokumen</th>
-                                    <th>Periode</th>
-                                    <th>Status</th>
-                                    <th>Tanggal Upload</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nama Dokumen</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Periode</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tanggal Upload</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($uploads as $item)
                                     <tr>
-                                        <td>{{ $item->nama_dokumen }}</td>
-                                        <td>{{ $item->periode_key }}</td>
                                         <td>
-                                            @if($item->is_uploaded == 1)
-                                                <span class="badge bg-success">Sudah</span>
-                                            @else
-                                                <span class="badge bg-danger">Belum</span>
-                                            @endif
+                                            <h6 class="mx-3  mb-0 text-sm">    
+                                                {{ $item->nama_dokumen }}
+                                            </h6>
                                         </td>
                                         <td>
+                                            <h6 class="mx-3  mb-0 text-sm">
+                                                {{ $item->periode_key }}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            @if($item->is_uploaded == 1)
+                                                <span class="mx-1 badge bg-success">Sudah</span>
+                                            @else
+                                                <span class="mx-1 badge bg-danger">Belum</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
                                             {{ $item->tanggal_upload ? \Carbon\Carbon::parse($item->tanggal_upload)->format('d/m/Y') : '-' }}
                                         </td>
                                     </tr>

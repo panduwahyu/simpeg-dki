@@ -60,8 +60,8 @@ Route::post('user-profile', [ProfileController::class, 'update'])->middleware('a
 Route::middleware('auth')->group(function () {
 
     // Dashboard
+    Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard');
 
     // Static pages
     Route::get('billing', fn() => view('pages.billing'))->name('billing');
