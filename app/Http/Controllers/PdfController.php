@@ -128,7 +128,7 @@ class PdfController extends Controller
 
             // Buat file output di public/tmp
             $outName     = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
-            $outStored   = 'public/tmp/' . $outName;
+            $outStored   = 'uploads/' . $outName;
             $outFullPath = Storage::path($outStored);
 
             $pdf->Output($outFullPath, 'F');
