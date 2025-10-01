@@ -89,7 +89,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $item->updated_at ? \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y') : '-' }}
+                                            {{ $item->tanggal_upload ? \Carbon\Carbon::parse($item->tanggal_upload)->format('d/m/Y') : '-' }}
                                         </td>
                                     </tr>
                                 @endforeach
