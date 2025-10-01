@@ -10,6 +10,7 @@ use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
+use App\Http\Controllers\DokumenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,4 +105,7 @@ Route::middleware('auth')->group(function () {
 
     // POST untuk memproses tanda tangan
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
+
+    // View table dokumen
+    Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
 });
