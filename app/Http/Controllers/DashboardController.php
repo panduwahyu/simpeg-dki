@@ -89,7 +89,7 @@ class DashboardController extends Controller
         // Hitung yang sudah upload dokumen
         $done = DB::table('mandatory_uploads')
             ->join('users', 'users.id', '=', 'mandatory_uploads.user_id')
-            ->where('users.role', 'pegawai')
+            ->whereIn('users.role', ['pegawai', 'supervisor']) // pegawai atau supervisor
             ->where('mandatory_uploads.jenis_dokumen_id', $dokumenId)
             ->where('mandatory_uploads.periode_id', $periodeId)
             ->where('mandatory_uploads.is_uploaded', 1)
@@ -108,7 +108,7 @@ class DashboardController extends Controller
     private function getPegawaiData($dokumenId, $periodeId)
     {
         return DB::table('users')
-        ->where('users.role', 'pegawai')
+        ->whereIn('users.role', ['pegawai', 'supervisor'])
         ->leftJoin('mandatory_uploads', function ($join) use ($dokumenId, $periodeId) {
             $join->on('users.id', '=', 'mandatory_uploads.user_id')
                 ->where('mandatory_uploads.jenis_dokumen_id', $dokumenId)
@@ -165,11 +165,11 @@ class DashboardController extends Controller
 
         // Hitung total & progress tiap kombinasi
         return $data->map(function ($item) {
-            $totalPegawai = DB::table('users')->where('role', 'pegawai')->count();
+            $totalPegawai = DB::table('users')->whereIn('users.role', ['pegawai', 'supervisor'])->count();
 
             $done = DB::table('mandatory_uploads')
                 ->join('users', 'users.id', '=', 'mandatory_uploads.user_id')
-                ->where('users.role', 'pegawai')
+                ->whereIn('users.role', ['pegawai', 'supervisor'])
                 ->where('mandatory_uploads.jenis_dokumen_id', $item->dokumen_id)
                 ->where('mandatory_uploads.periode_id', $item->periode_id)
                 ->where('mandatory_uploads.is_uploaded', 1)
