@@ -15,9 +15,11 @@ class PdfController extends Controller
 {
     public function index()
     {
+        $userId = Auth::id();
         $belumUpload = $this->getDokumenBelum();
 
         return view('pdf.sign', [
+            'id_user' => $userId,
             'belumUpload' => $belumUpload
         ]);
     }
@@ -32,10 +34,12 @@ class PdfController extends Controller
             ->where('mandatory_uploads.user_id', $userId)
             ->where('mandatory_uploads.is_uploaded', 0)
             ->select(
-                'mandatory_uploads.id',
+                'jenis_dokumen.id as jenis_dokumen_id',
                 'jenis_dokumen.nama_dokumen',
+                'periode.id as periode_id',
                 'periode.periode_key'
             )
+            ->distinct()
             ->orderBy('periode.periode_key')
             ->orderBy('jenis_dokumen.nama_dokumen')
             ->get();
@@ -44,7 +48,10 @@ class PdfController extends Controller
     public function signPdf(Request $request)
     {
         $request->validate([
-            'mandatory_id'       => 'required|exists:mandatory_uploads,id',
+            // 'mandatory_id'       => 'required|exists:mandatory_uploads,id',
+            'user_id'            => 'required|exists:mandatory_uploads,user_id',
+            'jenis_dokumen_id'   => 'required|exists:mandatory_uploads,jenis_dokumen_id',
+            'periode_id'         => 'required|exists:mandatory_uploads,periode_id',
             'pdf'                => 'required|file|mimes:pdf|max:10240',
             'signatures'         => 'required|array|min:1',
             'signatures.*.page'  => 'required|integer|min:1',
@@ -54,6 +61,19 @@ class PdfController extends Controller
             'files'              => 'required|array|min:1',
             'files.*'            => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
         ]);
+
+        //  Cari mandatory ID
+        $mandatory = DB::table('mandatory_uploads')
+            ->where('user_id', $request->user_id)
+            ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+            ->where('periode_id', $request->periode_id)
+            ->first();
+
+        if (!$mandatory) {
+            return back()->withErrors(['msg' => 'Mandatory upload tidak ditemukan untuk kombinasi tersebut.']);
+        }
+
+        $mandatory_id = $mandatory->id;
 
         // Simpan PDF asli ke storage/app/public/tmp
         $pdfFile = $request->file('pdf');
@@ -114,14 +134,26 @@ class PdfController extends Controller
             $pdf->Output($outFullPath, 'F');
             Log::info("✅ PDF hasil ditulis: $outFullPath");
 
-            // Update DB
-            DB::transaction(function () use ($request) {
+            // ✅ Update DB
+            DB::transaction(function () use ($mandatory_id, $mandatory, $outStored) {
+                // Update mandatory_uploads
                 DB::table('mandatory_uploads')
-                    ->where('id', $request->mandatory_id)
+                    ->where('id', $mandatory_id)
                     ->update([
                         'is_uploaded' => 1,
                         'updated_at'  => now()
                     ]);
+
+                // Insert ke dokumen
+                DB::table('dokumen')->insert([
+                    'path'             => $outStored,   // path file hasil
+                    'user_id'          => $mandatory->user_id,
+                    'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
+                    'periode_id'       => $mandatory->periode_id,
+                    'tanggal_unggah'   => now(),
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
             });
 
             // Hapus file input sementara
@@ -131,7 +163,7 @@ class PdfController extends Controller
             }
 
             return response()->download($outFullPath, $outName)
-                ->deleteFileAfterSend(true);
+                ->deleteFileAfterSend(false);
 
         } catch (Exception $e) {
             Storage::delete($pdfStoredPath);

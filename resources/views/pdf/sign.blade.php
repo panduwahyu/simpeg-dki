@@ -12,13 +12,15 @@
                         <div class="card-body pt-4 p-3">
                             <form id="signForm" action="{{ route('pdf.sign') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
+                            
                                 <div class="row g-3 mb-3">
+                                    <input type="hidden" id="userSelect" value="{{ $id_user }}">
                                     <div class="col-md-6">
                                         <label for="dokumenSelect" class="form-label">Dokumen</label>
                                         <select id="dokumenSelect" name="mandatory_id" class="form-select" required>
                                             <option value="">-- Pilih Dokumen --</option>
                                             @foreach($belumUpload as $dokumen)
-                                                <option value="{{ $dokumen->id }}">{{ $dokumen->nama_dokumen }}</option>
+                                                <option value="{{ $dokumen->jenis_dokumen_id }}">{{ $dokumen->nama_dokumen }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -27,7 +29,7 @@
                                         <select id="periodeSelect" name="periode_id" class="form-select" required>
                                             <option value="">-- Pilih Periode --</option>
                                             @foreach($belumUpload as $periode)
-                                                <option value="{{ $periode->id }}">{{ $periode->periode_key }}</option>
+                                                <option value="{{ $periode->periode_id }}">{{ $periode->periode_key }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -100,7 +102,9 @@
         document.addEventListener('DOMContentLoaded', function () {
             const pdfFileInput = document.getElementById('pdfFile');
             const sigFileInput = document.getElementById('sigFile');
+            const userSelect = document.getElementById('userSelect');
             const dokumenSelect = document.getElementById('dokumenSelect');
+            const periodeSelect = document.getElementById('periodeSelect');
             const pdfContainer = document.getElementById('pdf-container');
             const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
             const signaturesInput = document.getElementById('signaturesInput');
@@ -301,7 +305,10 @@
                 // Buat FormData
                 const formData = new FormData();
                 formData.append('_token', '{{ csrf_token() }}');
-                formData.append('mandatory_id', dokumenSelect.value);
+                // formData.append('mandatory_id', dokumenSelect.value);
+                formData.append('user_id', userSelect.value);
+                formData.append('jenis_dokumen_id', dokumenSelect.value);
+                formData.append('periode_id', periodeSelect.value);
                 formData.append('pdf', pdfFileInput.files[0]);
 
                 signatures.forEach((s,i)=>{

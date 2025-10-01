@@ -44,7 +44,7 @@
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Pages</h6>
             </li>
             <li class="nav-item">
-               <a class="nav-link text-white {{ $activePage == 'dashboard' ? 'active bg-gradient-primary' : '' }}"
+               <a class="nav-link text-white {{ $activePage == 'monitoring' || $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
                 href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">dashboard</i>
