@@ -7,15 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Periode extends Model
 {
     protected $table = 'periode';
-
-    protected $fillable = [
-        'periode_key',
-        'tahun',
-        'bulan',
-        'triwulan',
-        'tipe',
-        'label',
-    ];
+    protected $fillable = ['tipe'];
 
     // Relasi ke dokumen
     public function dokumen()

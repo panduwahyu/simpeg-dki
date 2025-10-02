@@ -17,39 +17,35 @@
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Kepegawaian</h6>
             </li>
-
-            {{-- Profil Saya selalu tampil --}}
             <li class="nav-item">
                 <a class="nav-link text-white {{ $activePage == 'user-profile' ? 'active bg-gradient-primary' : '' }}"
                     href="{{ route('user-profile') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">person</i>
+                        <i style="font-size: 1.2rem;" class="fas fa-user-circle ps-2 pe-2 text-center"></i>
                     </div>
                     <span class="nav-link-text ms-1">Profil Saya</span>
                 </a>
             </li>
 
             {{-- Hanya tampil jika bukan Pegawai --}}
-            @if(auth()->user()->role !== 'Pegawai')
-                <li class="nav-item">
-                    <a class="nav-link text-white {{ $activePage == 'user-management' ? 'active bg-gradient-primary' : '' }}"
-                        href="{{ route('user-management') }}">
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">group</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Manajemen Pegawai</span>
-                    </a>
-                </li>
+            @if(auth()->user()->role != 'Pegawai')
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $activePage == 'user-management' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('user-management') }}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i style="font-size: 1rem;" class="fas fa-lg fa-list-ul ps-2 pe-2 text-center"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Manajemen Pegawai</span>
+                </a>
+            </li>
             @endif
 
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Laman</h6>
             </li>
-
-            {{-- Monitoring --}}
             <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'monitoring' || $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
-                   href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
+               <a class="nav-link text-white {{ $activePage == 'monitoring' || $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
+                href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">dashboard</i>
                     </div>
@@ -57,7 +53,6 @@
                 </a>
             </li>
 
-            {{-- Dokumen --}}
             <li class="nav-item">
                 <a class="nav-link text-white {{ $activePage == 'tables' ? 'active bg-gradient-primary' : '' }}"
                     href="{{ route('tables') }}">
@@ -68,7 +63,6 @@
                 </a>
             </li>
 
-            {{-- Tanda Tangan PDF --}}
             <li class="nav-item">
                 <a class="nav-link text-white {{ $activePage == 'pdf-sign' ? 'active bg-gradient-primary' : '' }}"
                     href="{{ route('pdf.sign.form') }}">
@@ -78,19 +72,6 @@
                     <span class="nav-link-text ms-1">Tanda Tangan PDF</span>
                 </a>
             </li>
-
-            {{-- Form Upload hanya untuk Admin & Supervisor --}}
-            @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
-                <li class="nav-item">
-                    <a class="nav-link text-white {{ $activePage == 'form' ? 'active bg-gradient-primary' : '' }}"
-                        href="{{ route('form.index') }}">
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">assignment</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Form Upload</span>
-                    </a>
-                </li>
-            @endif
         </ul>
     </div>
 </aside>
