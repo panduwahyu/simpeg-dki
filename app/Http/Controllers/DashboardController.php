@@ -18,21 +18,19 @@ class DashboardController extends Controller
             return redirect()->route('pegawai-dashboard');
         }
 
-        // jumlah user bulan ini
-        $currentMonth = User::whereMonth('created_at', Carbon::now()->month)
-                            ->whereYear('created_at', Carbon::now()->year)
+        $currentMonthCount = User::whereMonth('created_at', '<=', Carbon::now()->month)
+                         ->whereYear('created_at', '<=', Carbon::now()->year)
+                         ->count();
+
+        $lastMonthCount = User::whereMonth('created_at', '<=', Carbon::now()->subMonth()->month)
+                            ->whereYear('created_at', '<=', Carbon::now()->subMonth()->year)
                             ->count();
 
-        // jumlah user bulan lalu
-        $lastMonth = User::whereMonth('created_at', Carbon::now()->subMonth()->month)
-                        ->whereYear('created_at', Carbon::now()->subMonth()->year)
-                        ->count();
+        // selisih karyawan
+        $growth = $currentMonthCount - $lastMonthCount;
 
-        // hitung persentase perubahan
-        $growth = 0;
-        if ($lastMonth > 0) {
-            $growth = (($currentMonth - $lastMonth) / $lastMonth) * 100;
-        }
+        // total pegawai sekarang
+        $totalUsers = $currentMonthCount;
 
         // total user keseluruhan
         $totalUsers = User::count();
@@ -50,10 +48,9 @@ class DashboardController extends Controller
         $pegawaiData     = $this->getPegawaiData($dokumenId, $periodeId);
         $summaryData     = $this->getSummaryData($dokumenId, $periodeId);
 
-        // 🔹 return view sekali saja dengan semua variabel
         return view('dashboard.index', compact(
             'totalUsers',
-            'growth',
+            'growth',         // jumlah bertambah/berkurang
             'dokumenList',
             'periodeList',
             'progressSummary',
@@ -61,7 +58,6 @@ class DashboardController extends Controller
             'summaryData'
         ));
     }
-
 
     public function filter(Request $request)
     {

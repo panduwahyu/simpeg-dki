@@ -46,9 +46,6 @@
                                     </div>
                                 </div>
 
-                                {{-- signatures hasil JS (metadata) --}}
-                                <input type="hidden" name="signatures" id="signaturesInput">
-
                                 <div id="viewerWrap" class="border" style="height:70vh; overflow:auto; position:relative; background:#efefef;">
                                     <div id="pdf-container" style="position:relative; width:fit-content; margin:16px;"></div>
                                 </div>
@@ -77,6 +74,21 @@
         </div>
     </main>
     <x-plugins></x-plugins>
+
+    <!-- Div toast untuk status upload -->
+    <div id="uploadStatus" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: #333;
+        color: #fff;
+        border-radius: 8px;
+        display: none;
+        z-index: 20000;
+    ">
+        Status
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
 
@@ -107,8 +119,14 @@
             const periodeSelect = document.getElementById('periodeSelect');
             const pdfContainer = document.getElementById('pdf-container');
             const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
-            const signaturesInput = document.getElementById('signaturesInput');
             const signatureControls = document.getElementById('signature-controls');
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            function showStatus(msg, duration=3000) {
+                uploadStatus.innerText = msg;
+                uploadStatus.style.display = 'block';
+                setTimeout(() => { uploadStatus.style.display = 'none'; }, duration);
+            }
 
             if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
@@ -131,35 +149,28 @@
                 resetPreview();
                 const file = e.target.files[0];
                 if (!file) return;
-
                 const url = URL.createObjectURL(file);
                 const loadingTask = pdfjsLib.getDocument(url);
                 pdfDocument = await loadingTask.promise;
-
                 const containerWidth = Math.max(800, pdfContainer.clientWidth - 40);
-
                 for (let i = 1; i <= pdfDocument.numPages; i++) {
                     const page = await pdfDocument.getPage(i);
                     const viewport = page.getViewport({ scale: 1 });
                     const scale = Math.min(1000, containerWidth) / viewport.width;
                     const scaledViewport = page.getViewport({ scale });
-
                     const pageWrap = document.createElement('div');
                     pageWrap.className = 'page-wrap';
                     pageWrap.style.width = scaledViewport.width + 'px';
                     pageWrap.style.height = scaledViewport.height + 'px';
                     pageWrap.dataset.pageNumber = i;
-
                     const canvas = document.createElement('canvas');
                     canvas.className = 'page-canvas';
                     canvas.width = scaledViewport.width;
                     canvas.height = scaledViewport.height;
                     pageWrap.appendChild(canvas);
                     pdfContainer.appendChild(pageWrap);
-
                     const ctx = canvas.getContext('2d');
                     await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-
                     pageViews.push({ pageNumber: i, elem: pageWrap });
                 }
             });
@@ -167,20 +178,16 @@
             // Enable drag for signature
             function enableDragFor(el) {
                 let isDragging = false, startX=0, startY=0, origLeft=0, origTop=0;
-
                 el.addEventListener('pointerdown', (ev)=>{
                     ev.preventDefault();
                     isDragging = true;
                     el.setPointerCapture(ev.pointerId);
-
                     const rect = el.getBoundingClientRect();
                     const parentRect = pdfContainer.getBoundingClientRect();
-                    startX = ev.clientX;
-                    startY = ev.clientY;
+                    startX = ev.clientX; startY = ev.clientY;
                     origLeft = rect.left - parentRect.left;
                     origTop = rect.top - parentRect.top;
                 });
-
                 document.addEventListener('pointermove', (ev)=>{
                     if(!isDragging) return;
                     const parentRect = pdfContainer.getBoundingClientRect();
@@ -191,7 +198,6 @@
                     el.style.left = left + 'px';
                     el.style.top = top + 'px';
                 });
-
                 document.addEventListener('pointerup', (ev)=>{
                     if(!isDragging) return;
                     isDragging=false;
@@ -213,7 +219,6 @@
                     pdfContainer.appendChild(img);
                     enableDragFor(img);
 
-                    // tombol hapus
                     const btn = document.createElement('button');
                     btn.innerText = '×';
                     btn.style.position='absolute';
@@ -238,10 +243,8 @@
                             signatures.splice(sidx,1);
                         }
                     });
-
                     pdfContainer.appendChild(btn);
 
-                    // slider resize
                     const idx = signatures.length;
                     const sliderDiv = document.createElement('div');
                     sliderDiv.id = `slider-${idx}`;
@@ -251,36 +254,25 @@
                     signatureControls.appendChild(sliderDiv);
 
                     const slider = sliderDiv.querySelector('input');
-                    slider.addEventListener('input', ()=>{
-                        img.style.width = slider.value + 'px';
-                    });
+                    slider.addEventListener('input', ()=>{ img.style.width = slider.value + 'px'; });
 
-                    // push signature object
                     signatures.push({ file, imgElem: img, page: 1, x:0, y:0, w:0, slider });
                 });
             });
 
             // Submit
             placeAndSubmitBtn.addEventListener('click', async ()=> {
-                if (!dokumenSelect.value) {
-                    alert('Pilih dokumen terlebih dahulu'); return;
-                }
-                if (!pdfFileInput.files[0]) {
-                    alert('Pilih file PDF'); return;
-                }
-                if (signatures.length===0) {
-                    alert('Pilih minimal 1 tanda tangan'); return;
-                }
-                if (pageViews.length === 0) {
-                    alert('Pastikan PDF telah dipreview terlebih dahulu'); return;
-                }
+                if (!dokumenSelect.value) { alert('Pilih dokumen terlebih dahulu'); return; }
+                if (!pdfFileInput.files[0]) { alert('Pilih file PDF'); return; }
+                if (signatures.length===0) { alert('Pilih minimal 1 tanda tangan'); return; }
+                if (pageViews.length === 0) { alert('Pastikan PDF telah dipreview terlebih dahulu'); return; }
 
-                // Hitung posisi relatif signature
+                showStatus('File sedang diunggah...', 10000);
+
                 signatures.forEach(s=>{
                     const rect = s.imgElem.getBoundingClientRect();
                     const sigCenterX = rect.left + rect.width/2;
                     const sigCenterY = rect.top + rect.height/2;
-
                     let matchedPage = pageViews[0];
                     for(const pv of pageViews){
                         const pRect = pv.elem.getBoundingClientRect();
@@ -288,29 +280,21 @@
                             matchedPage = pv; break;
                         }
                     }
-
                     const pageRect = matchedPage.elem.getBoundingClientRect();
                     const sigLeft = rect.left - pageRect.left;
                     const sigTop = rect.top - pageRect.top;
-                    const relX = sigLeft/pageRect.width;
-                    const relY = sigTop/pageRect.height;
-                    const relW = rect.width/pageRect.width;
-
                     s.page = matchedPage.pageNumber;
-                    s.x = relX;
-                    s.y = relY;
-                    s.w = relW;
+                    s.x = sigLeft/pageRect.width;
+                    s.y = sigTop/pageRect.height;
+                    s.w = rect.width/pageRect.width;
                 });
 
-                // Buat FormData
                 const formData = new FormData();
                 formData.append('_token', '{{ csrf_token() }}');
-                // formData.append('mandatory_id', dokumenSelect.value);
                 formData.append('user_id', userSelect.value);
                 formData.append('jenis_dokumen_id', dokumenSelect.value);
                 formData.append('periode_id', periodeSelect.value);
                 formData.append('pdf', pdfFileInput.files[0]);
-
                 signatures.forEach((s,i)=>{
                     formData.append(`files[${i}]`, s.file);
                     formData.append(`signatures[${i}][page]`, s.page);
@@ -319,7 +303,6 @@
                     formData.append(`signatures[${i}][w]`, s.w);
                 });
 
-                // Kirim via fetch
                 try {
                     const res = await fetch('{{ route("pdf.sign") }}', {
                         method: 'POST',
@@ -330,19 +313,28 @@
                         const text = await res.text();
                         throw new Error(text || 'Upload gagal');
                     }
+
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     const dokumenName = dokumenSelect.options[dokumenSelect.selectedIndex].text;
                     const periodeName = periodeSelect.options[periodeSelect.selectedIndex].text;
-                    const filename = `Ditandatangani_${dokumenName}_${periodeName}.pdf`;
-                    a.download = filename;
+                    a.download = `Ditandatangani_${dokumenName}_${periodeName}.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
+
+                    showStatus('File berhasil diunggah', 5000);
+
+                    // Reset seluruh preview, slider, dan input
+                    resetPreview();
+                    pdfFileInput.value = '';
+                    sigFileInput.value = '';
+                    dokumenSelect.value = '';
+                    periodeSelect.value = '';
                 } catch (err) {
-                    alert('Error: ' + err.message);
+                    showStatus('Error: ' + err.message, 5000);
                     console.error(err);
                 }
             });

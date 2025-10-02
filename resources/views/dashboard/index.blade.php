@@ -152,7 +152,7 @@
                                 @endphp
 
                                 <span class="{{ $growthClass }} text-sm font-weight-bolder">
-                                    {{ $growth >= 0 ? '+' : '' }}{{ number_format($growth, 1) }}%
+                                    {{ $growth >= 0 ? '+' : '' }}{{ $growth }}
                                 </span>
                                 dari bulan lalu
                             </p>
