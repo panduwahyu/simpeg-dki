@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\JenisDokumen;
 use App\Models\Periode;
+use Carbon\Carbon;
 
 class FormController extends Controller
 {
@@ -27,31 +28,41 @@ class FormController extends Controller
 
         if ($tipe === 'bulanan') {
             for ($bulan = 1; $bulan <= 12; $bulan++) {
-                Periode::create([
-                    'periode_key' => $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT),
-                    'tahun' => $tahun,
-                    'bulan' => $bulan,
-                    'tipe' => $tipe,
-                    'label' => date('F', mktime(0, 0, 0, $bulan, 1)) . ' ' . $tahun,
-                ]);
+                $label = Carbon::createFromDate($tahun, $bulan, 1)
+                    ->locale('id') // pakai bahasa Indonesia
+                    ->translatedFormat('F Y'); // contoh: Januari 2025
+
+                Periode::firstOrCreate(
+                    ['periode_key' => $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT)],
+                    [
+                        'tahun' => $tahun,
+                        'bulan' => $bulan,
+                        'tipe' => $tipe,
+                        'label' => $label,
+                    ]
+                );
             }
         } elseif ($tipe === 'triwulanan') {
             for ($q = 1; $q <= 4; $q++) {
-                Periode::create([
-                    'periode_key' => $tahun . '-Q' . $q,
-                    'tahun' => $tahun,
-                    'triwulan' => $q,
-                    'tipe' => $tipe,
-                    'label' => 'Triwulan ' . $q . ' ' . $tahun,
-                ]);
+                Periode::firstOrCreate(
+                    ['periode_key' => $tahun . '-Q' . $q],
+                    [
+                        'tahun' => $tahun,
+                        'triwulan' => $q,
+                        'tipe' => $tipe,
+                        'label' => 'Triwulan ' . $q . ' ' . $tahun,
+                    ]
+                );
             }
         } elseif ($tipe === 'tahunan') {
-            Periode::create([
-                'periode_key' => $tahun,
-                'tahun' => $tahun,
-                'tipe' => $tipe,
-                'label' => 'Tahun ' . $tahun,
-            ]);
+            Periode::firstOrCreate(
+                ['periode_key' => $tahun],
+                [
+                    'tahun' => $tahun,
+                    'tipe' => $tipe,
+                    'label' => 'Tahun ' . $tahun,
+                ]
+            );
         }
 
         return redirect()->route('form.index')->with('success', 'Periode berhasil dibuat!');
