@@ -100,6 +100,12 @@ Route::middleware('auth')->group(function () {
         // === Tambahan: route untuk form input ke pegawai (buat supervisor dan admin) ===
         Route::get('/form', [FormController::class, 'index'])->name('form.index');
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
+
+        // Route untuk edit dan menghapus JenisDokumen beserta periode terkait
+        Route::get('/jenis-dokumen/{id}/edit', [JenisDokumenController::class, 'edit'])->name('jenis-dokumen.edit');
+        Route::delete('/jenis-dokumen/{id}', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
+
+
     });
     
     // Contoh halaman profil user

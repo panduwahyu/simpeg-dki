@@ -17,9 +17,12 @@ class Periode extends Model
         'label',
     ];
 
-    // Relasi ke dokumen
-    public function dokumen()
+    /**
+     * Relasi many-to-many ke JenisDokumen via pivot table mandatory_uploads
+     */
+    public function jenisDokumen()
     {
-        return $this->hasMany(Dokumen::class, 'periode_id');
+        return $this->belongsToMany(JenisDokumen::class, 'mandatory_uploads')
+                    ->withPivot('is_uploaded');
     }
 }

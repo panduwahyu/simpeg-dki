@@ -11,6 +11,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
+use App\Http\Controllers\FormController;
 use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 use App\Models\Dokumen;
 
@@ -95,6 +96,10 @@ Route::middleware('auth')->group(function () {
         
         // Delete user
         Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+
+        // === Tambahan: route untuk form input ke pegawai (buat supervisor dan admin) ===
+        Route::get('/form', [FormController::class, 'index'])->name('form.index');
+        Route::post('/form', [FormController::class, 'store'])->name('form.store');
     });
     
     // Contoh halaman profil user
