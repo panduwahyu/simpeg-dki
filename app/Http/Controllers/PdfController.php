@@ -126,11 +126,21 @@ class PdfController extends Controller
                 }
             }
 
-            // Buat file output di public/tmp
-            $outName     = 'signed_' . time() . '_' . Str::random(6) . '.pdf';
-            $outStored   = 'public/tmp/' . $outName;
+            // Ambil data dari request (misalnya form kirim dokumen_id & periode_id)
+            $jenisDokumen = DB::table('jenis_dokumen')->where('id', $request->jenis_dokumen_id)->first();
+            $periode      = DB::table('periode')->where('id', $request->periode_id)->first();
+
+            // Pastikan ada datanya
+            if (!$jenisDokumen || !$periode) {
+                throw new Exception("Jenis dokumen atau periode tidak ditemukan");
+            }
+
+            // Buat nama file
+            $outName     = 'Ditandatangani_' . $jenisDokumen->nama_dokumen . '_' . $periode->periode_key . '.pdf';
+            $outStored   = 'uploads/' . $outName;
             $outFullPath = Storage::path($outStored);
 
+            // Simpan PDF
             $pdf->Output($outFullPath, 'F');
             Log::info("✅ PDF hasil ditulis: $outFullPath");
 

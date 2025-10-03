@@ -16,7 +16,7 @@ class JenisDokumenSeeder extends Seeder
         //
         DB::table('jenis_dokumen')->insert([
             ['nama_dokumen' => 'SPT', 'periode_tipe' => 'tahunan', 'deskripsi' => 'Laporan SPT Tahunan'],
-            ['nama_dokumen' => 'Laporan Bulanan', 'periode_tipe' => 'bulanan', 'deskripsi' => 'Laporan bulanan pegawai']
+            ['nama_dokumen' => 'SKP', 'periode_tipe' => 'bulanan', 'deskripsi' => 'Laporan SKP Bulanan']
         ]);
     }
 }
