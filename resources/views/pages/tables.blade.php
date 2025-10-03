@@ -15,6 +15,36 @@
                         </div>
                         <div class="card-body px-0 pb-2">
                             <div class="table-responsive p-0">
+                                <form method="GET" action="{{ route('dokumen.index') }}" class="row mb-3">
+                                    <div class="col-md-3">
+                                        <input type="text" name="search" value="{{ request('search') }}" 
+                                            class="form-control" placeholder="Cari dokumen...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="jenis_dokumen_id" class="form-select">
+                                            <option value="">-- Semua Jenis --</option>
+                                            @foreach($jenisDokumen as $jenis)
+                                                <option value="{{ $jenis->id }}" {{ request('jenis_dokumen_id') == $jenis->id ? 'selected' : '' }}>
+                                                    {{ $jenis->nama_dokumen }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="periode_id" class="form-select">
+                                            <option value="">-- Semua Periode --</option>
+                                            @foreach($periode as $p)
+                                                <option value="{{ $p->id }}" {{ request('periode_id') == $p->id ? 'selected' : '' }}>
+                                                    {{ $p->nama_periode }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="submit" class="btn btn-primary">Filter</button>
+                                        <a href="{{ route('dokumen.index') }}" class="btn btn-secondary">Reset</a>
+                                    </div>
+                                </form>
                                 @if(($dokumens ?? null) && $dokumens->count())
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -35,7 +65,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($dokumens as $d)
+                                        {{-- @foreach($dokumens as $d)
                                         <tr>
                                             <td>
                                                 <div class="d-flex px-2 py-1">
@@ -56,18 +86,42 @@
                                                 <div class="justify-content-center d-flex px-2 py-1">
                                                     {{ $d->tanggal_unggah }}
                                                 </div>
-                                            </td>
-                                            <td class="align-middle">
-                                                <a href="{{ route('dokumen.preview', $d->id) }}"
-                                                   target="_blank"
-                                                   class="text-secondary font-weight-bold text-xs">
-                                                    Preview
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        @endforeach
+                                            </td> --}}
+                                            @forelse ($dokumen as $index => $d)
+                                                <tr>
+                                                    <td hidden>{{ $dokumen->firstItem() + $index }}</td>
+                                                    <td>{{ $d->jenisDokumen->nama_dokumen ?? '-' }}</td>
+                                                    <td>{{ $d->periode->tipe ?? '-' }}</td>
+                                                    <td>
+                                                        <div class="justify-content-center d-flex px-2 py-1">
+                                                            {{ $d->periode->tahun ?? '-' }}</td>
+                                                        </div>
+                                                    <td>
+                                                        <div class="justify-content-center d-flex px-2 py-1">
+                                                            {{ $d->tanggal_unggah }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle">
+                                                        <a href="{{ route('dokumen.preview', $d->id) }}"
+                                                           target="_blank"
+                                                           class="btn btn-primary btn-sm">
+                                                            Preview
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center">Tidak ada data</td>
+                                                </tr>
+                                            @endforelse
+                                        {{-- </tr>
+                                        @endforeach --}}
                                     </tbody>
                                 </table>
+                                {{-- Pagination --}}
+                                <div class="d-flex justify-content-center">
+                                    {{ $dokumen->links() }}
+                                </div>
                                 @else
                                 <div class="justify-content-center d-flex px-2 py-1">
                                     Tidak ada dokumen

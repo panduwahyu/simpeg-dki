@@ -68,7 +68,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     //Dokumen
-    Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
+    Route::get('/tables', [DokumenController::class, 'index'])->name('tables', 'dokumen.index');
+    Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
+
 
     // === Tambahan: preview file PDF private ===
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');
@@ -102,7 +104,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
 
         // Route untuk edit dan menghapus JenisDokumen beserta periode terkait
-        Route::get('/jenis-dokumen/{id}/edit', [JenisDokumenController::class, 'edit'])->name('jenis-dokumen.edit');
+        // Route::get('/jenis-dokumen/{id}/edit', [JenisDokumenController::class, 'edit'])->name('jenis-dokumen.edit');
         Route::delete('/jenis-dokumen/{id}', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
 
 
