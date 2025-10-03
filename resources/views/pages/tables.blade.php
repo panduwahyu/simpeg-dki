@@ -63,10 +63,16 @@
                                                 <td class="align-middle">
                                                     <a href="javascript:;"
                                                         class="text-secondary font-weight-bold text-xs"
-                                                        data-toggle="tooltip" data-original-title="Edit user">
+                                                        data-toggle="tooltip" data-original-title="Preview pdf">
                                                         Preview
                                                     </a>
+                                                    <a href="javascript:;"
+                                                        class="text-secondary font-weight-bold text-xs"
+                                                        data-toggle="tooltip" data-original-title="Delete pdf">
+                                                        Delete
+                                                    </a>
                                                 </td>
+                                                
                                             </tr>
                                             @endforeach    
                                         </tbody>
