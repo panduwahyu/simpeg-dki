@@ -121,7 +121,7 @@
                 </div>
             </div>
 
-            <!-- Preview Tabel Dokumen & Periode (1 baris per dokumen, sorted by periode terbaru) -->
+            <!-- Preview Tabel Dokumen & Periode -->
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
@@ -137,30 +137,29 @@
                                         <th>No.</th>
                                         <th>Nama Dokumen</th>
                                         <th>Tipe Periode</th>
-                                        <th>Tahun Terbaru</th>
+                                        <th>Tahun</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @php $no = 1; @endphp
-                                    @foreach($jenisDokumen->sortByDesc(fn($jd) => $jd->periode->max('tahun')) as $jd)
-                                        @php
-                                            $latestPeriode = $jd->periode->sortByDesc('tahun')->first();
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $no++ }}</td>
-                                            <td>{{ $jd->nama_dokumen }}</td>
-                                            <td>{{ $jd->periode_tipe }}</td>
-                                            <td>{{ $latestPeriode?->tahun ?? '-' }}</td>
-                                            <td>
-                                                <a href="{{ route('jenis-dokumen.edit', $jd->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                                <form action="{{ route('jenis-dokumen.destroy', $jd->id) }}" method="POST" style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger btn-hapus">Hapus</button>
-                                                </form>
-                                            </td>
-                                        </tr>
+                                    @foreach($jenisDokumen as $jd)
+                                        @foreach($jd->periode->sortByDesc('tahun') as $periode)
+                                            <tr>
+                                                <td>{{ $no++ }}</td>
+                                                <td>{{ $jd->nama_dokumen }}</td>
+                                                <td>{{ $jd->periode_tipe }}</td>
+                                                <td>{{ $periode->tahun }}</td>
+                                                <td>
+                                                    <a href="{{ route('jenis-dokumen.edit', $jd->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                                    <form action="{{ route('jenis-dokumen.destroy', $jd->id) }}" method="POST" style="display:inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger btn-hapus">Hapus</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </table>

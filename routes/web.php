@@ -102,10 +102,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
 
         // Route untuk edit dan menghapus JenisDokumen beserta periode terkait
-        // Route::get('/jenis-dokumen/{id}/edit', [JenisDokumenController::class, 'edit'])->name('jenis-dokumen.edit');
-        Route::delete('/jenis-dokumen/{id}', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
-
-
+        Route::get('jenis-dokumen/{id}/edit', [FormController::class, 'edit'])->name('jenis-dokumen.edit');
+        Route::delete('jenis-dokumen/{id}', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
     });
     
     // Contoh halaman profil user

@@ -13,12 +13,10 @@ class FormController extends Controller
 {
     public function index()
     {
-        // Ambil semua dokumen beserta periode-nya, urut berdasarkan tahun/bulan desc
         $jenisDokumen = JenisDokumen::with(['periode' => function($query) {
             $query->orderByDesc('tahun')->orderByDesc('bulan');
-        }])->get();
+        }])->orderByDesc('id')->get();
 
-        // Ambil semua pegawai
         $pegawaiList = User::select('id', 'name', 'email', 'nip')->get();
 
         return view('pages.form', compact('jenisDokumen', 'pegawaiList'));
@@ -40,7 +38,6 @@ class FormController extends Controller
 
         DB::transaction(function() use ($request) {
 
-            // Buat jenis dokumen baru
             $jenisDokumen = JenisDokumen::create([
                 'nama_dokumen' => $request->nama_dokumen,
                 'deskripsi' => $request->deskripsi,
@@ -49,7 +46,7 @@ class FormController extends Controller
 
             $tahun = $request->tahun;
             $tipe  = $request->periode_tipe;
-            $pegawaiIds = $request->pegawai_ids;
+            $pegawaiIds = $request->pegawai_ids; // Hanya yang diceklis dikirim
 
             if ($tipe === 'bulanan') {
                 for ($bulan = 1; $bulan <= 12; $bulan++) {
