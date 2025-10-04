@@ -41,7 +41,7 @@
                                         <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Pilih tanda tangan (PNG/JPG)</label>
+                                        <label class="form-label">Pilih tanda tangan (PNG/JPG) max. 5 mb</label>
                                         <input type="file" id="sigFile" accept="image/*" class="form-control" multiple>
                                     </div>
                                 </div>
