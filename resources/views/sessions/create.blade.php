@@ -1,7 +1,7 @@
 <x-layout bodyClass="bg-gray-200">
     <main class="main-content mt-0">
         <div class="page-header align-items-start min-vh-100"
-             style="background-image: url('https://lh3.googleusercontent.com/p/AF1QipMnJxvPwegkvSUA1FNBikMw6xktCVVGK24V1_rk=s1360-w1360-h1020-rw');">
+            style="background-image: url('/assets/img/bps.jpg'); background-position: center; background-size: cover;">
             <span class="mask bg-gradient-dark opacity-6"></span>
 
             <div class="container mt-5">

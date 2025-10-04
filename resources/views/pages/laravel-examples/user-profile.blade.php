@@ -8,7 +8,7 @@
 
         <div class="container-fluid px-2 px-md-4">
             <div class="page-header min-height-300 border-radius-xl mt-4"
-                style="background-image: url('https://images.unsplash.com/photo-1531512073830-ba890ca4eba2?auto=format&fit=crop&w=1920&q=80'); background-position: center;">
+                style="background-image: url('/assets/img/monas.jpg'); background-position: center;">
                 <span class="mask bg-gradient-primary opacity-6"></span>
             </div>
 
