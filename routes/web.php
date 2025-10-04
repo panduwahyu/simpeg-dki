@@ -12,7 +12,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormController;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
+use Illuminate\Http\Request;
 use App\Models\Dokumen;
 
 /*
@@ -59,7 +59,6 @@ Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
 Route::get('profile', [ProfileController::class, 'create'])->middleware('auth')->name('profile');
 Route::post('user-profile', [ProfileController::class, 'update'])->middleware('auth');
 
-
 // === Group routes yang butuh login ===
 Route::middleware('auth')->group(function () {
     
@@ -67,21 +66,15 @@ Route::middleware('auth')->group(function () {
     Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    //Dokumen
-    Route::get('/tables', [DokumenController::class, 'index'])->name('tables', 'dokumen.index');
+    // Dokumen
+    Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
     Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
 
-
-    // === Tambahan: preview file PDF private ===
+    // Preview file PDF private
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');
 
     // Static pages
-    Route::get('billing', fn() => view('pages.billing'))->name('billing');
-    Route::get('rtl', fn() => view('pages.rtl'))->name('rtl');
-    Route::get('virtual-reality', fn() => view('pages.virtual-reality'))->name('virtual-reality');
     Route::get('notifications', fn() => view('pages.notifications'))->name('notifications');
-    Route::get('static-sign-in', fn() => view('pages.static-sign-in'))->name('static-sign-in');
-    Route::get('static-sign-up', fn() => view('pages.static-sign-up'))->name('static-sign-up');
     
     // User Management (Admin & Supervisor)
     Route::middleware('role:Admin,Supervisor')->group(function () {
@@ -99,19 +92,23 @@ Route::middleware('auth')->group(function () {
         // Delete user
         Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
 
-        // === Tambahan: route untuk form input ke pegawai (buat supervisor dan admin) ===
+        // Form input pegawai
         Route::get('/form', [FormController::class, 'index'])->name('form.index');
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
 
-        // Route untuk edit dan menghapus JenisDokumen beserta periode terkait
+        // Edit & delete JenisDokumen
         Route::get('jenis-dokumen/{id}/edit', [FormController::class, 'edit'])->name('jenis-dokumen.edit');
         Route::delete('jenis-dokumen/{id}', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
+
+        // Ekspor & impor data user (langsung ke controller, tanpa UsersExport/UsersImport)
+        Route::get('user/export', [UserManagementController::class, 'export'])->name('user.export');
+        Route::post('user/import', [UserManagementController::class, 'import'])->name('user.import');
     });
     
     // Contoh halaman profil user
     Route::get('user-profile', fn() => view('pages.laravel-examples.user-profile'))->name('user-profile');
     
-    // === Tambahan: route untuk tanda tangan PDF (butuh login) ===
+    // Tanda tangan PDF
     Route::get('/sign-pdf', [PdfController::class, 'index'])->name('pdf.sign.form');
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
 });

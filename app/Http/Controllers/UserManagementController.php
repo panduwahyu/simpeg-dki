@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserManagementController extends Controller
 {
@@ -42,16 +43,26 @@ class UserManagementController extends Controller
             'golongan'   => 'nullable|string|max:255',
         ]);
 
+        // Normalisasi role
+        $role = strtolower($validated['role']);
+        if ($role === 'admin') {
+            $role = 'Admin';
+        } elseif ($role === 'supervisor') {
+            $role = 'Supervisor';
+        } else {
+            $role = 'Pegawai';
+        }
+
         User::create([
             'name'       => $validated['name'],
             'email'      => $validated['email'],
-            'role'       => $validated['role'],
+            'role'       => $role,
             'nip'        => $validated['nip'] ?? null,
             'unit_kerja' => $validated['unit_kerja'] ?? null,
             'jabatan'    => $validated['jabatan'] ?? null,
             'pangkat'    => $validated['pangkat'] ?? null,
             'golongan'   => $validated['golongan'] ?? null,
-            'password'   => 'password', // default dummy password
+            'password'   => 'password', // default dummy
         ]);
 
         return redirect()->route('user-management')
@@ -82,17 +93,26 @@ class UserManagementController extends Controller
             'golongan'   => 'nullable|string|max:255',
         ]);
 
-        // update field dasar
-        $user->name       = $validated['name'];
-        $user->email      = $validated['email'];
-        $user->role       = $validated['role'];
-        $user->nip        = $validated['nip'] ?? null;
-        $user->unit_kerja = $validated['unit_kerja'] ?? null;
-        $user->jabatan    = $validated['jabatan'] ?? null;
-        $user->pangkat    = $validated['pangkat'] ?? null;
-        $user->golongan   = $validated['golongan'] ?? null;
+        // Normalisasi role
+        $role = strtolower($validated['role']);
+        if ($role === 'admin') {
+            $role = 'Admin';
+        } elseif ($role === 'supervisor') {
+            $role = 'Supervisor';
+        } else {
+            $role = 'Pegawai';
+        }
 
-        $user->save();
+        $user->update([
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'role'       => $role,
+            'nip'        => $validated['nip'] ?? null,
+            'unit_kerja' => $validated['unit_kerja'] ?? null,
+            'jabatan'    => $validated['jabatan'] ?? null,
+            'pangkat'    => $validated['pangkat'] ?? null,
+            'golongan'   => $validated['golongan'] ?? null,
+        ]);
 
         return redirect()->route('user-management')
             ->with('status', 'User berhasil diupdate!');
@@ -106,5 +126,125 @@ class UserManagementController extends Controller
         $user->delete();
         return redirect()->route('user-management')
             ->with('status', 'User berhasil dihapus!');
+    }
+
+    /**
+     * Export users ke Excel (.xlsx)
+     */
+    public function export()
+    {
+        $users = User::all(['id','name','email','role','nip','unit_kerja','jabatan','pangkat','golongan']);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $sheet->fromArray(['ID','Name','Email','Role','NIP','Unit Kerja','Jabatan','Pangkat','Golongan'], NULL, 'A1');
+
+        // Data
+        $rowNumber = 2;
+        foreach ($users as $user) {
+            $sheet->fromArray([
+                $user->id,
+                $user->name,
+                $user->email,
+                $user->role,
+                $user->nip,
+                $user->unit_kerja,
+                $user->jabatan,
+                $user->pangkat,
+                $user->golongan,
+            ], NULL, 'A'.$rowNumber);
+            $rowNumber++;
+        }
+
+        $filename = 'users.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        $writer->save($filename);
+        return response()->download($filename)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Import users dari CSV atau Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx',
+        ]);
+
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+
+        if (in_array($extension, ['csv','txt'])) {
+            $handle = fopen($file, 'r');
+            $header = fgetcsv($handle);
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine($header, $row);
+
+                $roleInput = strtolower(trim($data['Role'] ?? ''));
+                if ($roleInput === 'admin') {
+                    $role = 'Admin';
+                } elseif ($roleInput === 'supervisor') {
+                    $role = 'Supervisor';
+                } else {
+                    $role = 'Pegawai';
+                }
+
+                User::updateOrCreate(
+                    ['email' => $data['Email']],
+                    [
+                        'name'       => $data['Name'],
+                        'role'       => $role,
+                        'nip'        => $data['NIP'] ?? null,
+                        'unit_kerja' => $data['Unit Kerja'] ?? null,
+                        'jabatan'    => $data['Jabatan'] ?? null,
+                        'pangkat'    => $data['Pangkat'] ?? null,
+                        'golongan'   => $data['Golongan'] ?? null,
+                        'password'   => 'password',
+                    ]
+                );
+            }
+            fclose($handle);
+        } elseif ($extension === 'xlsx') {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            $header = $rows[0];
+            unset($rows[0]);
+
+            foreach ($rows as $row) {
+                $data = array_combine($header, $row);
+
+                $roleInput = strtolower(trim($data['Role'] ?? ''));
+                if ($roleInput === 'admin') {
+                    $role = 'Admin';
+                } elseif ($roleInput === 'supervisor') {
+                    $role = 'Supervisor';
+                } else {
+                    $role = 'Pegawai';
+                }
+
+                User::updateOrCreate(
+                    ['email' => $data['Email']],
+                    [
+                        'name'       => $data['Name'],
+                        'role'       => $role,
+                        'nip'        => $data['NIP'] ?? null,
+                        'unit_kerja' => $data['Unit Kerja'] ?? null,
+                        'jabatan'    => $data['Jabatan'] ?? null,
+                        'pangkat'    => $data['Pangkat'] ?? null,
+                        'golongan'   => $data['Golongan'] ?? null,
+                        'password'   => 'password',
+                    ]
+                );
+            }
+        }
+
+        return redirect()->route('user-management')
+            ->with('status', 'Users imported successfully!');
     }
 }

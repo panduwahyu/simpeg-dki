@@ -42,7 +42,7 @@
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item px-0 py-1"><strong>Email:</strong> {{ auth()->user()->email }}</li>
                                 <li class="list-group-item px-0 py-1"><strong>NIP:</strong> {{ auth()->user()->nip ?? '-' }}</li>
-                                <li class="list-group-item px-0 py-1"><strong>Role:</strong> {{ auth()->user()->role ?? 'Pegawai' }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>Status:</strong> {{ auth()->user()->role ?? 'Pegawai' }}</li>
                             </ul>
                         </div>
                     </div>

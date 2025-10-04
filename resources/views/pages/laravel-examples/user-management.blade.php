@@ -5,6 +5,23 @@
         <x-navbars.navs.auth titlePage="Manajemen Pegawai"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
+
+            {{-- SweetAlert untuk notifikasi sukses --}}
+            @if (session('status'))
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sukses!',
+                            text: '{{ session('status') }}',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    });
+                </script>
+            @endif
+
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
@@ -16,23 +33,36 @@
                             </div>
                         </div>
 
+                        {{-- Tombol Tambah User --}}
                         <div class="me-3 my-3 text-end">
                             <a class="btn bg-gradient-dark mb-0" href="{{ route('user-management.create') }}">
-                                <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Add New User
+                                <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User Baru
                             </a>
                         </div>
 
+                        {{-- Tombol Export & Import --}}
+                        <div class="mb-3 ms-3">
+                            <a href="{{ route('user.export') }}" class="btn btn-success">Export Users</a>
+
+                            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data" style="display:inline-block;">
+                                @csrf
+                                <input type="file" name="file" required>
+                                <button type="submit" class="btn btn-primary">Import Users</button>
+                            </form>
+                        </div>
+
+                        {{-- Tabel Users --}}
                         <div class="card-body px-0 pb-2">
                             <div class="table-responsive p-0">
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">PHOTO</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAME</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">FOTO</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAMA LENGKAP</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">EMAIL</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ROLE</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">CREATION DATE</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">TANGGAL DIBUAT</th>
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
@@ -54,7 +84,7 @@
                                                                 ? (Str::startsWith($user->photo, ['http://','https://']) 
                                                                     ? $user->photo 
                                                                     : asset('storage/' . $user->photo)) 
-                                                                : asset('assets/img/default-avatar.png');
+                                                                : asset('assets/img/bruce-mars.jpg');
                                                         @endphp
                                                         <img src="{{ $photo }}" 
                                                             class="avatar avatar-sm me-3 border-radius-lg" 
@@ -79,18 +109,19 @@
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                <!-- Tombol Edit -->
+                                                {{-- Tombol Edit --}}
                                                 <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link">
                                                     <i class="material-icons">edit</i>
                                                 </a>
 
-                                                <!-- Tombol Delete -->
-                                                <form action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                                {{-- Tombol Delete dengan SweetAlert --}}
+                                                <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})">
+                                                    <i class="material-icons">close</i>
+                                                </button>
+
+                                                <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-link">
-                                                        <i class="material-icons">close</i>
-                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -109,5 +140,26 @@
     </main>
 
     <x-plugins></x-plugins>
+
+    {{-- SweetAlert Delete --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function deleteUser(id) {
+            Swal.fire({
+                title: 'Yakin?',
+                text: "User ini akan dihapus!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            });
+        }
+    </script>
 
 </x-layout>
