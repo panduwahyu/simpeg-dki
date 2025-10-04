@@ -46,7 +46,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Role</label>
+                                    <label class="form-label">Status</label>
                                     <select name="role" class="form-control" required>
                                         <option value="Pegawai" {{ old('role') == 'Pegawai' ? 'selected' : '' }}>Pegawai</option>
                                         <option value="Supervisor" {{ old('role') == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
