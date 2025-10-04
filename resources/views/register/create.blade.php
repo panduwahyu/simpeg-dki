@@ -1,15 +1,6 @@
 <x-layout bodyClass="">
 
     <div>
-        <div class="container position-sticky z-index-sticky top-0">
-            <div class="row">
-                <div class="col-12">
-                    <!-- Navbar -->
-                    <x-navbars.navs.guest signin='login' signup='register'></x-navbars.navs.guest>
-                    <!-- End Navbar -->
-                </div>
-            </div>
-        </div>
         <main class="main-content  mt-0">
             <section>
                 <div class="page-header min-vh-100">

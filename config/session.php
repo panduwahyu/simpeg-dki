@@ -26,14 +26,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the number of minutes that you wish the session
-    | to be allowed to remain idle before it expires. If you want them
-    | to expire immediately when the browser is closed then you may
-    | indicate that via the expire_on_close configuration option.
+    | to be allowed to remain idle before it expires. For "remember me",
+    | the cookie lifetime will be overridden in Auth configuration.
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
-
+    'lifetime' => (int) env('SESSION_LIFETIME', 120), // default 2 jam
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
     /*
@@ -193,8 +191,6 @@ return [
     | take place, and can be used to mitigate CSRF attacks. By default, we
     | will set this value to "lax" to permit secure cross-site requests.
     |
-    | See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value
-    |
     | Supported: "lax", "strict", "none", null
     |
     */
@@ -214,4 +210,15 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Remember Me Cookie Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | Laravel's built-in "remember me" cookie duration. Default 14 days.
+    |
+    */
+
+    'remember_me_lifetime' => 20160, // 14 hari dalam menit (14*24*60)
+    
 ];

@@ -30,17 +30,28 @@ class SessionsController extends Controller
             'password' => 'required'
         ]);
 
-        // Hanya email dan password
-        if (! auth()->attempt([
-            'email' => $credentials['email'],
-            'password' => $credentials['password']
-        ])) {
+        // Ambil status Remember Me dari checkbox
+        $remember = $request->has('rememberMe');
+
+        // Login dengan Remember Me jika dicentang
+        if (! auth()->attempt($credentials, $remember)) {
             throw ValidationException::withMessages([
                 'email' => 'Your provided credentials could not be verified.'
             ]);
         }
 
+        // Regenerate session
         $request->session()->regenerate();
+
+        // Atur durasi Remember Me 14 hari jika dicentang
+        if ($remember) {
+            $rememberDuration = 20160; // menit = 14 hari
+            cookie()->queue(
+                auth()->guard()->getRecallerName(),
+                cookie()->get(auth()->guard()->getRecallerName()),
+                $rememberDuration
+            );
+        }
 
         return redirect('/dashboard');
     }

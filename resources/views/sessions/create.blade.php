@@ -1,18 +1,7 @@
 <x-layout bodyClass="bg-gray-200">
-
-    <div class="container position-sticky z-index-sticky top-0">
-        <div class="row">
-            <div class="col-12">
-                <!-- Navbar -->
-                <x-navbars.navs.guest signin='login' signup='register'></x-navbars.navs.guest>
-                <!-- End Navbar -->
-            </div>
-        </div>
-    </div>
-
     <main class="main-content mt-0">
         <div class="page-header align-items-start min-vh-100"
-             style="background-image: url('https://images.unsplash.com/photo-1497294815431-9365093b7331?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80');">
+             style="background-image: url('https://lh3.googleusercontent.com/p/AF1QipMnJxvPwegkvSUA1FNBikMw6xktCVVGK24V1_rk=s1360-w1360-h1020-rw');">
             <span class="mask bg-gradient-dark opacity-6"></span>
 
             <div class="container mt-5">
@@ -21,7 +10,7 @@
                         <div class="card z-index-0 fadeIn3 fadeInBottom">
                             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                                 <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                                    <h4 class="text-white font-weight-bolder text-center mt-2 mb-0">Sign in</h4>
+                                    <h4 class="text-white font-weight-bolder text-center mt-2 mb-0">Contoh</h4>
                                     <div class="row mt-3">
                                         <h6 class='text-white text-center'>
                                             <span class="font-weight-normal">Email:</span> admin@material.com
@@ -79,30 +68,30 @@
 
                                     <div class="form-check form-switch d-flex align-items-center my-3">
                                         <input class="form-check-input" type="checkbox" id="rememberMe">
-                                        <label class="form-check-label mb-0 ms-2" for="rememberMe">Remember me</label>
+                                        <label class="form-check-label mb-0 ms-2" for="rememberMe">Ingat saya</label>
                                     </div>
 
                                     <div class="text-center">
                                         <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">
-                                            Sign in
+                                            Masuk
                                         </button>
 
                                         {{-- Tombol login Google penuh --}}
                                         <a href="{{ route('google.login') }}" class="btn btn-light w-100 my-2">
                                             <i class="fa fa-google text-danger text-lg me-2"></i>
-                                            Sign in with Google
+                                            Masuk dengan Google
                                         </a>
                                     </div>
 
                                     <p class="mt-4 text-sm text-center">
-                                        Don't have an account?
+                                        Belum punya akun?
                                         <a href="{{ route('register') }}" class="text-primary text-gradient font-weight-bold">
                                             Sign up
                                         </a>
                                     </p>
                                     <p class="text-sm text-center">
-                                        Forgot your password? Reset your password
-                                        <a href="{{ route('verify') }}" class="text-primary text-gradient font-weight-bold">here</a>
+                                        Lupa password?
+                                        <a href="{{ route('verify') }}" class="text-primary text-gradient font-weight-bold">Ubah di sini</a>
                                     </p>
                                 </form>
                             </div>

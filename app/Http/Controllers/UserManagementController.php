@@ -77,10 +77,7 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'email'      => ['required','email', Rule::unique('users')->ignore($user->id)],
-            'password'   => 'nullable|string|min:6|confirmed',
             'role'       => 'required|string|max:50',
-
-            // field tambahan:
             'nip'        => 'nullable|string|max:50',
             'unit_kerja' => 'nullable|string|max:255',
             'jabatan'    => 'nullable|string|max:255',

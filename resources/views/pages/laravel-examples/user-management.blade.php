@@ -51,7 +51,14 @@
                                             <td>
                                                 <div class="d-flex px-2 py-1">
                                                     <div>
-                                                        <img src="{{ $user->photo ? asset('storage/' . $user->photo) : asset('assets/img/default-avatar.png') }}" 
+                                                        @php
+                                                            $photo = $user->photo 
+                                                                ? (Str::startsWith($user->photo, ['http://','https://']) 
+                                                                    ? $user->photo 
+                                                                    : asset('storage/' . $user->photo)) 
+                                                                : asset('assets/img/default-avatar.png');
+                                                        @endphp
+                                                        <img src="{{ $photo }}" 
                                                             class="avatar avatar-sm me-3 border-radius-lg" 
                                                             alt="{{ $user->name }}">
                                                     </div>
@@ -69,7 +76,9 @@
                                                 <span class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
                                             </td>
                                             <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">{{ $user->created_at->format('d/m/Y') }}</span>
+                                                <span class="text-secondary text-xs font-weight-bold">
+                                                    {{ optional($user->created_at)->format('d/m/Y') }}
+                                                </span>
                                             </td>
                                             <td class="align-middle">
                                                 <!-- Tombol Edit -->
