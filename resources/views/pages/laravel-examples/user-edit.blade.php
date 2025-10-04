@@ -24,7 +24,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Role</label>
+                            <label class="form-label">Status</label>
                             <select name="role" class="form-control">
                                 <option value="Pegawai" {{ old('role', $user->role) == 'Pegawai' ? 'selected' : '' }}>Pegawai</option>
                                 <option value="Supervisor" {{ old('role', $user->role) == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
