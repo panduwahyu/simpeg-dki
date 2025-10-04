@@ -21,7 +21,7 @@ class DokumenSeeder extends Seeder
 
         // Masukkan 1 contoh dokumen yang sudah diunggah
         DB::table('dokumen')->insert([
-            'path' => 'uploads/SPT_2024_' . $user->NIP . '.pdf',
+            'path' => 'uploads/SPT_2024_' . $user->nip . '.pdf',
             'user_id' => $user->id,
             'jenis_dokumen_id' => $jenisDokumen->id,
             'periode_id' => $periode->id,
