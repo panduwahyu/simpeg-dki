@@ -34,10 +34,7 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|unique:users,email',
-            'password'   => 'required|string|min:6|confirmed',
             'role'       => 'required|string|max:50',
-
-            // field tambahan:
             'nip'        => 'nullable|string|max:50',
             'unit_kerja' => 'nullable|string|max:255',
             'jabatan'    => 'nullable|string|max:255',
@@ -48,13 +45,13 @@ class UserManagementController extends Controller
         User::create([
             'name'       => $validated['name'],
             'email'      => $validated['email'],
-            'password'   => $validated['password'],
             'role'       => $validated['role'],
             'nip'        => $validated['nip'] ?? null,
             'unit_kerja' => $validated['unit_kerja'] ?? null,
             'jabatan'    => $validated['jabatan'] ?? null,
             'pangkat'    => $validated['pangkat'] ?? null,
             'golongan'   => $validated['golongan'] ?? null,
+            'password'   => 'password', // default dummy password
         ]);
 
         return redirect()->route('user-management')
@@ -94,10 +91,6 @@ class UserManagementController extends Controller
         $user->jabatan    = $validated['jabatan'] ?? null;
         $user->pangkat    = $validated['pangkat'] ?? null;
         $user->golongan   = $validated['golongan'] ?? null;
-
-        if (!empty($validated['password'])) {
-            $user->password = $validated['password'];
-        }
 
         $user->save();
 

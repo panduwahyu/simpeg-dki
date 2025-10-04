@@ -82,17 +82,6 @@
                                             Masuk dengan Google
                                         </a>
                                     </div>
-
-                                    <p class="mt-4 text-sm text-center">
-                                        Belum punya akun?
-                                        <a href="{{ route('register') }}" class="text-primary text-gradient font-weight-bold">
-                                            Sign up
-                                        </a>
-                                    </p>
-                                    <p class="text-sm text-center">
-                                        Lupa password?
-                                        <a href="{{ route('verify') }}" class="text-primary text-gradient font-weight-bold">Ubah di sini</a>
-                                    </p>
                                 </form>
                             </div>
                         </div>
