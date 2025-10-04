@@ -8,94 +8,58 @@
 
         <div class="container-fluid px-2 px-md-4">
             <div class="page-header min-height-300 border-radius-xl mt-4"
-                style="background-image: url('https://images.unsplash.com/photo-1531512073830-ba890ca4eba2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');">
-                <span class="mask  bg-gradient-primary  opacity-6"></span>
+                style="background-image: url('https://images.unsplash.com/photo-1531512073830-ba890ca4eba2?auto=format&fit=crop&w=1920&q=80'); background-position: center;">
+                <span class="mask bg-gradient-primary opacity-6"></span>
             </div>
 
             <div class="card card-body mx-3 mx-md-4 mt-n6">
-                <div class="row gx-4 mb-2">
+
+                <!-- Avatar & Nama -->
+                <div class="row gx-4 mb-4">
                     <div class="col-auto">
-                        <div class="avatar avatar-xl position-relative">
-                            @if(auth()->user()->photo)
-                                <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="profile_image"
-                                    class="w-100 border-radius-lg shadow-sm">
-                            @else
-                                <img src="{{ asset('assets/img/bruce-mars.jpg') }}" alt="profile_image"
-                                    class="w-100 border-radius-lg shadow-sm">
-                            @endif
+                        <div class="avatar avatar-xxl position-relative">
+                            @php
+                                $photo = auth()->user()->photo;
+                                $isUrl = $photo && str_starts_with($photo, 'http');
+                            @endphp
+                            <img src="{{ $photo ? ($isUrl ? $photo : asset('storage/' . $photo)) : asset('assets/img/bruce-mars.jpg') }}"
+                                 alt="profile_image" class="w-100 border-radius-xl shadow">
                         </div>
                     </div>
-                    <div class="col-auto my-auto">
-                        <div class="h-100">
-                            <h5 class="mb-1">{{ auth()->user()->name }}</h5>
-                            <p class="mb-0 font-weight-normal text-sm">{{ auth()->user()->role ?? 'Pegawai' }}</p>
+                    <div class="col my-auto">
+                        <h4 class="mb-1">{{ auth()->user()->name }}</h4>
+                        <p class="mb-0 text-sm text-muted">
+                            {{ auth()->user()->jabatan ?? '' }} — {{ auth()->user()->unit_kerja ?? '' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Info Profile -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <h6 class="text-uppercase text-muted text-xs mb-3">Informasi Dasar</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 py-1"><strong>Email:</strong> {{ auth()->user()->email }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>NIP:</strong> {{ auth()->user()->nip ?? '-' }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>Role:</strong> {{ auth()->user()->role ?? 'Pegawai' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <h6 class="text-uppercase text-muted text-xs mb-3">Kepegawaian</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 py-1"><strong>Unit Kerja:</strong> {{ auth()->user()->unit_kerja ?? '-' }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>Jabatan:</strong> {{ auth()->user()->jabatan ?? '-' }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>Pangkat:</strong> {{ auth()->user()->pangkat ?? '-' }}</li>
+                                <li class="list-group-item px-0 py-1"><strong>Golongan:</strong> {{ auth()->user()->golongan ?? '-' }}</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-plain h-100 mt-4">
-                    <div class="card-header pb-0 p-3">
-                        <h6 class="mb-3">Profile Information</h6>
-                    </div>
-
-                    <div class="card-body p-3">
-                        @if (session('status'))
-                            <div class="alert alert-success alert-dismissible text-white" role="alert">
-                                <span class="text-sm">{{ Session::get('status') }}</span>
-                                <button type="button" class="btn-close text-lg py-3 opacity-10"
-                                    data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-
-                        <form method="POST" action="{{ route('user-profile') }}" enctype="multipart/form-data">
-                            @csrf
-                            <div class="row">
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" class="form-control border border-2 p-2"
-                                        value="{{ auth()->user()->name }}" readonly>
-                                </div>
-
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control border border-2 p-2"
-                                        value="{{ auth()->user()->email }}" readonly>
-                                </div>
-
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Phone</label>
-                                    <input type="text" name="phone" class="form-control border border-2 p-2"
-                                        value="{{ old('phone', auth()->user()->phone) }}">
-                                    @error('phone')
-                                        <p class="text-danger inputerror">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" class="form-control border border-2 p-2"
-                                        value="{{ auth()->user()->location }}" readonly>
-                                </div>
-
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Role</label>
-                                    <input type="text" name="role" class="form-control border border-2 p-2"
-                                        value="{{ auth()->user()->role ?? 'Pegawai' }}" readonly>
-                                </div>
-
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Photo</label>
-                                    <input type="file" name="photo" class="form-control border border-2 p-2">
-                                    @if(auth()->user()->photo)
-                                        <img src="{{ asset('storage/' . auth()->user()->photo) }}" class="mt-2" width="100">
-                                    @endif
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn bg-gradient-dark">Update Profile</button>
-                        </form>
-                    </div>
-                </div>
             </div>
         </div>
 

@@ -10,29 +10,37 @@ use App\Models\User;
 
 class GoogleController extends Controller
 {
-    // Step 1: Redirect ke Google
+    // Step 1: Redirect ke Google (scope email + profile)
     public function redirect()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')
+            ->scopes(['openid', 'email', 'profile'])
+            ->redirect();
     }
 
     // Step 2: Handle callback dari Google
     public function callback()
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-        // Selalu sinkronkan data user Google
-        $user = User::updateOrCreate(
-            ['email' => $googleUser->getEmail()], // cari berdasarkan email
-            [
-                'name'     => $googleUser->getName(),
-                'password' => bcrypt(Str::random(16)),         // isi default role kalau perlu
-                'location' => 'BPS Provinsi DKI Jakarta'
-            ]
-        );
+            // Sinkronisasi data user Google ke tabel users
+            $user = User::updateOrCreate(
+                ['email' => $googleUser->getEmail()], // cari berdasarkan email
+                [
+                    'name'     => $googleUser->getName(),
+                    'photo'    => $googleUser->getAvatar(),      // simpan foto ke kolom photo
+                    'password' => bcrypt(Str::random(16)),       // password random
+                ]
+            );
 
-        Auth::login($user);
+            // Login user
+            Auth::login($user);
 
-        return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('dashboard'));
+        } catch (\Exception $e) {
+            return redirect()->route('login')
+                ->with('error', 'Google login failed: ' . $e->getMessage());
+        }
     }
 }
