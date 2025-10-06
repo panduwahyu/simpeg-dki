@@ -16,31 +16,25 @@
                         </div>
                         <div class="card-body px-4 pb-2">
 
-                            <!-- SweetAlert Success -->
                             @if(session('success'))
                                 <script>
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Sukses',
-                                            text: '{{ session('success') }}',
-                                            timer: 2000,
-                                            showConfirmButton: false
-                                        });
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Sukses',
+                                        text: '{{ session('success') }}',
+                                        timer: 2000,
+                                        showConfirmButton: false
                                     });
                                 </script>
                             @endif
 
-                            <!-- SweetAlert Error -->
                             @if($errors->any())
                                 <script>
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Gagal',
-                                            html: `<ul style="text-align:left;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>`,
-                                            confirmButtonText: 'OK'
-                                        });
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Gagal',
+                                        html: `<ul style="text-align:left;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>`,
+                                        confirmButtonText: 'OK'
                                     });
                                 </script>
                             @endif
@@ -53,7 +47,7 @@
                                     <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
                                     <input type="text" id="nama_dokumen" name="nama_dokumen"
                                            class="form-control"
-                                           value="{{ old('nama_dokumen') }}">
+                                           value="{{ old('nama_dokumen') }}" required>
                                 </div>
 
                                 <!-- Deskripsi -->
@@ -66,13 +60,13 @@
                                 <div class="mb-3">
                                     <label for="tahun" class="form-label">Tahun</label>
                                     <input type="number" id="tahun" name="tahun" class="form-control"
-                                           value="{{ old('tahun', date('Y')) }}">
+                                           value="{{ old('tahun', date('Y')) }}" required>
                                 </div>
 
                                 <!-- Tipe Periode -->
                                 <div class="mb-3">
                                     <label for="periode_tipe" class="form-label">Tipe Periode</label>
-                                    <select name="periode_tipe" id="periode_tipe" class="form-control">
+                                    <select name="periode_tipe" id="periode_tipe" class="form-control" required>
                                         <option value="">-- Pilih Tipe --</option>
                                         <option value="bulanan" {{ old('periode_tipe') == 'bulanan' ? 'selected' : '' }}>Bulanan</option>
                                         <option value="triwulanan" {{ old('periode_tipe') == 'triwulanan' ? 'selected' : '' }}>Triwulanan</option>
@@ -83,7 +77,7 @@
                                 <!-- Pegawai Ditugaskan -->
                                 <div class="mb-3">
                                     <label for="pegawai_type" class="form-label">Pegawai Ditugaskan</label>
-                                    <select name="pegawai_type" id="pegawai_type" class="form-control">
+                                    <select name="pegawai_type" id="pegawai_type" class="form-control" required>
                                         <option value="">-- Pilih Opsi --</option>
                                         <option value="all" {{ old('pegawai_type') == 'all' ? 'selected' : '' }}>Seluruh Pegawai</option>
                                         <option value="specific" {{ old('pegawai_type', 'specific') == 'specific' ? 'selected' : '' }}>Pegawai Tertentu</option>
@@ -120,14 +114,14 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" id="btnSubmit" class="btn btn-primary">Buat Dokumen</button>
+                                <button type="submit" class="btn btn-primary">Buat Dokumen</button>
                             </form>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Preview Tabel Dokumen & Periode -->
+            <!-- Preview Tabel Dokumen & Periode (1 baris per dokumen, sorted by periode terbaru) -->
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
@@ -187,10 +181,6 @@
         const pegawaiType = document.getElementById('pegawai_type');
         const checkboxContainer = document.getElementById('pegawai_checkbox_container');
         const dokumenForm = document.getElementById('dokumenForm');
-        const btnSubmit = document.getElementById('btnSubmit');
-        const periodeTipe = document.getElementById('periode_tipe');
-        const namaDokumen = document.getElementById('nama_dokumen');
-        const deskripsi = document.getElementById('deskripsi');
 
         function togglePegawaiCheckbox() {
             checkboxContainer.style.display = 'block'; // selalu tampil
@@ -199,54 +189,27 @@
                 checkboxContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
             } else if (pegawaiType.value === 'specific') {
                 checkboxContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            } else {
+                checkboxContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             }
         }
         pegawaiType.addEventListener('change', togglePegawaiCheckbox);
         window.addEventListener('DOMContentLoaded', togglePegawaiCheckbox);
 
-        // Konfirmasi submit + cek field wajib
-        btnSubmit.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            if (namaDokumen.value.trim() === '') {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nama Dokumen wajib diisi.' });
-                return;
-            }
-
-            if (deskripsi.value.trim() === '') {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Deskripsi wajib diisi.' });
-                return;
-            }
-
-            if (periodeTipe.value === '') {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silakan pilih Tipe Periode terlebih dahulu.' });
-                return;
-            }
-
+        dokumenForm.addEventListener('submit', function(e) {
             const isChecked = Array.from(checkboxContainer.querySelectorAll('input[type="checkbox"]'))
                                    .some(cb => cb.checked);
-
             if (!isChecked) {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Minimal pilih 1 pegawai.' });
-                return;
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Minimal pilih 1 pegawai.',
+                    confirmButtonText: 'OK'
+                });
             }
-
-            Swal.fire({
-                title: 'Yakin membuat dokumen?',
-                text: "Pastikan data sudah benar.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Buat!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    dokumenForm.submit();
-                }
-            });
         });
 
-        // Konfirmasi hapus
         document.querySelectorAll('.btn-hapus').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();

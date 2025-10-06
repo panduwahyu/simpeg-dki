@@ -20,7 +20,7 @@ class FormController extends Controller
 
         // Ambil hanya pegawai (exclude Admin & Supervisor)
         $pegawaiList = User::select('id', 'name', 'email', 'nip')
-            ->where('role', 'Pegawai') // hanya Pegawai
+            ->where('role', 'Pegawai') // hanya pegawai
             ->get();
 
         return view('pages.form', compact('jenisDokumen', 'pegawaiList'));
@@ -47,7 +47,6 @@ class FormController extends Controller
                 'nama_dokumen' => $request->nama_dokumen,
                 'deskripsi' => $request->deskripsi,
                 'periode_tipe' => $request->periode_tipe,
-                'tahun' => $request->tahun,
             ]);
 
             $tahun = $request->tahun;
