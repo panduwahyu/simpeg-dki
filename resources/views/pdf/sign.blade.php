@@ -1,7 +1,7 @@
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="pdf-sign"></x-navbars.sidebar>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
+        <x-navbars.navs.auth titlePage="Tanda Tangan PDF Pegawai"></x-navbars.navs.auth>
         <div class="container-fluid py-4">
             <div class="row">
                 <div class="col-lg-10 mx-auto">
@@ -12,25 +12,18 @@
                         <div class="card-body pt-4 p-3">
                             <form id="signForm" action="{{ route('pdf.sign') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
-                            
                                 <div class="row g-3 mb-3">
-                                    <input type="hidden" id="userSelect" value="{{ $id_user }}">
+                                    <input type="hidden" id="userSelect" value="{{ auth()->user()->id }}">
                                     <div class="col-md-6">
                                         <label for="dokumenSelect" class="form-label">Dokumen</label>
-                                        <select id="dokumenSelect" name="mandatory_id" class="form-select" required>
+                                        <select id="dokumenSelect" name="jenis_dokumen_id" class="form-select" required>
                                             <option value="">-- Pilih Dokumen --</option>
-                                            @foreach($belumUpload as $dokumen)
-                                                <option value="{{ $dokumen->jenis_dokumen_id }}">{{ $dokumen->nama_dokumen }}</option>
-                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="periodeSelect" class="form-label">Periode</label>
-                                        <select id="periodeSelect" name="periode_id" class="form-select" required>
+                                        <select id="periodeSelect" name="periode_id" class="form-select" required disabled>
                                             <option value="">-- Pilih Periode --</option>
-                                            @foreach($belumUpload as $periode)
-                                                <option value="{{ $periode->periode_id }}">{{ $periode->periode_key }}</option>
-                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -50,6 +43,9 @@
                                     <div id="pdf-container" style="position:relative; width:fit-content; margin:16px;"></div>
                                 </div>
 
+                                <p class="mt-3 text-muted small">
+                                    Cara pakai: pilih PDF & PNG → tanda tangan muncul di atas PDF → geser (drag) ke posisi yang diinginkan → atur ukuran dengan slider → klik "Simpan & Download".
+                                </p>
                                 <div id="signature-controls" class="mt-3"></div>
 
                                 <div class="mt-3 d-flex justify-content-end">
@@ -75,40 +71,30 @@
     </main>
     <x-plugins></x-plugins>
 
-    <!-- Div toast untuk status upload -->
-    <div id="uploadStatus" style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        background: #333;
-        color: #fff;
-        border-radius: 8px;
-        display: none;
-        z-index: 20000;
-    ">
-        Status
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
 
     <style>
-        .page-wrap {
-            position: relative;
-            margin-bottom: 18px;
-            display: inline-block;
+        .page-wrap { position: relative; margin-bottom: 18px; display: inline-block; }
+        .page-canvas { display: block; }
+        .sign-img { position: absolute; cursor: grab; user-select: none; touch-action: none; z-index: 999; }
+
+         /* Tambahkan padding agar placeholder tidak menempel ke border */
+        select.form-select {
+            padding-left: 12px; /* jarak kiri */
+            padding-right: 12px; /* jarak kanan */
         }
-        .page-canvas {
-            display: block;
-        }
-        .sign-img {
-            position: absolute;
-            cursor: grab;
-            user-select: none;
-            touch-action: none;
-            z-index: 999;
+
+        /* Opsional: buat warna placeholder sedikit lebih pucat */
+        select.form-select option[value=""] {
+            color: #6c757d; /* abu-abu */
         }
     </style>
+
+    <x-plugins></x-plugins>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -120,13 +106,6 @@
             const pdfContainer = document.getElementById('pdf-container');
             const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
             const signatureControls = document.getElementById('signature-controls');
-            const uploadStatus = document.getElementById('uploadStatus');
-
-            function showStatus(msg, duration=3000) {
-                uploadStatus.innerText = msg;
-                uploadStatus.style.display = 'block';
-                setTimeout(() => { uploadStatus.style.display = 'none'; }, duration);
-            }
 
             if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
@@ -144,7 +123,52 @@
                 signatures = [];
             }
 
-            // Load PDF preview
+            // --- AJAX: Load Dokumen saat page load ---
+            async function loadDokumen() {
+                try {
+                    const res = await fetch(`/pegawai/ajax-dokumen/${userSelect.value}`);
+                    const data = await res.json();
+                    dokumenSelect.innerHTML = `<option value="">-- Pilih Dokumen --</option>`;
+                    data.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.jenis_dokumen_id;
+                        opt.textContent = d.nama_dokumen;
+                        dokumenSelect.appendChild(opt);
+                    });
+                } catch(err) {
+                    Swal.fire('Error','Gagal memuat dokumen','error');
+                    console.error(err);
+                }
+            }
+            loadDokumen();
+
+            // --- Dropdown Periode AJAX ---
+            dokumenSelect.addEventListener('change', async function(){
+                const dokumenId = this.value;
+                periodeSelect.innerHTML = `<option value="">-- Loading... --</option>`;
+                periodeSelect.disabled = true;
+                if(!dokumenId) {
+                    periodeSelect.innerHTML = `<option value="">-- Pilih Periode --</option>`;
+                    return;
+                }
+                try {
+                    const res = await fetch(`/pegawai/ajax-periode/${userSelect.value}/${dokumenId}`);
+                    const data = await res.json();
+                    periodeSelect.innerHTML = `<option value="">-- Pilih Periode --</option>`;
+                    data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.periode_key;
+                        periodeSelect.appendChild(opt);
+                    });
+                    periodeSelect.disabled = false;
+                } catch(err){
+                    Swal.fire('Error','Gagal memuat periode','error');
+                    console.error(err);
+                }
+            });
+
+            // --- PDF Preview ---
             pdfFileInput.addEventListener('change', async (e) => {
                 resetPreview();
                 const file = e.target.files[0];
@@ -175,40 +199,45 @@
                 }
             });
 
-            // Enable drag for signature
+            // --- Drag & Resize Signature ---
             function enableDragFor(el) {
-                let isDragging = false, startX=0, startY=0, origLeft=0, origTop=0;
-                el.addEventListener('pointerdown', (ev)=>{
-                    ev.preventDefault();
-                    isDragging = true;
-                    el.setPointerCapture(ev.pointerId);
-                    const rect = el.getBoundingClientRect();
-                    const parentRect = pdfContainer.getBoundingClientRect();
-                    startX = ev.clientX; startY = ev.clientY;
-                    origLeft = rect.left - parentRect.left;
-                    origTop = rect.top - parentRect.top;
+                let isDragging=false,startX=0,startY=0,origLeft=0,origTop=0;
+                el.addEventListener('pointerdown',(ev)=>{
+                    ev.preventDefault(); isDragging=true; el.setPointerCapture(ev.pointerId);
+                    const rect=el.getBoundingClientRect();
+                    const parentRect=pdfContainer.getBoundingClientRect();
+                    startX=ev.clientX; startY=ev.clientY;
+                    origLeft=rect.left-parentRect.left; origTop=rect.top-parentRect.top;
                 });
-                document.addEventListener('pointermove', (ev)=>{
+                document.addEventListener('pointermove',(ev)=>{
                     if(!isDragging) return;
-                    const parentRect = pdfContainer.getBoundingClientRect();
-                    let left = origLeft + (ev.clientX - startX);
-                    let top = origTop + (ev.clientY - startY);
-                    left = Math.max(0, Math.min(left, parentRect.width - el.offsetWidth));
-                    top = Math.max(0, Math.min(top, parentRect.height - el.offsetHeight));
-                    el.style.left = left + 'px';
-                    el.style.top = top + 'px';
+                    const parentRect=pdfContainer.getBoundingClientRect();
+                    let left=origLeft+(ev.clientX-startX);
+                    let top=origTop+(ev.clientY-startY);
+                    left=Math.max(0,Math.min(left,parentRect.width-el.offsetWidth));
+                    top=Math.max(0,Math.min(top,parentRect.height-el.offsetHeight));
+                    el.style.left=left+'px'; el.style.top=top+'px';
                 });
-                document.addEventListener('pointerup', (ev)=>{
-                    if(!isDragging) return;
-                    isDragging=false;
-                    try { el.releasePointerCapture(ev.pointerId); } catch(e){}
+                document.addEventListener('pointerup',(ev)=>{
+                    if(!isDragging) return; isDragging=false;
+                    try{el.releasePointerCapture(ev.pointerId);}catch(e){}
                 });
             }
 
-            // Tambahkan signature image
+            // --- Pilih tanda tangan: validasi tipe & ukuran ---
             sigFileInput.addEventListener('change', (e) => {
                 const files = Array.from(e.target.files);
                 files.forEach(file => {
+                    const validTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+                    if (!validTypes.includes(file.type)) {
+                        Swal.fire('Peringatan', `File "${file.name}" bukan PNG/JPG/JPEG`, 'warning');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        Swal.fire('Peringatan', `File "${file.name}" terlalu besar. Maksimal 5 MB`, 'warning');
+                        return;
+                    }
+
                     const url = URL.createObjectURL(file);
                     const img = document.createElement('img');
                     img.src = url;
@@ -219,125 +248,113 @@
                     pdfContainer.appendChild(img);
                     enableDragFor(img);
 
+                    const idx = signatures.length;
+
+                    // Tombol close ×
                     const btn = document.createElement('button');
                     btn.innerText = '×';
-                    btn.style.position='absolute';
-                    btn.style.top='0';
-                    btn.style.right='0';
-                    btn.style.zIndex=10000;
-                    btn.style.background='red';
-                    btn.style.color='white';
-                    btn.style.border='none';
-                    btn.style.borderRadius='50%';
-                    btn.style.width='20px';
-                    btn.style.height='20px';
-                    btn.style.cursor='pointer';
-
-                    btn.addEventListener('click', ()=>{
+                    btn.style.position = 'absolute';
+                    btn.style.top = '0';
+                    btn.style.right = '0';
+                    btn.style.zIndex = 10000;
+                    btn.style.background = 'red';
+                    btn.style.color = 'white';
+                    btn.style.border = 'none';
+                    btn.style.borderRadius = '50%';
+                    btn.style.width = '20px';
+                    btn.style.height = '20px';
+                    btn.style.cursor = 'pointer';
+                    btn.addEventListener('click', () => {
                         pdfContainer.removeChild(img);
                         pdfContainer.removeChild(btn);
-                        const sidx = signatures.findIndex(s=>s.imgElem===img);
-                        if(sidx>=0){
+                        const sidx = signatures.findIndex(s => s.imgElem === img);
+                        if (sidx >= 0) {
                             const sliderDiv = document.getElementById(`slider-${sidx}`);
-                            if(sliderDiv) sliderDiv.remove();
-                            signatures.splice(sidx,1);
+                            if (sliderDiv) sliderDiv.remove();
+                            signatures.splice(sidx, 1);
                         }
                     });
                     pdfContainer.appendChild(btn);
 
-                    const idx = signatures.length;
+                    // Slider resize
                     const sliderDiv = document.createElement('div');
                     sliderDiv.id = `slider-${idx}`;
                     sliderDiv.className = 'mt-2';
-                    sliderDiv.innerHTML = `<label>Resize tanda tangan ${idx+1}: </label> 
+                    sliderDiv.innerHTML = `<label>Resize tanda tangan ${idx+1}: </label>
                         <input type="range" min="30" max="600" value="180" class="individual-slider">`;
                     signatureControls.appendChild(sliderDiv);
-
                     const slider = sliderDiv.querySelector('input');
-                    slider.addEventListener('input', ()=>{ img.style.width = slider.value + 'px'; });
+                    slider.addEventListener('input', () => { img.style.width = slider.value + 'px'; });
 
-                    signatures.push({ file, imgElem: img, page: 1, x:0, y:0, w:0, slider });
+                    signatures.push({ file, imgElem: img, slider, page: 1, x: 0, y: 0, w: 0 });
                 });
+
+                // Reset input supaya bisa pilih file yang sama lagi
+                sigFileInput.value = '';
             });
 
-            // Submit
-            placeAndSubmitBtn.addEventListener('click', async ()=> {
-                if (!dokumenSelect.value) { alert('Pilih dokumen terlebih dahulu'); return; }
-                if (!pdfFileInput.files[0]) { alert('Pilih file PDF'); return; }
-                if (signatures.length===0) { alert('Pilih minimal 1 tanda tangan'); return; }
-                if (pageViews.length === 0) { alert('Pastikan PDF telah dipreview terlebih dahulu'); return; }
+            // --- Submit PDF + tanda tangan ---
+            placeAndSubmitBtn.addEventListener('click', async ()=>{
+                if(!dokumenSelect.value){ Swal.fire('Peringatan','Pilih dokumen','warning'); return; }
+                if(!periodeSelect.value){ Swal.fire('Peringatan','Pilih periode','warning'); return; }
+                if(!pdfFileInput.files[0]){ Swal.fire('Peringatan','Pilih file PDF','warning'); return; }
+                if(signatures.length===0){ Swal.fire('Peringatan','Pilih minimal 1 tanda tangan','warning'); return; }
+                if(pageViews.length===0){ Swal.fire('Peringatan','Pastikan PDF telah dipreview','warning'); return; }
 
-                showStatus('File sedang diunggah...', 10000);
+                Swal.fire({title:'Sedang mengunggah...',allowOutsideClick:false,didOpen:()=>{Swal.showLoading();}});
 
                 signatures.forEach(s=>{
-                    const rect = s.imgElem.getBoundingClientRect();
-                    const sigCenterX = rect.left + rect.width/2;
-                    const sigCenterY = rect.top + rect.height/2;
-                    let matchedPage = pageViews[0];
+                    const rect=s.imgElem.getBoundingClientRect();
+                    const sigCenterX=rect.left+rect.width/2;
+                    const sigCenterY=rect.top+rect.height/2;
+                    let matchedPage=pageViews[0];
                     for(const pv of pageViews){
-                        const pRect = pv.elem.getBoundingClientRect();
+                        const pRect=pv.elem.getBoundingClientRect();
                         if(sigCenterX>=pRect.left && sigCenterX<=pRect.right && sigCenterY>=pRect.top && sigCenterY<=pRect.bottom){
-                            matchedPage = pv; break;
+                            matchedPage=pv; break;
                         }
                     }
-                    const pageRect = matchedPage.elem.getBoundingClientRect();
-                    const sigLeft = rect.left - pageRect.left;
-                    const sigTop = rect.top - pageRect.top;
-                    s.page = matchedPage.pageNumber;
-                    s.x = sigLeft/pageRect.width;
-                    s.y = sigTop/pageRect.height;
-                    s.w = rect.width/pageRect.width;
+                    const pageRect=matchedPage.elem.getBoundingClientRect();
+                    s.page=matchedPage.pageNumber;
+                    s.x=(rect.left-pageRect.left)/pageRect.width;
+                    s.y=(rect.top-pageRect.top)/pageRect.height;
+                    s.w=rect.width/pageRect.width;
                 });
 
-                const formData = new FormData();
-                formData.append('_token', '{{ csrf_token() }}');
-                formData.append('user_id', userSelect.value);
-                formData.append('jenis_dokumen_id', dokumenSelect.value);
-                formData.append('periode_id', periodeSelect.value);
-                formData.append('pdf', pdfFileInput.files[0]);
+                const formData=new FormData();
+                formData.append('_token','{{ csrf_token() }}');
+                formData.append('user_id',userSelect.value);
+                formData.append('jenis_dokumen_id',dokumenSelect.value);
+                formData.append('periode_id',periodeSelect.value);
+                formData.append('pdf',pdfFileInput.files[0]);
                 signatures.forEach((s,i)=>{
-                    formData.append(`files[${i}]`, s.file);
-                    formData.append(`signatures[${i}][page]`, s.page);
-                    formData.append(`signatures[${i}][x]`, s.x);
-                    formData.append(`signatures[${i}][y]`, s.y);
-                    formData.append(`signatures[${i}][w]`, s.w);
+                    formData.append(`files[${i}]`,s.file);
+                    formData.append(`signatures[${i}][page]`,s.page);
+                    formData.append(`signatures[${i}][x]`,s.x);
+                    formData.append(`signatures[${i}][y]`,s.y);
+                    formData.append(`signatures[${i}][w]`,s.w);
                 });
 
-                try {
-                    const res = await fetch('{{ route("pdf.sign") }}', {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'same-origin'
-                    });
-                    if (!res.ok) {
-                        const text = await res.text();
-                        throw new Error(text || 'Upload gagal');
-                    }
+                try{
+                    const res=await fetch('{{ route("pdf.sign") }}',{method:'POST',body:formData,credentials:'same-origin'});
+                    if(!res.ok){ const text=await res.text(); throw new Error(text||'Upload gagal'); }
+                    const blob=await res.blob();
+                    const url=window.URL.createObjectURL(blob);
+                    const a=document.createElement('a');
+                    a.href=url;
+                    const dokumenName=dokumenSelect.options[dokumenSelect.selectedIndex].text;
+                    const periodeName=periodeSelect.options[periodeSelect.selectedIndex].text;
+                    a.download=`Ditandatangani_${dokumenName}_${periodeName}.pdf`;
+                    document.body.appendChild(a); a.click(); a.remove();
 
-                    const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    const dokumenName = dokumenSelect.options[dokumenSelect.selectedIndex].text;
-                    const periodeName = periodeSelect.options[periodeSelect.selectedIndex].text;
-                    a.download = `Ditandatangani_${dokumenName}_${periodeName}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                    Swal.fire('Berhasil','File berhasil diunggah','success');
 
-                    showStatus('File berhasil diunggah', 5000);
-
-                    // Reset seluruh preview, slider, dan input
-                    resetPreview();
-                    pdfFileInput.value = '';
-                    sigFileInput.value = '';
-                    dokumenSelect.value = '';
-                    periodeSelect.value = '';
-                } catch (err) {
-                    showStatus('Error: ' + err.message, 5000);
-                    console.error(err);
+                    resetPreview(); pdfFileInput.value=''; sigFileInput.value=''; dokumenSelect.value=''; periodeSelect.value='';
+                }catch(err){
+                    Swal.fire('Error',err.message,'error'); console.error(err);
                 }
             });
+
         });
     </script>
 </x-layout>

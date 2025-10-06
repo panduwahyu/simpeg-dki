@@ -130,4 +130,12 @@ Route::middleware('auth')->group(function () {
     // Tanda tangan PDF
     Route::get('/sign-pdf', [PdfController::class, 'index'])->name('pdf.sign.form');
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
+
+    // AJAX untuk dropdown Dokumen pegawai
+    Route::get('/pegawai/ajax-dokumen/{userId}', [PdfController::class, 'getDokumenPegawai'])
+        ->name('pegawai.ajax.dokumen');
+
+    // AJAX untuk dropdown Periode pegawai
+    Route::get('/pegawai/ajax-periode/{userId}/{dokumenId}', [PdfController::class, 'getPeriode'])
+        ->name('pegawai.ajax.periode');
 });

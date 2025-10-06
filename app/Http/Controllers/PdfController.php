@@ -153,6 +153,44 @@ class PdfController extends Controller
     }
 
     // =======================
+    // AJAX: Dokumen untuk Pegawai (unik)
+    // =======================
+    public function getDokumenPegawai($userId)
+    {
+        $dokumen = DB::table('mandatory_uploads')
+            ->join('jenis_dokumen', 'mandatory_uploads.jenis_dokumen_id', '=', 'jenis_dokumen.id')
+            ->where('mandatory_uploads.user_id', $userId)
+            ->where('mandatory_uploads.is_uploaded', 0)
+            ->select('jenis_dokumen.id as jenis_dokumen_id', 'jenis_dokumen.nama_dokumen')
+            ->groupBy('jenis_dokumen.id', 'jenis_dokumen.nama_dokumen') // <-- pastikan unik
+            ->get();
+
+        return response()->json($dokumen);
+    }
+
+
+    // =======================
+    // AJAX: Periode untuk Pegawai (sudah ada)
+    // =======================
+    public function getPeriode($userId, $dokumenId)
+    {
+        $periode = DB::table('periode')
+            ->join('mandatory_uploads', 'periode.id', '=', 'mandatory_uploads.periode_id')
+            ->where('mandatory_uploads.user_id', $userId)
+            ->where('mandatory_uploads.jenis_dokumen_id', $dokumenId)
+            ->where('mandatory_uploads.is_uploaded', 0)
+            ->select('periode.id', 'periode.periode_key')
+            ->distinct()
+            ->get();
+
+        return response()->json($periode);
+    }
+
+
+
+
+
+    // =======================
     // Halaman Supervisor/Admin
     // =======================
     public function indexSupervisorAdmin()
