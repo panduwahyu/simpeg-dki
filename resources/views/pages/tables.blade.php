@@ -118,6 +118,19 @@
                 </div>
             </div>
 
+             <style>
+                /* Tambahkan padding agar placeholder tidak menempel ke border */
+                select.form-select {
+                    padding-left: 12px; /* jarak kiri */
+                    padding-right: 12px; /* jarak kanan */
+                }
+
+                /* Opsional: buat warna placeholder sedikit lebih pucat */
+                select.form-select option[value=""] {
+                    color: #6c757d; /* abu-abu */
+                }
+            </style>
+
             <x-footers.auth></x-footers.auth>
         </div>
     </main>
