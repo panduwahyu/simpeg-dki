@@ -14,8 +14,6 @@
     <hr class="horizontal light mt-0 mb-2">
     <div class="sidenav w-auto max-height-vh-100" id="sidenav-main">
         <ul class="navbar-nav">
-            
-            {{-- Section Kepegawaian --}}
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Kepegawaian</h6>
             </li>
@@ -31,7 +29,7 @@
                 </a>
             </li>
 
-            {{-- Manajemen Pegawai hanya untuk Admin/Supervisor --}}
+            {{-- Hanya tampil jika bukan Pegawai --}}
             @if(auth()->user()->role !== 'Pegawai')
                 <li class="nav-item">
                     <a class="nav-link text-white {{ $activePage == 'user-management' ? 'active bg-gradient-primary' : '' }}"
@@ -44,7 +42,6 @@
                 </li>
             @endif
 
-            {{-- Section Laman --}}
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Laman</h6>
             </li>
@@ -86,23 +83,13 @@
 
             {{-- Tanda Tangan PDF --}}
             <li class="nav-item">
-                @if(auth()->user()->role === 'Pegawai')
-                    <a class="nav-link text-white {{ $activePage == 'pdf-sign' ? 'active bg-gradient-primary' : '' }}"
-                        href="{{ route('pdf.sign.form') }}">
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">picture_as_pdf</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Tanda Tangan PDF</span>
-                    </a>
-                @else
-                    <a class="nav-link text-white {{ $activePage == 'pdf-sign-supervisor' ? 'active bg-gradient-primary' : '' }}"
-                        href="{{ route('pdf.sign.supervisor') }}">
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">picture_as_pdf</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Tanda Tangan PDF</span>
-                    </a>
-                @endif
+                <a class="nav-link text-white {{ $activePage == 'pdf-sign' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('pdf.sign.form') }}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">picture_as_pdf</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Tanda Tangan PDF</span>
+                </a>
             </li>
         </ul>
     </div>

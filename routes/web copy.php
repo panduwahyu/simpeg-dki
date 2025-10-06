@@ -104,11 +104,9 @@ Route::middleware('auth')->group(function () {
         Route::get('user/export', [UserManagementController::class, 'export'])->name('user.export');
         Route::post('user/import', [UserManagementController::class, 'import'])->name('user.import');
 
-        // Tanda tangan PDF Supervisor & Admin
-        Route::get('/pdf/supervisoradmin', [PdfController::class, 'indexSupervisorAdmin'])
-            ->name('pdf.sign.supervisor');
-        Route::post('/pdf/supervisoradmin', [PdfController::class, 'signSupervisorAdmin'])
-            ->name('pdf.sign.supervisor.submit');
+        // Tanda tangan PDF untuk Supervisor & Admin
+        Route::get('/pdf/supervisoradmin', [PdfController::class, 'indexSupervisorAdmin'])->name('pdf.supervisoradmin');
+
     });
     
     // Contoh halaman profil user
