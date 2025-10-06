@@ -105,11 +105,23 @@ Route::middleware('auth')->group(function () {
         Route::get('user/export', [UserManagementController::class, 'export'])->name('user.export');
         Route::post('user/import', [UserManagementController::class, 'import'])->name('user.import');
 
+        // -----------------------------
         // Tanda tangan PDF Supervisor & Admin
+        // -----------------------------
         Route::get('/pdf/supervisoradmin', [PdfController::class, 'indexSupervisorAdmin'])
             ->name('pdf.sign.supervisor');
-        Route::post('/pdf/supervisoradmin', [PdfController::class, 'signSupervisorAdmin'])
+
+        Route::post('/pdf/supervisoradmin', [PdfController::class, 'signPdfSupervisor'])
             ->name('pdf.sign.supervisor.submit');
+
+        // -----------------------------
+        // AJAX untuk dependent dropdown
+        // -----------------------------
+        Route::get('/ajax-dokumen/{user}', [PdfController::class, 'getDokumenByUser'])
+            ->name('ajax.dokumen');
+
+        Route::get('/ajax-periode/{user}/{dokumen}', [PdfController::class, 'getPeriodeByUserDokumen'])
+            ->name('ajax.periode');
     });
     
     // Contoh halaman profil user

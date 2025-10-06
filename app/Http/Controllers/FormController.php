@@ -31,7 +31,7 @@ class FormController extends Controller
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'tahun' => 'required|integer|min:2000|max:' . date('Y'),
+            'tahun' => 'required|integer|min:2000',
             'periode_tipe' => 'required|in:bulanan,triwulanan,tahunan',
             'pegawai_type' => 'required|in:all,specific',
             'pegawai_ids' => 'required|array|min:1',
