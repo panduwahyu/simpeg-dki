@@ -13,36 +13,45 @@ class DokumenController extends Controller
     /**
      * Tampilkan daftar dokumen
      */
-    public function index()
+    public function index(Request $request)
     {
-        $dokumens = Dokumen::with(['jenisDokumen', 'periode'])
-        ->orderBy('tanggal_unggah', 'desc')
-        ->get();
-        $jenisDokumen = JenisDokumen::all();
-        $periode = Periode::all();
-        
         $query = Dokumen::query();
-        $dokumen = $query->paginate(10)->withQueryString();; // bisa pakai paginate
-        return view('pages.tables', compact('dokumens', 'jenisDokumen', 'periode', 'dokumen'));
-        
-        // filter berdasarkan jenis_dokumen
+
+        // Filter berdasarkan jenis dokumen
         if ($request->filled('jenis_dokumen_id')) {
             $query->where('jenis_dokumen_id', $request->jenis_dokumen_id);
         }
-        
-        // filter berdasarkan periode
-        if ($request->filled('periode_id')) {
-            $query->where('periode_id', $request->periode_id);
+
+        // Filter berdasarkan tipe periode
+        if ($request->filled('tipe')) {
+            $query->whereHas('periode', function ($q) use ($request) {
+                $q->where('tipe', $request->tipe);
+            });
         }
-        
-        // filter berdasarkan keyword (misal nama file atau keterangan)
-        if ($request->filled('search')) {
-            $query->where('nama_file', 'like', '%' . $request->search . '%');
+
+        // Filter berdasarkan tahun
+        if ($request->filled('tahun')) {
+            $query->whereHas('periode', function ($q) use ($request) {
+                $q->where('tahun', $request->tahun);
+            });
         }
-        
-        
-        // return view('pages.tables', compact('dokumen'));
+
+        // Filter berdasarkan tanggal unggah
+        if ($request->filled('tanggal')) {
+            $query->whereDate('tanggal_unggah', $request->tanggal);
         }
+
+        // Ambil data dengan relasi
+        $dokumen = $query->with(['jenisDokumen', 'periode'])
+                         ->paginate(10)
+                         ->withQueryString();
+
+        // Untuk dropdown filter
+        $jenisDokumen = JenisDokumen::all();
+        $periode = Periode::select('tipe', 'tahun')->distinct()->get();
+
+        return view('pages.tables', compact('dokumen', 'jenisDokumen', 'periode'));
+    }
 
     /**
      * Preview dokumen PDF dari storage private

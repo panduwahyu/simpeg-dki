@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
         
         // Monitoring dokumen
         Route::get('/dashboard/filter', [DashboardController::class, 'filter'])->name('monitoring.filter');
+        Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
 
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
