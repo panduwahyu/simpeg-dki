@@ -121,16 +121,6 @@ class FormController extends Controller
         return redirect()->route('form.index')->with('success', 'Dokumen berhasil dibuat!');
     }
 
-    // public function destroy(JenisDokumen $jenisDokumen)
-    // {
-    //     DB::transaction(function() use ($jenisDokumen) {
-    //         DB::table('mandatory_uploads')->where('jenis_dokumen_id', $jenisDokumen->id)->delete();
-    //         $jenisDokumen->delete();
-    //     });
-
-    //     return redirect()->route('form.index')->with('success', 'Dokumen berhasil dihapus!');
-    // }
-
     public function destroy(Request $request)
     {
         $request->validate([
