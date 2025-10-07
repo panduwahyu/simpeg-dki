@@ -1,14 +1,14 @@
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="pdf-sign-supervisoradmin"></x-navbars.sidebar>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
+        <x-navbars.navs.auth titlePage="Tanda Tangan PDF - Supervisor/Admin"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
             <div class="row">
                 <div class="col-lg-10 mx-auto">
                     <div class="card">
                         <div class="card-header pb-0 px-3">
-                            <h6 class="mb-0">Upload & Tandatangani PDF (bisa lebih dari satu)</h6>
+                            <h6 class="mb-0">Upload & Tandatangani PDF (Drag & Resize multiple tanda tangan)</h6>
                         </div>
                         <div class="card-body pt-4 p-3">
                             <form id="signForm" action="{{ route('pdf.sign.supervisor.submit') }}" method="POST" enctype="multipart/form-data">
@@ -47,7 +47,7 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-12">
-                                        <label class="form-label">Pilih tanda tangan (PNG/JPG) max. 5 MB</label>
+                                        <label class="form-label">Pilih tanda tangan (PNG/JPG) max. 5 mb</label>
                                         <input type="file" id="sigFile" accept="image/*" class="form-control" multiple>
                                     </div>
                                 </div>
@@ -55,10 +55,6 @@
                                 <div id="viewerWrap" class="border" style="height:70vh; overflow:auto; position:relative; background:#efefef;">
                                     <div id="pdf-container" style="position:relative; width:fit-content; margin:16px;"></div>
                                 </div>
-
-                                <p class="mt-3 text-muted small">
-                                    Cara pakai: pilih PDF & PNG → tanda tangan muncul di atas PDF → geser (drag) ke posisi yang diinginkan → atur ukuran dengan slider → klik "Simpan & Download".
-                                </p>
 
                                 <div id="signature-controls" class="mt-3"></div>
 
@@ -97,26 +93,12 @@
         z-index: 20000;
     ">Status</div>
 
-    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         .page-wrap { position: relative; margin-bottom: 18px; display: inline-block; }
         .page-canvas { display: block; }
         .sign-img { position: absolute; cursor: grab; user-select: none; touch-action: none; z-index: 999; }
-
-        /* Tambahkan padding agar placeholder tidak menempel ke border */
-        select.form-select {
-            padding-left: 12px; /* jarak kiri */
-            padding-right: 12px; /* jarak kanan */
-        }
-
-        /* Opsional: buat warna placeholder sedikit lebih pucat */
-        select.form-select option[value=""] {
-            color: #6c757d; /* abu-abu */
-        }
     </style>
 
     <script>
@@ -129,35 +111,21 @@
         const pdfContainer = document.getElementById('pdf-container');
         const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
         const signatureControls = document.getElementById('signature-controls');
+        const uploadStatus = document.getElementById('uploadStatus');
 
-        let pdfDocument = null;
-        let pageViews = [];
-        let signatures = [];
-        let uploadToast;
-
-        // === SweetAlert2 helpers ===
-        async function swalAlert(msg) {
-            await Swal.fire({ icon: 'error', title: 'Peringatan', text: msg });
-        }
-
-        function showUploadStatus(msg, duration=10000) {
-            if (uploadToast) uploadToast.close();
-
-            uploadToast = Swal.fire({
-                title: msg,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                didOpen: (toast) => {
-                    Swal.showLoading();
-                    setTimeout(() => { toast.close(); }, duration);
-                }
-            });
+        function showStatus(msg, duration=3000) {
+            uploadStatus.innerText = msg;
+            uploadStatus.style.display = 'block';
+            setTimeout(() => { uploadStatus.style.display = 'none'; }, duration);
         }
 
         if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
         }
+
+        let pdfDocument = null;
+        let pageViews = [];
+        let signatures = [];
 
         function resetPreview() {
             pdfContainer.innerHTML = '';
@@ -167,7 +135,6 @@
             signatures = [];
         }
 
-        // === PDF Preview ===
         pdfFileInput.addEventListener('change', async (e) => {
             resetPreview();
             const file = e.target.files[0];
@@ -198,7 +165,6 @@
             }
         });
 
-        // === Drag & Resize ===
         function enableDragFor(el) {
             let isDragging = false, startX=0, startY=0, origLeft=0, origTop=0;
             el.addEventListener('pointerdown', (ev)=>{
@@ -223,28 +189,8 @@
             });
         }
 
-        // === File Validation + Preview ===
         sigFileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
-            const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            const maxSize = 5 * 1024 * 1024; // 5 MB
-            let hasInvalid = false;
-
-            files.forEach(file => {
-                if (!validTypes.includes(file.type)) {
-                    Swal.fire({ icon: 'error', title: 'File Tidak Valid', text: `${file.name} bukan file PNG/JPG` });
-                    hasInvalid = true;
-                } else if (file.size > maxSize) {
-                    Swal.fire({ icon: 'error', title: 'File Terlalu Besar', text: `${file.name} lebih dari 5 MB` });
-                    hasInvalid = true;
-                }
-            });
-
-            if (hasInvalid) {
-                sigFileInput.value = '';
-                return;
-            }
-
             files.forEach(file => {
                 const url = URL.createObjectURL(file);
                 const img = document.createElement('img');
@@ -280,7 +226,7 @@
             });
         });
 
-        // === Dependent Dropdowns ===
+        // Dependent Dropdown
         userSelect.addEventListener('change', function() {
             const userId = this.value;
             dokumenSelect.innerHTML = '<option value="">Loading...</option>';
@@ -296,7 +242,8 @@
                     dokumenSelect.innerHTML = '<option value="">-- Pilih Dokumen --</option>';
                     data.forEach(d => {
                         const opt = document.createElement('option');
-                        opt.value = d.id; opt.text = d.nama_dokumen;
+                        opt.value = d.id;
+                        opt.text = d.nama_dokumen;
                         dokumenSelect.appendChild(opt);
                     });
                     dokumenSelect.disabled = false;
@@ -316,23 +263,23 @@
                     periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
                     data.forEach(p => {
                         const opt = document.createElement('option');
-                        opt.value = p.id; opt.text = p.periode_key;
+                        opt.value = p.id;
+                        opt.text = p.periode_key;
                         periodeSelect.appendChild(opt);
                     });
                     periodeSelect.disabled = false;
                 });
         });
 
-        // === Submit PDF + Signature ===
         placeAndSubmitBtn.addEventListener('click', async ()=> {
-            if (!userSelect.value){ await swalAlert('Pilih pegawai'); return; }
-            if (!dokumenSelect.value){ await swalAlert('Pilih dokumen'); return; }
-            if (!periodeSelect.value){ await swalAlert('Pilih periode'); return; }
-            if (!pdfFileInput.files[0]){ await swalAlert('Pilih file PDF'); return; }
-            if (signatures.length===0){ await swalAlert('Pilih minimal 1 tanda tangan'); return; }
-            if (pageViews.length===0){ await swalAlert('Preview PDF belum siap'); return; }
+            if (!userSelect.value){alert('Pilih pegawai'); return;}
+            if (!dokumenSelect.value){alert('Pilih dokumen'); return;}
+            if (!periodeSelect.value){alert('Pilih periode'); return;}
+            if (!pdfFileInput.files[0]){alert('Pilih file PDF'); return;}
+            if (signatures.length===0){alert('Pilih minimal 1 tanda tangan'); return;}
+            if (pageViews.length===0){alert('Preview PDF belum siap'); return;}
 
-            showUploadStatus('File sedang diunggah...');
+            showStatus('File sedang diunggah...', 10000);
 
             signatures.forEach(s=>{
                 const rect = s.imgElem.getBoundingClientRect();
@@ -392,15 +339,14 @@
                 a.click();
                 a.remove();
 
-                Swal.fire({ icon: 'success', title: 'Berhasil', text: 'File berhasil diunggah & disimpan' });
+                showStatus('File berhasil diunggah',5000);
                 resetPreview();
                 pdfFileInput.value=''; sigFileInput.value=''; dokumenSelect.value=''; periodeSelect.value=''; userSelect.value='';
             }catch(err){
-                Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                showStatus('Error: '+err.message,5000);
                 console.error(err);
             }
         });
-
     });
     </script>
 </x-layout>
