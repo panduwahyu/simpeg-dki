@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class JenisDokumen extends Model
 {
     protected $table = 'jenis_dokumen';
-    protected $fillable = ['nama_dokumen', 'deskripsi', 'periode_tipe', 'tahun'];
+    protected $fillable = ['nama_dokumen', 'periode_tipe', 'tahun'];
 
     /**
      * Relasi many-to-many ke periode lewat pivot table mandatory_uploads

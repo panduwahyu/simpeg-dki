@@ -30,7 +30,6 @@ class FormController extends Controller
     {
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
             'tahun' => 'required|integer|min:2000',
             'periode_tipe' => 'required|in:bulanan,triwulanan,tahunan',
             'pegawai_type' => 'required|in:all,specific',
@@ -45,7 +44,6 @@ class FormController extends Controller
             // Buat jenis dokumen baru
             $jenisDokumen = JenisDokumen::create([
                 'nama_dokumen' => $request->nama_dokumen,
-                'deskripsi' => $request->deskripsi,
                 'periode_tipe' => $request->periode_tipe,
                 'tahun' => $request->tahun,
             ]);

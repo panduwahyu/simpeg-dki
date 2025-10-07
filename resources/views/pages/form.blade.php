@@ -56,12 +56,6 @@
                                            value="{{ old('nama_dokumen') }}">
                                 </div>
 
-                                <!-- Deskripsi -->
-                                <div class="mb-3">
-                                    <label for="deskripsi" class="form-label">Deskripsi</label>
-                                    <textarea id="deskripsi" name="deskripsi" class="form-control" rows="3">{{ old('deskripsi') }}</textarea>
-                                </div>
-
                                 <!-- Tahun -->
                                 <div class="mb-3">
                                     <label for="tahun" class="form-label">Tahun</label>
@@ -190,7 +184,6 @@
         const btnSubmit = document.getElementById('btnSubmit');
         const periodeTipe = document.getElementById('periode_tipe');
         const namaDokumen = document.getElementById('nama_dokumen');
-        const deskripsi = document.getElementById('deskripsi');
 
         function togglePegawaiCheckbox() {
             checkboxContainer.style.display = 'block'; // selalu tampil
@@ -210,11 +203,6 @@
 
             if (namaDokumen.value.trim() === '') {
                 Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nama Dokumen wajib diisi.' });
-                return;
-            }
-
-            if (deskripsi.value.trim() === '') {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Deskripsi wajib diisi.' });
                 return;
             }
 
