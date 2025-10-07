@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Log;
 
 class UserManagementController extends Controller
 {
@@ -62,7 +63,7 @@ class UserManagementController extends Controller
             'jabatan'    => $validated['jabatan'] ?? null,
             'pangkat'    => $validated['pangkat'] ?? null,
             'golongan'   => $validated['golongan'] ?? null,
-            'password'   => 'password', // default dummy
+            'password'   => bcrypt('password'), // hashed default
         ]);
 
         return redirect()->route('user-management')
@@ -177,12 +178,25 @@ class UserManagementController extends Controller
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension();
 
+        Log::info("Mulai import user dari file: {$file->getClientOriginalName()}");
+
         if (in_array($extension, ['csv','txt'])) {
             $handle = fopen($file, 'r');
             $header = fgetcsv($handle);
 
             while (($row = fgetcsv($handle)) !== false) {
                 $data = array_combine($header, $row);
+                $email = trim($data['Email'] ?? '');
+
+                if (empty($email)) {
+                    Log::warning("Baris dilewati: email kosong");
+                    continue;
+                }
+
+                if (User::where('email', $email)->exists()) {
+                    Log::info("Skip: email sudah ada ($email)");
+                    continue;
+                }
 
                 $roleInput = strtolower(trim($data['Role'] ?? ''));
                 if ($roleInput === 'admin') {
@@ -193,19 +207,22 @@ class UserManagementController extends Controller
                     $role = 'Pegawai';
                 }
 
-                User::updateOrCreate(
-                    ['email' => $data['Email']],
-                    [
+                try {
+                    User::create([
                         'name'       => $data['Name'],
+                        'email'      => $email,
                         'role'       => $role,
                         'nip'        => $data['NIP'] ?? null,
                         'unit_kerja' => $data['Unit Kerja'] ?? null,
                         'jabatan'    => $data['Jabatan'] ?? null,
                         'pangkat'    => $data['Pangkat'] ?? null,
                         'golongan'   => $data['Golongan'] ?? null,
-                        'password'   => 'password',
-                    ]
-                );
+                        'password'   => bcrypt('password'),
+                    ]);
+                    Log::info("User berhasil diimport: {$email}");
+                } catch (\Exception $e) {
+                    Log::error("Gagal import user {$email}: ".$e->getMessage());
+                }
             }
             fclose($handle);
         } elseif ($extension === 'xlsx') {
@@ -218,6 +235,17 @@ class UserManagementController extends Controller
 
             foreach ($rows as $row) {
                 $data = array_combine($header, $row);
+                $email = trim($data['Email'] ?? '');
+
+                if (empty($email)) {
+                    Log::warning("Baris dilewati: email kosong");
+                    continue;
+                }
+
+                if (User::where('email', $email)->exists()) {
+                    Log::info("Skip: email sudah ada ($email)");
+                    continue;
+                }
 
                 $roleInput = strtolower(trim($data['Role'] ?? ''));
                 if ($roleInput === 'admin') {
@@ -228,23 +256,27 @@ class UserManagementController extends Controller
                     $role = 'Pegawai';
                 }
 
-                User::updateOrCreate(
-                    ['email' => $data['Email']],
-                    [
+                try {
+                    User::create([
                         'name'       => $data['Name'],
+                        'email'      => $email,
                         'role'       => $role,
                         'nip'        => $data['NIP'] ?? null,
                         'unit_kerja' => $data['Unit Kerja'] ?? null,
                         'jabatan'    => $data['Jabatan'] ?? null,
                         'pangkat'    => $data['Pangkat'] ?? null,
                         'golongan'   => $data['Golongan'] ?? null,
-                        'password'   => 'password',
-                    ]
-                );
+                        'password'   => bcrypt('password'),
+                    ]);
+                    Log::info("User berhasil diimport: {$email}");
+                } catch (\Exception $e) {
+                    Log::error("Gagal import user {$email}: ".$e->getMessage());
+                }
             }
         }
 
+        Log::info("Import user selesai.");
         return redirect()->route('user-management')
-            ->with('status', 'Users imported successfully!');
+            ->with('status', 'Users imported successfully! (lihat log untuk detail)');
     }
 }
