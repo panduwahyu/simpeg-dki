@@ -154,9 +154,12 @@
                                             <td>{{ $latestPeriode?->tahun ?? '-' }}</td>
                                             <td>
                                                 <a href="{{ route('jenis-dokumen.edit', $jd->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                                <form action="{{ route('jenis-dokumen.destroy', $jd->id) }}" method="POST" style="display:inline-block;">
+                                                <form action="{{ route('jenis-dokumen.destroy') }}" method="POST" style="display:inline-block;">
                                                     @csrf
                                                     @method('DELETE')
+                                                    <input type="hidden" name="nama_dokumen" value="{{ $jd->nama_dokumen }}">
+                                                    <input type="hidden" name="periode_tipe" value="{{ $jd->periode_tipe }}">
+                                                    <input type="hidden" name="tahun" value="{{ $jd->periode->max('tahun') }}">
                                                     <button type="submit" class="btn btn-sm btn-danger btn-hapus">Hapus</button>
                                                 </form>
                                             </td>
