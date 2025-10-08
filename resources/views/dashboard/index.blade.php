@@ -386,8 +386,6 @@
                     </div>
                 </div>
             </div>
-
-            <x-footers.auth></x-footers.auth>
         </div>
 
     <!-- Script untuk show/hide tabel pegawai -->

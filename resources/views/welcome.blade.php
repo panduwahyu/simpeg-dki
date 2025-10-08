@@ -12,5 +12,4 @@
             <h1 class="text-light text-center">Selamat datang di Sistem Kepegawaian BPS DKI Jakarta</h1>
         </div>
     </div>
-        <x-footers.guest></x-footers.guest>
 </x-layout>

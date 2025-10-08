@@ -130,8 +130,6 @@
                     color: #6c757d; /* abu-abu */
                 }
             </style>
-
-            <x-footers.auth></x-footers.auth>
         </div>
     </main>
     <x-plugins></x-plugins>
