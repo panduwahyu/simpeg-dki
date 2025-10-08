@@ -11,7 +11,7 @@
                     <div class="card my-4">
                         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                             <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                                <h6 class="text-white text-capitalize ps-3">Form Pembuatan Dokumen</h6>
+                                <h6 class="text-white text-capitalize ps-3">Edit Dokumen</h6>
                             </div>
                         </div>
                         <div class="card-body px-4 pb-2">
@@ -45,16 +45,14 @@
                                 </script>
                             @endif
 
-                            <form id="dokumenForm" action="{{ route('form.store') }}" method="POST">
+                            <form action="{{ route('jenis-dokumen.update', $jenisDokumen->id) }}" method="POST">
                                 @csrf
                                 @method('PUT')
 
                                 <!-- Nama Dokumen -->
                                 <div class="mb-3">
                                     <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
-                                    <input type="text" id="nama_dokumen" name="nama_dokumen"
-                                           class="form-control"
-                                           value="{{ old('nama_dokumen') }}">
+                                    <input type="text" name="nama_dokumen" value="{{ old('nama_dokumen', $jenisDokumen->nama_dokumen) }}" class="form-control">
                                 </div>
 
                                 <!-- Tahun -->
@@ -115,7 +113,7 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" id="btnSubmit" class="btn btn-primary">Buat Dokumen</button>
+                                <button type="submit" class="btn btn-success">Simpan Perubahan</button>
                             </form>
                         </div>
                     </div>

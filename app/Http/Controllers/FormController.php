@@ -137,4 +137,70 @@ class FormController extends Controller
         return redirect()->route('form.index')
                         ->with('success', "$deleted dokumen berhasil dihapus!");
     }
+
+    // Tampilkan form edit
+    public function edit($id)
+    {
+        $jenisDokumen = JenisDokumen::with('mandatoryUploads')->findOrFail($id);
+        
+        // Ambil ID pegawai yang sudah di-checklist
+        $selectedPegawaiIds = $jenisDokumen->mandatoryUploads->pluck('user_id')->toArray();
+
+        // Daftar semua pegawai
+        $pegawaiList = User::all();
+
+        return view('form.edit', compact('jenisDokumen', 'pegawaiList', 'selectedPegawaiIds'));
+    }
+
+    // Update jenis dokumen + pivot table
+    public function update(Request $request, JenisDokumen $jenisDokumen)
+    {
+        $request->validate([
+            'nama_dokumen' => 'required|string|max:255',
+            'tahun' => 'required|integer|min:2000',
+            'periode_tipe' => 'required|in:bulanan,triwulanan,tahunan',
+            'pegawai_ids' => 'required|array|min:1',
+            'pegawai_ids.*' => 'integer|exists:users,id'
+        ], [
+            'pegawai_ids.required' => 'Pilih minimal 1 pegawai.'
+        ]);
+
+        DB::transaction(function() use ($request, $jenisDokumen) {
+            // Update kolom di tabel jenis_dokumen
+            $jenisDokumen->update([
+                'nama_dokumen' => $request->nama_dokumen,
+                'tahun' => $request->tahun,
+                'periode_tipe' => $request->periode_tipe,
+            ]);
+
+            $newPegawaiIds = $request->pegawai_ids;
+
+            // Ambil user_id lama dari pivot
+            $oldPegawaiIds = DB::table('mandatory_uploads')
+                ->where('jenis_dokumen_id', $jenisDokumen->id)
+                ->pluck('user_id')
+                ->toArray();
+
+            // Hapus yang sudah tidak dicentang
+            $toDelete = array_diff($oldPegawaiIds, $newPegawaiIds);
+            if (!empty($toDelete)) {
+                DB::table('mandatory_uploads')
+                    ->where('jenis_dokumen_id', $jenisDokumen->id)
+                    ->whereIn('user_id', $toDelete)
+                    ->delete();
+            }
+
+            // Tambahkan yang baru dicentang tapi belum ada
+            $toInsert = array_diff($newPegawaiIds, $oldPegawaiIds);
+            foreach ($toInsert as $userId) {
+                DB::table('mandatory_uploads')->insert([
+                    'jenis_dokumen_id' => $jenisDokumen->id,
+                    'user_id' => $userId,
+                    'is_uploaded' => 0
+                ]);
+            }
+        });
+
+        return redirect()->route('form.index')->with('success', 'Dokumen berhasil diperbarui!');
+    }
 }

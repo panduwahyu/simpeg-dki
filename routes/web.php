@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
 
         // Edit & delete JenisDokumen
         Route::get('jenis-dokumen/{id}/edit', [FormController::class, 'edit'])->name('jenis-dokumen.edit');
+        Route::put('jenis-dokumen/{jenisDokumen}', [FormController::class, 'update'])->name('jenis-dokumen.update');
         Route::delete('jenis-dokumen/destroy', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
 
         // Ekspor & impor data user (langsung ke controller, tanpa UsersExport/UsersImport)

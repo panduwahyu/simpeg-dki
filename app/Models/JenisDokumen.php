@@ -25,4 +25,14 @@ class JenisDokumen extends Model
     {
         return $this->hasMany(Dokumen::class, 'jenis_dokumen_id');
     }
+
+    public function mandatoryUploads()
+    {
+        return $this->belongsToMany(
+            \App\Models\User::class,       // Model yang di-relasikan
+            'mandatory_uploads',           // Nama pivot table
+            'jenis_dokumen_id',            // Foreign key di pivot untuk JenisDokumen
+            'user_id'                      // Foreign key di pivot untuk User
+        );
+    }
 }
