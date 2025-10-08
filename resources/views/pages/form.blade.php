@@ -11,7 +11,7 @@
                     <div class="card my-4">
                         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                             <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                                <h6 class="text-white text-capitalize ps-3">Form Pembuatan Dokumen</h6>
+                                <h6 class="text-white text-capitalize ps-3 form-title">Form Pembuatan Dokumen</h6>
                             </div>
                         </div>
                         <div class="card-body px-4 pb-2">
@@ -47,7 +47,6 @@
 
                             <form id="dokumenForm" action="{{ route('form.store') }}" method="POST">
                                 @csrf
-                                @method('PUT')
 
                                 <!-- Nama Dokumen -->
                                 <div class="mb-3">
@@ -154,7 +153,11 @@
                                             <td>{{ $jd->periode_tipe }}</td>
                                             <td>{{ $latestPeriode?->tahun ?? '-' }}</td>
                                             <td>
-                                                <a href="{{ route('jenis-dokumen.edit', $jd->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                                <a href="javascript:void(0)" 
+                                                class="btn btn-sm btn-warning btn-edit" 
+                                                data-id="{{ $jd->id }}">
+                                                Edit
+                                                </a>
                                                 <form action="{{ route('jenis-dokumen.destroy') }}" method="POST" style="display:inline-block;">
                                                     @csrf
                                                     @method('DELETE')
@@ -216,7 +219,7 @@
             }
 
             const isChecked = Array.from(checkboxContainer.querySelectorAll('input[type="checkbox"]'))
-                                   .some(cb => cb.checked);
+                                .some(cb => cb.checked);
 
             if (!isChecked) {
                 Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Minimal pilih 1 pegawai.' });
@@ -258,5 +261,69 @@
                 });
             });
         });
+
+        // 🟢 Tambahkan bagian ini DI SINI — setelah konfirmasi hapus
+        document.querySelectorAll('.btn-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+
+            // SweetAlert konfirmasi sebelum edit
+            Swal.fire({
+                title: 'Apakah anda yakin ingin edit data ini?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, edit',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Lanjut fetch data JSON untuk edit
+                    fetch(`/jenis-dokumen/${id}/json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Ubah judul form
+                            document.querySelector('.form-title').textContent = "Edit Dokumen";
+
+                            // Ubah action form dan method
+                            const form = document.getElementById('dokumenForm');
+                            form.action = `/form/${data.id}`;
+
+                            // Tambahkan input hidden _method jika belum ada
+                            if (!form.querySelector('input[name="_method"]')) {
+                                const hiddenMethod = document.createElement('input');
+                                hiddenMethod.type = 'hidden';
+                                hiddenMethod.name = '_method';
+                                hiddenMethod.value = 'PUT';
+                                form.appendChild(hiddenMethod);
+                            } else {
+                                form.querySelector('input[name="_method"]').value = 'PUT';
+                            }
+
+                            // Isi field sesuai data
+                            document.getElementById('nama_dokumen').value = data.nama_dokumen;
+                            document.getElementById('tahun').value = data.tahun;
+                            document.getElementById('periode_tipe').value = data.periode_tipe;
+
+                            // Tahun & tipe periode readonly
+                            document.getElementById('tahun').readOnly = true;
+                            document.getElementById('periode_tipe').disabled = true;
+
+                            // Checkbox pegawai
+                            document.querySelectorAll('input[name="pegawai_ids[]"]').forEach(cb => {
+                                cb.checked = data.pegawai_ids.includes(parseInt(cb.value));
+                            });
+
+                            // Tombol ubah teks
+                            document.getElementById('btnSubmit').textContent = 'Simpan Perubahan';
+                        })
+                        .catch(err => {
+                            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat memuat data dokumen.' });
+                            console.error(err);
+                        });
+                }
+            });
+        });
+    });
     </script>
 </x-layout>

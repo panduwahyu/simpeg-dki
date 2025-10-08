@@ -96,11 +96,16 @@ Route::middleware('auth')->group(function () {
         // Form input pegawai
         Route::get('/form', [FormController::class, 'index'])->name('form.index');
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
+        Route::get('/form/{id}', [FormController::class, 'edit'])->name('form.edit');
+        Route::put('/form/{id}', [FormController::class, 'update'])->name('form.update');
 
         // Edit & delete JenisDokumen
         Route::get('jenis-dokumen/{id}/edit', [FormController::class, 'edit'])->name('jenis-dokumen.edit');
         Route::put('jenis-dokumen/{jenisDokumen}', [FormController::class, 'update'])->name('jenis-dokumen.update');
         Route::delete('jenis-dokumen/destroy', [FormController::class, 'destroy'])->name('jenis-dokumen.destroy');
+
+        Route::get('/jenis-dokumen/{id}/json', [FormController::class, 'getJenisDokumenJson'])
+            ->name('jenis-dokumen.json');
 
         // Ekspor & impor data user (langsung ke controller, tanpa UsersExport/UsersImport)
         Route::get('user/export', [UserManagementController::class, 'export'])->name('user.export');

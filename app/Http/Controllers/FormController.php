@@ -15,16 +15,19 @@ class FormController extends Controller
     {
         // Ambil semua dokumen beserta periode-nya, urut berdasarkan tahun/bulan desc
         $jenisDokumen = JenisDokumen::with(['periode' => function($query) {
-            $query->orderByDesc('tahun')->orderByDesc('bulan');
-        }])->get();
+                $query->orderByDesc('tahun')->orderByDesc('bulan');
+            }])
+            ->orderByDesc('tahun') // urutkan berdasarkan kolom tahun di tabel jenis_dokumen
+            ->get();
 
         // Ambil hanya pegawai (exclude Admin & Supervisor)
         $pegawaiList = User::select('id', 'name', 'email', 'nip')
-            ->where('role', 'Pegawai') // hanya Pegawai
+            ->where('role', 'Pegawai')
             ->get();
 
         return view('pages.form', compact('jenisDokumen', 'pegawaiList'));
     }
+
 
     public function store(Request $request)
     {
@@ -138,69 +141,96 @@ class FormController extends Controller
                         ->with('success', "$deleted dokumen berhasil dihapus!");
     }
 
-    // Tampilkan form edit
+    /**
+     * Tampilkan form edit jenis dokumen
+     */
     public function edit($id)
     {
         $jenisDokumen = JenisDokumen::with('mandatoryUploads')->findOrFail($id);
-        
-        // Ambil ID pegawai yang sudah di-checklist
-        $selectedPegawaiIds = $jenisDokumen->mandatoryUploads->pluck('user_id')->toArray();
+        $pegawaiList = User::where('role', 'Pegawai')->get();
 
-        // Daftar semua pegawai
-        $pegawaiList = User::all();
+        // Ambil pegawai yang sudah dicentang di pivot table
+        $selectedPegawaiIds = $jenisDokumen->mandatoryUploads->pluck('id')->toArray();
 
-        return view('form.edit', compact('jenisDokumen', 'pegawaiList', 'selectedPegawaiIds'));
+        return view('pages.jenis-dokumen.edit-form', [
+            'jenisDokumen' => $jenisDokumen,
+            'pegawaiList' => $pegawaiList,
+            'selectedPegawaiIds' => $selectedPegawaiIds,
+            'edit' => true,
+        ]);
     }
 
-    // Update jenis dokumen + pivot table
-    public function update(Request $request, JenisDokumen $jenisDokumen)
+    /**
+     * Update data jenis dokumen
+     */
+    public function update(Request $request, $id)
     {
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
-            'tahun' => 'required|integer|min:2000',
-            'periode_tipe' => 'required|in:bulanan,triwulanan,tahunan',
-            'pegawai_ids' => 'required|array|min:1',
-            'pegawai_ids.*' => 'integer|exists:users,id'
-        ], [
-            'pegawai_ids.required' => 'Pilih minimal 1 pegawai.'
+            'pegawai_ids'  => 'required|array|min:1',
         ]);
 
-        DB::transaction(function() use ($request, $jenisDokumen) {
-            // Update kolom di tabel jenis_dokumen
+        DB::beginTransaction();
+        try {
+            $jenisDokumen = JenisDokumen::findOrFail($id);
+
+            // Update nama dokumen
             $jenisDokumen->update([
                 'nama_dokumen' => $request->nama_dokumen,
-                'tahun' => $request->tahun,
-                'periode_tipe' => $request->periode_tipe,
             ]);
+
+            // Ambil semua periode terkait dokumen ini
+            $periodeIds = $jenisDokumen->periode->pluck('id')->toArray();
+
+            // Ambil semua pegawai sebelumnya di pivot table
+            $existingPegawai = DB::table('mandatory_uploads')
+                ->where('jenis_dokumen_id', $id)
+                ->pluck('user_id', 'periode_id'); // key = periode_id, value = user_id
 
             $newPegawaiIds = $request->pegawai_ids;
 
-            // Ambil user_id lama dari pivot
-            $oldPegawaiIds = DB::table('mandatory_uploads')
-                ->where('jenis_dokumen_id', $jenisDokumen->id)
-                ->pluck('user_id')
-                ->toArray();
-
-            // Hapus yang sudah tidak dicentang
-            $toDelete = array_diff($oldPegawaiIds, $newPegawaiIds);
-            if (!empty($toDelete)) {
+            foreach ($periodeIds as $periodeId) {
+                // Hapus baris yang tidak ada di newPegawaiIds
                 DB::table('mandatory_uploads')
-                    ->where('jenis_dokumen_id', $jenisDokumen->id)
-                    ->whereIn('user_id', $toDelete)
+                    ->where('jenis_dokumen_id', $id)
+                    ->where('periode_id', $periodeId)
+                    ->whereNotIn('user_id', $newPegawaiIds)
                     ->delete();
+
+                // Tambah baris baru jika belum ada
+                foreach ($newPegawaiIds as $userId) {
+                    DB::table('mandatory_uploads')->updateOrInsert(
+                        [
+                            'jenis_dokumen_id' => $id,
+                            'periode_id' => $periodeId,
+                            'user_id' => $userId
+                        ],
+                        ['is_uploaded' => 0]
+                    );
+                }
             }
 
-            // Tambahkan yang baru dicentang tapi belum ada
-            $toInsert = array_diff($newPegawaiIds, $oldPegawaiIds);
-            foreach ($toInsert as $userId) {
-                DB::table('mandatory_uploads')->insert([
-                    'jenis_dokumen_id' => $jenisDokumen->id,
-                    'user_id' => $userId,
-                    'is_uploaded' => 0
-                ]);
-            }
-        });
+            DB::commit();
+            return redirect()->route('form.index')->with('success', 'Data berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+        }
+    }
 
-        return redirect()->route('form.index')->with('success', 'Dokumen berhasil diperbarui!');
+    /**
+     * Endpoint JSON untuk AJAX (fetch data edit)
+     */
+    public function getJenisDokumenJson($id)
+    {
+        $jenisDokumen = JenisDokumen::with('mandatoryUploads')->findOrFail($id);
+
+        return response()->json([
+            'id' => $jenisDokumen->id,
+            'nama_dokumen' => $jenisDokumen->nama_dokumen,
+            'periode_tipe' => $jenisDokumen->periode_tipe,
+            'tahun' => $jenisDokumen->tahun,
+            'pegawai_ids' => $jenisDokumen->mandatoryUploads->pluck('id')->toArray(),
+        ]);
     }
 }
