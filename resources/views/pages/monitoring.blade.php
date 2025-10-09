@@ -12,10 +12,11 @@
 
                 <div class="card-body">
                     {{-- FILTER FORM --}}
-                    <form method="GET" action="{{ route('monitoring.index') }}" class="row g-3 mb-4">
+                    <form class="row g-3 mb-4">
                         <div class="col-md-4">
                             <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
-                            <select name="nama_dokumen" id="nama_dokumen" class="form-select p-2" required>
+                            <select id="nama_dokumen" class="form-select p-2">
+                                <option value="" selected disabled>Pilih Dokumen</option>
                                 @foreach($dokumenList as $nama)
                                     <option value="{{ $nama }}" {{ $selectedDokumen == $nama ? 'selected' : '' }}>
                                         {{ $nama }}
@@ -26,116 +27,25 @@
 
                         <div class="col-md-4">
                             <label for="tahun" class="form-label">Tahun</label>
-                            <select name="tahun" id="tahun" class="form-select p-2" required>
-                                @foreach($tahunList as $t)
-                                    <option value="{{ $t }}" {{ $selectedTahun == $t ? 'selected' : '' }}>
-                                        {{ $t }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="text" id="tahun" class="form-control p-2" readonly value="{{ $selectedTahun ?? '' }}">
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-4 align-self-end">
-                                <button type="submit" class="btn bg-gradient-info w-100">Tampilkan</button>
-                            </div>
+                        <div class="col-md-4">
+                            <label for="periode" class="form-label">Periode</label>
+                            <input type="text" id="periode" class="form-control p-2" readonly value="{{ $selectedPeriode ?? '' }}">
                         </div>
                     </form>
 
                     {{-- TABEL MONITORING --}}
-                    @if(!empty($monitoring))
-                        <div class="mb-4">
-                            <h5 class="mb-3 text-primary">
-                                {{ strtoupper($selectedDokumen) }} - {{ $selectedTahun }}
-                            </h5>
-
-                            <div class="table-responsive custom-table-wrapper">
-                                <table class="table border border-1 border-secondary-subtle text-center align-middle">
-                                    <thead class="bg-light">
-                                        {{-- HEADER BARIS 1 --}}
-                                        <tr>
-                                            <th rowspan="2" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 sticky-col align-middle">
-                                                Nama Pegawai
-                                            </th>
-
-                                            @if(!empty($monitoring['triwulan']))
-                                                <th colspan="{{ count($monitoring['triwulan']) }}" class="text-center text-secondary text-xs fw-bold bg-light">
-                                                    Triwulanan
-                                                </th>
-                                            @else
-                                                <th colspan="{{ count($monitoring['bulan']) }}" class="text-center text-secondary text-xs fw-bold bg-light">
-                                                    Bulanan
-                                                </th>
-                                                <th colspan="1" class="text-center text-secondary text-xs fw-bold bg-light">
-                                                    Tahunan
-                                                </th>
-                                            @endif
-                                        </tr>
-
-                                        {{-- HEADER BARIS 2 --}}
-                                        <tr>
-                                            @if(!empty($monitoring['triwulan']))
-                                                @foreach($monitoring['triwulan'] as $p)
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $p->label }}</th>
-                                                @endforeach
-                                            @else
-                                                @foreach($monitoring['bulan'] as $p)
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                                        {{ DateTime::createFromFormat('!m', $p->bulan)->format('M') }}
-                                                    </th>
-                                                @endforeach
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $selectedTahun }}</th>
-                                            @endif
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        @foreach($monitoring['tabel'] as $row)
-                                            <tr>
-                                                <td class="fw-bold text-sm sticky-col bg-white">
-                                                    {{ $row['nama'] }}
-                                                </td>
-
-                                                @if(!empty($monitoring['triwulan']))
-                                                    @foreach($monitoring['triwulan'] as $p)
-                                                        @php $status = $row[$p->label] ?? 0; @endphp
-                                                        <td>
-                                                            @if($status == 1)
-                                                                <i class="fas fa-check-circle text-success"></i>
-                                                            @else
-                                                                <i class="fas fa-times-circle text-danger"></i>
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                @else
-                                                    @foreach($monitoring['bulan'] as $p)
-                                                        @php $status = $row[$p->bulan] ?? 0; @endphp
-                                                        <td>
-                                                            @if($status == 1)
-                                                                <i class="fas fa-check-circle text-success"></i>
-                                                            @else
-                                                                <i class="fas fa-times-circle text-danger"></i>
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                    @php $statusTahun = $row['tahun'] ?? 0; @endphp
-                                                    <td>
-                                                        @if($statusTahun == 1)
-                                                            <i class="fas fa-check-circle text-success"></i>
-                                                        @else
-                                                            <i class="fas fa-times-circle text-danger"></i>
-                                                        @endif
-                                                    </td>
-                                                @endif
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div class="mb-4">
+                        <div class="table-responsive custom-table-wrapper">
+                            @if(!empty($monitoring))
+                                @include('pages.monitoring.table', ['monitoring' => $monitoring, 'selectedTahun' => $selectedTahun])
+                            @else
+                                <p class="text-center text-muted">Silakan pilih nama dokumen terlebih dahulu.</p>
+                            @endif
                         </div>
-                    @else
-                        <p class="text-center text-muted">Silakan pilih nama dokumen dan tahun terlebih dahulu.</p>
-                    @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -146,28 +56,27 @@
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-    {{-- Sticky Table CSS --}}
+    {{-- CSS Sticky --}}
     <style>
         .custom-table-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 500px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
+            overflow-x:auto;
+            max-height:500px;
+            border:1px solid #dee2e6;
+            border-radius:8px;
         }
 
         .table thead th {
             position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 3;
+            top:0;
+            background:#f8f9fa;
+            z-index:3;
         }
 
         .sticky-col {
             position: sticky;
-            left: 0;
-            z-index: 4;
-            background: #fff;
+            left:0;
+            z-index:5;
+            background:#fff;
         }
 
         .table th, .table td {
@@ -175,13 +84,112 @@
             vertical-align: middle;
         }
 
+        .table thead tr:nth-child(2) th {
+            background: #f8f9fa;
+            z-index: 3;
+        }
+
         .table tbody tr:nth-child(even) td {
             background-color: #fcfcfc;
         }
 
         .table thead th:first-child {
-            z-index: 5;
-            background: #e9ecef;
+            z-index: 6;
+            background:#e9ecef;
         }
     </style>
+
+    {{-- JS Auto Update Tabel --}}
+    <script>
+        const tableWrapper = document.querySelector('.custom-table-wrapper');
+
+        const bulanIndonesia = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const triwulanLabel = ['Triwulan 1', 'Triwulan 2', 'Triwulan 3', 'Triwulan 4'];
+
+        document.getElementById('nama_dokumen').addEventListener('change', function() {
+            const namaDokumen = this.value;
+            if (!namaDokumen) return;
+
+            fetch(`/monitoring/data/${namaDokumen}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Update tahun & periode
+                    document.getElementById('tahun').value = data.tahun;
+                    document.getElementById('periode').value = data.periode_tipe;
+
+                    // Kosongkan tabel jika tidak ada data
+                    if (data.monitoring.tabel.length === 0) {
+                        tableWrapper.innerHTML = '<p class="text-center text-muted">Data monitoring kosong.</p>';
+                        return;
+                    }
+
+                    // Bangun tabel HTML
+                    let html = '<table class="table border border-1 border-secondary-subtle text-center align-middle">';
+                    html += '<thead class="bg-light"><tr>';
+                    html += '<th class="sticky-col bg-white fw-bold" ';
+
+                    let periode = data.periode_tipe.toLowerCase();
+                    if(periode === 'tahunan') {
+                        html += 'rowspan="1">Nama Pegawai</th>';
+                    } else {
+                        html += 'rowspan="2">Nama Pegawai</th>';
+                    }
+
+                    // Header baris 1
+                    if(periode === 'bulanan') {
+                        html += `<th colspan="12">${data.tahun}</th>`;
+                    } else if(periode === 'triwulanan') {
+                        html += `<th colspan="4">${data.tahun}</th>`;
+                    } else if(periode === 'tahunan') {
+                        html += `<th>${data.tahun}</th>`;
+                    }
+
+                    html += '</tr>';
+
+                    // Header baris 2
+                    if(periode === 'bulanan') {
+                        html += '<tr>';
+                        bulanIndonesia.forEach(b => html += `<th>${b}</th>`);
+                        html += '</tr>';
+                    } else if(periode === 'triwulanan') {
+                        html += '<tr>';
+                        triwulanLabel.forEach(t => html += `<th>${t}</th>`);
+                        html += '</tr>';
+                    }
+
+                    html += '</thead><tbody>';
+
+                    data.monitoring.tabel.forEach(row => {
+                        html += '<tr>';
+                        html += `<td class="sticky-col bg-white fw-bold">${row.nama}</td>`;
+
+                        if(periode === 'bulanan') {
+                            for(let i=1;i<=12;i++){
+                                let status = row[i] ?? 0;
+                                html += status==1 
+                                    ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
+                                    : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                            }
+                        } else if(periode === 'triwulanan') {
+                            for(let i=1;i<=4;i++){
+                                let status = row['Triwulan '+i] ?? 0;
+                                html += status==1 
+                                    ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
+                                    : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                            }
+                        } else if(periode === 'tahunan') {
+                            let status = row.tahun ?? 0;
+                            html += status==1 
+                                ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
+                                : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                        }
+
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    tableWrapper.innerHTML = html;
+                });
+        });
+    </script>
 </x-layout>
