@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MonitoringController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil daftar nama dokumen unik
         $dokumenList = DB::table('jenis_dokumen')
             ->select('nama_dokumen')
             ->distinct()
@@ -22,7 +22,7 @@ class MonitoringController extends Controller
             ->orderByDesc('tahun')
             ->pluck('tahun');
 
-        $selectedDokumen = $request->input('nama_dokumen'); // default kosong
+        $selectedDokumen = $request->input('nama_dokumen');
         $monitoring = null;
         $selectedTahun = null;
         $periodeList = collect();
@@ -38,13 +38,7 @@ class MonitoringController extends Controller
 
             $monitoring = $this->getMonitoringData($jenisDokumen, $selectedTahun);
 
-            $periodeList = DB::table('jenis_dokumen')
-                ->where('nama_dokumen', $selectedDokumen)
-                ->where('tahun', $selectedTahun)
-                ->select('periode_tipe')
-                ->distinct()
-                ->pluck('periode_tipe');
-
+            $periodeList = $jenisDokumen->pluck('periode_tipe')->unique();
             $selectedPeriode = $request->input('periode', $periodeList->first());
         }
 
@@ -61,7 +55,8 @@ class MonitoringController extends Controller
 
     private function getMonitoringData($jenisDokumen, $tahun)
     {
-        $ids = $jenisDokumen->pluck('id');
+        // id jenis dokumen relevan (mis. untuk nama dokumen yang dipilih & tahun yang dipilih)
+        $ids = $jenisDokumen->pluck('id')->toArray();
         $types = $jenisDokumen->pluck('periode_tipe')->unique();
 
         $periodeQuery = DB::table('periode')->where('tahun', $tahun);
@@ -75,47 +70,77 @@ class MonitoringController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Ambil semua mandatory_uploads untuk jenis_dokumen yang relevan
         $uploads = DB::table('mandatory_uploads')
-        ->whereIn('jenis_dokumen_id', $ids)
-        ->join('users', 'users.id', '=', 'mandatory_uploads.user_id')
-        ->join('periode', 'periode.id', '=', 'mandatory_uploads.periode_id')
-        ->select('users.id as user_id', 'users.name as user_name', 'periode.id as periode_id', 'mandatory_uploads.is_uploaded')
-        ->get();
+            ->whereIn('jenis_dokumen_id', $ids)
+            ->select('user_id', 'periode_id', 'jenis_dokumen_id', 'is_uploaded')
+            ->get();
 
-    // Ambil daftar user_id yang ada di mandatory_uploads
-    $userIds = $uploads->pluck('user_id')->unique();
+        // Ambil daftar user_id yang ada di mandatory_uploads
+        $userIds = $uploads->pluck('user_id')->unique();
 
-    // Ambil pegawai hanya yang ada di mandatory_uploads
-    $pegawai = DB::table('users')
-        ->whereIn('id', $userIds)
-        ->select('id', 'name')
-        ->orderBy('name')
-        ->get();
+        // Ambil pegawai hanya yang ada di mandatory_uploads
+        $pegawai = DB::table('users')
+            ->whereIn('id', $userIds)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        // Build map untuk lookup cepat: $uploadsMap[user_id][periode_id] = ['jenis' => ..., 'is_uploaded' => ...]
+        $uploadsMap = [];
+        foreach ($uploads as $u) {
+            $uploadsMap[$u->user_id][$u->periode_id] = [
+                'jenis' => $u->jenis_dokumen_id,
+                'is_uploaded' => (int)$u->is_uploaded
+            ];
+        }
 
         $tableData = [];
         foreach ($pegawai as $p) {
-            $row = ['nama' => $p->name];
+            $row = ['nama' => $p->name, 'user_id' => $p->id];
 
             if ($types->contains('triwulanan')) {
-                foreach ($triwulan as $tw) {
-                    $upload = $uploads->first(fn($u) => $u->user_id == $p->id && $u->periode_id == $tw->id);
-                    $row[$tw->label] = $upload ? $upload->is_uploaded : 0;
+                foreach ($triwulan as $idx => $tw) {
+                    $spaceLabel = preg_replace('/\s+\d{4}$/', '', $tw->label); // fix: hapus tahun di akhir label
+                    $underscoreLabel = str_replace(' ', '_', $spaceLabel);
+
+                    $uploadEntry = $uploadsMap[$p->id][$tw->id] ?? null;
+                    $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                    $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
+
+                    $row[$spaceLabel] = $isUploaded;
+                    $row[$underscoreLabel . '_periode_id'] = $tw->id;
+                    $row[$underscoreLabel . '_jenis_id'] = $jenisId;
                 }
             } else {
-                foreach ($bulan as $b) {
-                    $upload = $uploads->first(fn($u) => $u->user_id == $p->id && $u->periode_id == $b->id);
-                    $row[$b->bulan] = $upload ? $upload->is_uploaded : 0;
-                }
+                // BULANAN
+                foreach ($bulan as $idx => $b) {
+                    $monthIndex = is_numeric($b->bulan) ? (int)$b->bulan : ($idx + 1);
+                    $monthKey = (string)$monthIndex;
 
-                foreach ($tahunPeriode as $t) {
-                    $upload = $uploads->first(fn($u) => $u->user_id == $p->id && $u->periode_id == $t->id);
-                    $row['tahun'] = $upload ? $upload->is_uploaded : 0;
+                    $uploadEntry = $uploadsMap[$p->id][$b->id] ?? null;
+                    $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                    $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
+
+                    $row[$monthKey] = $isUploaded;
+                    $row[$monthKey . '_periode_id'] = $b->id;
+                    $row[$monthKey . '_jenis_id'] = $jenisId;
                 }
             }
 
+            // 🧩 TAHUNAN (DIPINDAH KE LUAR IF)
+            foreach ($tahunPeriode as $t) {
+                $uploadEntry = $uploadsMap[$p->id][$t->id] ?? null;
+                $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
+
+                $row['tahun'] = $isUploaded;
+                $row['tahun_periode_id'] = $t->id;
+                $row['tahun_jenis_id'] = $jenisId;
+            }
             $tableData[] = $row;
         }
-
+            
         return [
             'bulan' => $bulan,
             'tahun' => $tahunPeriode,
@@ -124,13 +149,26 @@ class MonitoringController extends Controller
         ];
     }
 
-    public function getMonitoringDataAjax($namaDokumen)
+    // NOTE: terima param tahun via query string (opsional). Pastikan kita pakai jenis_dokumen untuk tahun yang benar.
+    public function getMonitoringDataAjax(Request $request, $namaDokumen)
     {
+        // jika client mengirim tahun, pakai itu; jika tidak, ambil tahun terbesar untuk nama dokumen ini
+        $tahunParam = $request->input('tahun');
+
+        if ($tahunParam) {
+            $tahun = (int)$tahunParam;
+        } else {
+            $tahun = DB::table('jenis_dokumen')
+                ->where('nama_dokumen', $namaDokumen)
+                ->max('tahun') ?? now()->year;
+        }
+
+        // ambil jenis dokumen yang sesuai nama + tahun
         $jenisDokumen = DB::table('jenis_dokumen')
             ->where('nama_dokumen', $namaDokumen)
+            ->where('tahun', $tahun)
             ->get();
 
-        $tahun = $jenisDokumen->first()?->tahun ?? '';
         $periode_tipe = $jenisDokumen->first()?->periode_tipe ?? '';
 
         $monitoring = $this->getMonitoringData($jenisDokumen, $tahun);
@@ -140,5 +178,41 @@ class MonitoringController extends Controller
             'periode_tipe' => $periode_tipe,
             'monitoring' => $monitoring
         ]);
+    }
+
+    // Preview tetap cek mandatory_uploads (validasi wajib upload), tetapi file path diambil dari table dokumen
+    public function previewFile($userId, $jenisDokumenId, $periodeId)
+    {
+        $upload = DB::table('mandatory_uploads')
+            ->where('user_id', $userId)
+            ->where('jenis_dokumen_id', $jenisDokumenId)
+            ->where('periode_id', $periodeId)
+            ->first();
+
+        if (!$upload) {
+            abort(404, 'File tidak ditemukan atau tidak wajib upload');
+        }
+
+        $dokumen = DB::table('dokumen')
+            ->where('user_id', $userId)
+            ->where('jenis_dokumen_id', $jenisDokumenId)
+            ->where('periode_id', $periodeId)
+            ->first();
+
+        if (!$dokumen || !$dokumen->path) {
+            abort(404, 'File tidak ditemukan di tabel dokumen');
+        }
+
+        $filePath = storage_path('app/private/' . $dokumen->path);
+        if (!file_exists($filePath)) {
+            abort(404, 'File tidak ditemukan di storage');
+        }
+
+        $mime = mime_content_type($filePath);
+        $file = file_get_contents($filePath);
+
+        return response($file, 200)
+            ->header('Content-Type', $mime)
+            ->header('Content-Disposition', 'inline; filename="' . basename($filePath) . '"');
     }
 }

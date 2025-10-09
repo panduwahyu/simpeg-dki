@@ -97,12 +97,15 @@
             z-index: 6;
             background:#e9ecef;
         }
+
+        .status-upload {
+            cursor: pointer;
+        }
     </style>
 
     {{-- JS Auto Update Tabel --}}
     <script>
         const tableWrapper = document.querySelector('.custom-table-wrapper');
-
         const bulanIndonesia = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         const triwulanLabel = ['Triwulan 1', 'Triwulan 2', 'Triwulan 3', 'Triwulan 4'];
 
@@ -110,48 +113,39 @@
             const namaDokumen = this.value;
             if (!namaDokumen) return;
 
-            fetch(`/monitoring/data/${namaDokumen}`)
+            const tahunVal = document.getElementById('tahun').value || '';
+            fetch(`/monitoring/data/${encodeURIComponent(namaDokumen)}?tahun=${encodeURIComponent(tahunVal)}`)
                 .then(res => res.json())
                 .then(data => {
-                    // Update tahun & periode
                     document.getElementById('tahun').value = data.tahun;
                     document.getElementById('periode').value = data.periode_tipe;
 
-                    // Kosongkan tabel jika tidak ada data
                     if (data.monitoring.tabel.length === 0) {
                         tableWrapper.innerHTML = '<p class="text-center text-muted">Data monitoring kosong.</p>';
                         return;
                     }
 
-                    // Bangun tabel HTML
                     let html = '<table class="table border border-1 border-secondary-subtle text-center align-middle">';
                     html += '<thead class="bg-light"><tr>';
-                    html += '<th class="sticky-col bg-white fw-bold" ';
-
                     let periode = data.periode_tipe.toLowerCase();
-                    if(periode === 'tahunan') {
-                        html += 'rowspan="1">Nama Pegawai</th>';
-                    } else {
-                        html += 'rowspan="2">Nama Pegawai</th>';
-                    }
 
-                    // Header baris 1
-                    if(periode === 'bulanan') {
+                    html += '<th class="sticky-col bg-white fw-bold" ' + (periode==='tahunan' ? 'rowspan="1"' : 'rowspan="2"') + '>Nama Pegawai</th>';
+
+                    if(periode === 'bulanan'){
                         html += `<th colspan="12">${data.tahun}</th>`;
-                    } else if(periode === 'triwulanan') {
+                    } else if(periode === 'triwulanan'){
                         html += `<th colspan="4">${data.tahun}</th>`;
-                    } else if(periode === 'tahunan') {
+                    } else if(periode === 'tahunan'){
                         html += `<th>${data.tahun}</th>`;
                     }
 
                     html += '</tr>';
 
-                    // Header baris 2
-                    if(periode === 'bulanan') {
+                    if(periode === 'bulanan'){
                         html += '<tr>';
                         bulanIndonesia.forEach(b => html += `<th>${b}</th>`);
                         html += '</tr>';
-                    } else if(periode === 'triwulanan') {
+                    } else if(periode === 'triwulanan'){
                         html += '<tr>';
                         triwulanLabel.forEach(t => html += `<th>${t}</th>`);
                         html += '</tr>';
@@ -163,25 +157,43 @@
                         html += '<tr>';
                         html += `<td class="sticky-col bg-white fw-bold">${row.nama}</td>`;
 
-                        if(periode === 'bulanan') {
+                        if(periode === 'bulanan'){
                             for(let i=1;i<=12;i++){
                                 let status = row[i] ?? 0;
-                                html += status==1 
-                                    ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
-                                    : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                                let jenisId = row[i+'_jenis_id'] ?? '';
+                                let periodeId = row[i+'_periode_id'] ?? '';
+                                if(status==1){
+                                    html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            </td>`;
+                                } else {
+                                    html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                                }
                             }
-                        } else if(periode === 'triwulanan') {
+                        } else if(periode === 'triwulanan'){
                             for(let i=1;i<=4;i++){
                                 let status = row['Triwulan '+i] ?? 0;
-                                html += status==1 
-                                    ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
-                                    : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                                let jenisId = row['Triwulan_'+i+'_jenis_id'] ?? '';
+                                let periodeId = row['Triwulan_'+i+'_periode_id'] ?? '';
+                                if(status==1){
+                                    html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            </td>`;
+                                } else {
+                                    html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                                }
                             }
-                        } else if(periode === 'tahunan') {
+                        } else if(periode === 'tahunan'){
                             let status = row.tahun ?? 0;
-                            html += status==1 
-                                ? '<td><i class="fas fa-check-circle text-success"></i></td>' 
-                                : '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                            let jenisId = row.tahun_jenis_id ?? '';
+                            let periodeId = row.tahun_periode_id ?? '';
+                            if(status==1){
+                                html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </td>`;
+                            } else {
+                                html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                            }
                         }
 
                         html += '</tr>';
@@ -189,6 +201,17 @@
 
                     html += '</tbody></table>';
                     tableWrapper.innerHTML = html;
+
+                    document.querySelectorAll('.status-upload').forEach(td => {
+                        td.addEventListener('click', function() {
+                            const userId = this.dataset.user;
+                            const jenisId = this.dataset.jenis;
+                            const periodeId = this.dataset.periode;
+                            if(!userId || !jenisId || !periodeId) return;
+                            const url = `/monitoring/preview/${userId}/${jenisId}/${periodeId}`;
+                            window.open(url, '_blank');
+                        });
+                    });
                 });
         });
     </script>

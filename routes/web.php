@@ -89,6 +89,9 @@ Route::middleware('auth')->group(function () {
             ->name('monitoring.dokumen.detail');
         Route::get('/monitoring/data/{namaDokumen}', [MonitoringController::class, 'getMonitoringDataAjax'])
             ->name('monitoring.ajax');
+        Route::get('/monitoring/file-path/{user}/{periode}', [MonitoringController::class, 'getFilePath'])
+            ->name('monitoring.file-path');
+        Route::get('/monitoring/preview/{userId}/{jenisDokumenId}/{periodeId}', [MonitoringController::class, 'previewFile']);
 
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
