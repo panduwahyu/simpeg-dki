@@ -16,13 +16,13 @@
                         <div class="card-body px-0 pb-2">
                             {{-- Form Filter --}}
                             <div class="container-fluid px-3 mb-4">
-                                <form method="GET" action="{{ route('dokumen.index') }}" class="row g-3 align-items-end justify-content-center">
+                                <form method="GET" action="{{ route('dokumen.index') }}" class="row g-3 align-items-end justify-content-center" style="margin-right: 100px;">
                                     <div class="col-12 col-md-6 col-lg-3">
                                         <label for="jenis_dokumen_id" class="form-label small mb-1">Jenis Dokumen</label>
                                         <select name="jenis_dokumen_id" id="jenis_dokumen_id" class="form-select">
                                             <option value="">-- Semua Jenis Dokumen --</option>
                                             @foreach($jenisDokumen as $jenis)
-                                                <option value="{{ $jenis->id }}" {{ request('jenis_dokumen_id') == $jenis->id ? 'selected' : '' }}>
+                                                <option value="{{ $jenis->id }} " {{ request('jenis_dokumen_id') == $jenis->id ? 'selected' : '' }}>
                                                     {{ $jenis->nama_dokumen }}
                                                 </option>
                                             @endforeach
@@ -61,6 +61,46 @@
                                             <a href="{{ route('dokumen.index') }}" class="btn btn-secondary flex-fill flex-lg-grow-0" style="min-width: 100px;">
                                                 <i class="bi bi-arrow-clockwise me-1"></i>Reset
                                             </a>
+                                            <button type="button" class="btn flex-fill btn-primary flex-lg-grow-0" data-bs-toggle="modal" data-bs-target="#tambahDokumenModal" style="min-width: 100px;padding: 6px 12px;">
+                                                Tambah Dokumen
+                                            </button>
+                                            <div class="modal fade" id="tambahDokumenModal" tabindex="-1" aria-labelledby="tambahDokumenLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="tambahDokumenLabel">Tambah Dokumen</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                {{-- modal upload dokumen popup --}}
+                                                <div class="modal-body">
+                                                    <form id="formTambahDokumen">
+                                                    @csrf
+                                                    <div class="mb-3">
+                                                        <label for="jenis_dokumen" class="form-label">Jenis Dokumen</label>
+                                                        <select name="jenis_dokumen_id" id="jenis_dokumen_id" class="form-select">
+                                                            <option value="">-- Semua Jenis Dokumen --</option>
+                                                            @foreach($jenisDokumen as $jenis)
+                                                                <option value="{{ $jenis->id }} " {{ request('jenis_dokumen_id') == $jenis->id ? 'selected' : '' }}>
+                                                                    {{ $jenis->nama_dokumen }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="periode" class="form-label">Periode</label>
+                                                        <input type="text" class="form-control" id="periode" name="periode">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="periode" class="form-label">Tahun</label>
+                                                        <input type="text" class="form-control" id="periode" name="periode">
+                                                    </div>
+                                                    <button type="submit" class="btn btn-success w-100">Simpan</button>
+                                                    </form>
+                                                </div>
+                                                </div>
+                                            </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </form>
@@ -70,8 +110,8 @@
                             <table class="table table-bordered table-striped align-middle">
                                 <thead class="table-dark text-center">
                                     <tr>
-                                        <th hidden>#</th>
-                                        <th>Jenis Dokumen</th>
+                                        <th>Nama Pegawai</th>
+                                        <th style="max-width: 100px">Jenis Dokumen</th>
                                         <th>Tipe Periode</th>
                                         <th>Tahun</th>
                                         <th>Tanggal Upload</th>
@@ -81,9 +121,9 @@
                                 <tbody>
                                     @forelse ($dokumen as $index => $d)
                                         <tr>
-                                            <td hidden>{{ $dokumen->firstItem() + $index }}</td>
-                                            <td>{{ $d->jenisDokumen->nama_dokumen ?? '-' }}</td>
-                                            <td>{{ $d->periode->tipe ?? '-' }}</td>
+                                            <td>{{ $d->users->name ?? '-' }}</td>
+                                            <td>{{ $d->jenisDokumen->nama_dokumen ?? '-' }} </td>
+                                            <td>{{ $d->periode->tipe ?? '-' }} </td>
                                             <td>
                                                 <div class="d-flex justify-content-center px-2 py-1">
                                                     {{ $d->periode->tahun ?? '-' }}
@@ -97,7 +137,7 @@
                                             <td class="text-center">
                                                 <a href="{{ route('dokumen.preview', $d->id) }}"
                                                 target="_blank"
-                                                class="btn btn-sm btn-primary">
+                                                class="btn btn-sm btn-info">
                                                     Preview
                                                 </a>
                                             </td>
@@ -128,6 +168,10 @@
                 /* Opsional: buat warna placeholder sedikit lebih pucat */
                 select.form-select option[value=""] {
                     color: #6c757d; /* abu-abu */
+                }
+                table {
+                    padding-left: 10px;
+                    padding-right: 10px;
                 }
             </style>
         </div>
