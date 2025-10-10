@@ -57,15 +57,15 @@
             </li>
 
             {{-- Monitoring --}}
-            {{-- <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'monitoring' || $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
                    href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">dashboard</i>
                     </div>
-                    <span class="nav-link-text ms-1">Monitoring</span>
+                    <span class="nav-link-text ms-1">Pegawai</span>
                 </a>
-            </li> --}}
+            </li>
 
             {{-- Dokumen Baru hanya untuk Admin & Supervisor --}}
             @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
