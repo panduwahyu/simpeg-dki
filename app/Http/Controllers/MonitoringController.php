@@ -170,15 +170,16 @@ class MonitoringController extends Controller
             }
         }
 
-        $progressUploaded = $totalCells > 0 ? round(($uploadedCells / $totalCells) * 100, 2) : 0;
-        $progressSigned = $uploadedCells > 0 ? round(($signedCells / $uploadedCells) * 100, 2) : 0;
+        // Keterangan "X dari Y dokumen"
+        $progressUploadedText = "$uploadedCells dari $totalCells dokumen";
+        $progressSignedText = $uploadedCells > 0 ? "$signedCells dari $uploadedCells dokumen" : "0 dari 0 dokumen";
 
         return response()->json([
             'tahun' => $tahun,
             'periode_tipe' => $periode_tipe,
             'monitoring' => $monitoring,
-            'progressUploaded' => $progressUploaded,
-            'progressSigned' => $progressSigned
+            'progressUploadedText' => $progressUploadedText,
+            'progressSignedText' => $progressSignedText
         ]);
     }
 
