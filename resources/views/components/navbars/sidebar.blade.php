@@ -6,8 +6,7 @@
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
             aria-hidden="true" id="iconSidenav"></i>
-        @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
-        <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
+        <a class="navbar-brand d-flex align-items-center" href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
             <img src="{{ asset('assets/img/logo-ct.png') }}" class="navbar-brand-img" style="height: 55px;" alt="main_logo">
             <span class="ms-2 fw-bold text-white" style="font-size: 2rem; line-height: 1;">SIPETRA</span>
         </a>
@@ -56,19 +55,31 @@
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Laman</h6>
             </li>
 
-            {{-- Monitoring --}}
-            <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
-                   href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">dashboard</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Pegawai</span>
-                </a>
-            </li>
+
+            @if(auth()->user()->role === 'Pegawai')
+                <li class="nav-item">
+                    <a class="nav-link text-white {{ $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('pegawai-dashboard') }}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">dashboard</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Monitoring</span>
+                    </a>
+                </li>
+            @endif
 
             {{-- Dokumen Baru hanya untuk Admin & Supervisor --}}
             @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
+                <li class="nav-item">
+                    <a class="nav-link text-white {{ $activePage == 'monitoring-pegawai' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('monitoring.index') }}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">insights</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Monitoring Pegawai</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a class="nav-link text-white {{ $activePage == 'form' ? 'active bg-gradient-primary' : '' }}"
                         href="{{ route('form.index') }}">
@@ -79,15 +90,6 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'monitoring-pegawai' ? 'active bg-gradient-primary' : '' }}"
-                   href="{{ route('monitoring.index') }}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">insights</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Monitoring Pegawai</span>
-                </a>
-            </li>
             @endif
 
             {{-- Dokumen --}}

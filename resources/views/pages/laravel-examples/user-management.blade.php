@@ -57,7 +57,7 @@
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">NO.</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">FOTO</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAMA LENGKAP</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">EMAIL</th>
@@ -72,7 +72,7 @@
                                             <td>
                                                 <div class="d-flex px-2 py-1">
                                                     <div class="d-flex flex-column justify-content-center">
-                                                        <p class="mb-0 text-sm">{{ $user->id }}</p>
+                                                        <p class="mb-0 text-sm">{{ $loop->iteration }}</p>
                                                     </div>
                                                 </div>
                                             </td>
