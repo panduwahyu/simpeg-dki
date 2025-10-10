@@ -39,13 +39,13 @@
                     {{-- PROGRESS BAR --}}
                     <div id="progressBars" class="mb-4" style="display:none;">
                         <div class="mb-2">
-                            <label>Progres Pegawai Upload Dokumen: <span id="progressUploadedText">0%</span></label>
+                            <label>Progres Pegawai Unggah Dokumen: <span id="progressUploadedText">0%</span></label>
                             <div class="progress">
                                 <div id="progressUploadedBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
                             </div>
                         </div>
                         <div class="mb-2">
-                            <label>Progres Penandatanganan Pejabat: <span id="progressSignedText">0%</span></label>
+                            <label>Progres Penandatanganan Dokumen oleh Pejabat: <span id="progressSignedText">0%</span></label>
                             <div class="progress">
                                 <div id="progressSignedBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
                             </div>
