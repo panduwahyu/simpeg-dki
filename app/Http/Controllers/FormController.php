@@ -199,14 +199,21 @@ class FormController extends Controller
 
                 // Tambah baris baru jika belum ada
                 foreach ($newPegawaiIds as $userId) {
-                    DB::table('mandatory_uploads')->updateOrInsert(
-                        [
+                    $existing = DB::table('mandatory_uploads')
+                        ->where('jenis_dokumen_id', $id)
+                        ->where('periode_id', $periodeId)
+                        ->where('user_id', $userId)
+                        ->first();
+
+                    if (!$existing) {
+                        // hanya buat baru kalau belum ada
+                        DB::table('mandatory_uploads')->insert([
                             'jenis_dokumen_id' => $id,
                             'periode_id' => $periodeId,
-                            'user_id' => $userId
-                        ],
-                        ['is_uploaded' => 0]
-                    );
+                            'user_id' => $userId,
+                            'is_uploaded' => 0,
+                        ]);
+                    }
                 }
             }
 

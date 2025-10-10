@@ -152,23 +152,11 @@ class MonitoringController extends Controller
     // NOTE: terima param tahun via query string (opsional). Pastikan kita pakai jenis_dokumen untuk tahun yang benar.
     public function getMonitoringDataAjax(Request $request, $namaDokumen)
     {
-        // jika client mengirim tahun, pakai itu; jika tidak, ambil tahun terbesar untuk nama dokumen ini
-        $tahunParam = $request->input('tahun');
-
-        if ($tahunParam) {
-            $tahun = (int)$tahunParam;
-        } else {
-            $tahun = DB::table('jenis_dokumen')
-                ->where('nama_dokumen', $namaDokumen)
-                ->max('tahun') ?? now()->year;
-        }
-
-        // ambil jenis dokumen yang sesuai nama + tahun
         $jenisDokumen = DB::table('jenis_dokumen')
             ->where('nama_dokumen', $namaDokumen)
-            ->where('tahun', $tahun)
             ->get();
 
+        $tahun = $jenisDokumen->first()?->tahun ?? '';
         $periode_tipe = $jenisDokumen->first()?->periode_tipe ?? '';
 
         $monitoring = $this->getMonitoringData($jenisDokumen, $tahun);
