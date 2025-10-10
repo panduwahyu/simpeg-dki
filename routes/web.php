@@ -64,7 +64,7 @@ Route::middleware('auth')->group(function () {
     
     // Dashboard
     Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [MonitoringController::class, 'index'])->name('dashboard')->middleware('role:Admin,Supervisor');
     
     // Dokumen
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');

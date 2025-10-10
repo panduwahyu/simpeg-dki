@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class SessionsController extends Controller
 {
@@ -52,8 +53,12 @@ class SessionsController extends Controller
                 $rememberDuration
             );
         }
-
-        return redirect('/dashboard');
+        $user = Auth::user();
+        if ($user->role === 'Supervisor' || $user->role === 'Admin') {
+            return redirect('/dashboard');
+        } else {
+            return redirect('pegawai/dashboard');
+        }
     }
 
     /**
