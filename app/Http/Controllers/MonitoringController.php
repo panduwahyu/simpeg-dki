@@ -146,31 +146,17 @@ class MonitoringController extends Controller
 
         $monitoring = $this->getMonitoringData($jenisDokumen, $tahun);
 
-        // ===== Hitung progress bar =====
-        $rows = $monitoring['tabel'];
+        // ===== Hitung progress bar (revisi) =====
+        $ids = $jenisDokumen->pluck('id')->toArray();
 
-        $totalCells = 0;
-        $uploadedCells = 0;
-        $signedCells = 0;
+        $uploads = DB::table('mandatory_uploads')
+            ->whereIn('jenis_dokumen_id', $ids)
+            ->get();
 
-        foreach ($rows as $row) {
-            foreach ($row as $key => $val) {
-                if (in_array($key, ['nama','user_id'])) continue;
+        $totalCells = $uploads->count(); // total dokumen yang wajib diupload
+        $uploadedCells = $uploads->where('is_uploaded', 1)->count();
+        $signedCells = $uploads->where('is_uploaded', 1)->where('penilaian', 1)->count();
 
-                $totalCells++;
-                if ($val == 1) { // ceklis atau tanda seru
-                    $uploadedCells++;
-
-                    // cek penilaian untuk ceklis ✅
-                    $penilaianKey = str_replace(' ','_', $key) . '_penilaian';
-                    if(isset($row[$penilaianKey]) && $row[$penilaianKey] == 1){
-                        $signedCells++;
-                    }
-                }
-            }
-        }
-
-        // Keterangan "X dari Y dokumen"
         $progressUploadedText = "$uploadedCells dari $totalCells dokumen";
         $progressSignedText = $uploadedCells > 0 ? "$signedCells dari $uploadedCells dokumen" : "0 dari 0 dokumen";
 
