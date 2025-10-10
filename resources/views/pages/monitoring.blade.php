@@ -36,6 +36,22 @@
                         </div>
                     </form>
 
+                    {{-- PROGRESS BAR --}}
+                    <div id="progressBars" class="mb-4" style="display:none;">
+                        <div class="mb-2">
+                            <label>Progress Upload: <span id="progressUploadedText">0%</span></label>
+                            <div class="progress">
+                                <div id="progressUploadedBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label>Progress Penandatanganan: <span id="progressSignedText">0%</span></label>
+                            <div class="progress">
+                                <div id="progressSignedBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- TABEL MONITORING --}}
                     <div class="mb-4">
                         <div class="table-responsive custom-table-wrapper">
@@ -45,6 +61,12 @@
                                 <p class="text-center text-muted">Silakan pilih nama dokumen terlebih dahulu.</p>
                             @endif
                         </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-4 align-items-center justify-content-center">
+                        <div><i class="fas fa-times-circle text-danger"></i> Pegawai belum unggah dokumen</div>
+                        <div><i class="fas fa-exclamation-circle text-warning"></i> Dokumen belum ditandatangani pejabat</div>
+                        <div><i class="fas fa-check-circle text-success"></i> Dokumen telah lengkap</div>
                     </div>
                 </div>
             </div>
@@ -84,11 +106,6 @@
             vertical-align: middle;
         }
 
-        .table thead tr:nth-child(2) th {
-            background: #f8f9fa;
-            z-index: 3;
-        }
-
         .table tbody tr:nth-child(even) td {
             background-color: #fcfcfc;
         }
@@ -103,7 +120,7 @@
         }
     </style>
 
-    {{-- JS Auto Update Tabel --}}
+    {{-- JS Auto Update Tabel + Progress --}}
     <script>
 document.getElementById('nama_dokumen').addEventListener('change', function() {
     const namaDokumen = this.value;
@@ -115,6 +132,13 @@ document.getElementById('nama_dokumen').addEventListener('change', function() {
         .then(data => {
             document.getElementById('tahun').value = data.tahun;
             document.getElementById('periode').value = data.periode_tipe;
+
+            // tampilkan progress bar
+            document.getElementById('progressBars').style.display = 'block';
+            document.getElementById('progressUploadedText').innerText = data.progressUploaded + '%';
+            document.getElementById('progressSignedText').innerText = data.progressSigned + '%';
+            document.getElementById('progressUploadedBar').style.width = data.progressUploaded + '%';
+            document.getElementById('progressSignedBar').style.width = data.progressSigned + '%';
 
             const tableWrapper = document.querySelector('.custom-table-wrapper');
             if (data.monitoring.tabel.length === 0) {
