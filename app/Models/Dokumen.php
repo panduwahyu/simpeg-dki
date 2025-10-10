@@ -29,8 +29,13 @@ class Dokumen extends Model
         return $this->belongsTo(Periode::class, 'periode_id');
     }
 
-    public function user()
+    public function pegawai()
     {
         return $this->belongsTo(NamaPegawai::class, 'user_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

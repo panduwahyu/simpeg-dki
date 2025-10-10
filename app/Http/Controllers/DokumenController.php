@@ -9,6 +9,7 @@ use App\Models\JenisDokumen;
 use App\Models\Periode;
 use App\Models\NamaPegawai;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class DokumenController extends Controller
 {
@@ -18,27 +19,20 @@ class DokumenController extends Controller
     public function index(Request $request)
     {
         $query = Dokumen::query();
-        // $namaPegawai = Auth::id();
-
-        // Filter berdasarkan nama pegawai
-        if ($request->filled('name')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', $request->nama_pegawai);
-            });
-        }
+        $user = Auth::user();
 
         // Filter berdasarkan jenis dokumen
         if ($request->filled('jenis_dokumen_id')) {
             $query->where('jenis_dokumen_id', $request->jenis_dokumen_id);
         }
-
+        
         // Filter berdasarkan tipe periode
         if ($request->filled('tipe')) {
             $query->whereHas('periode', function ($q) use ($request) {
                 $q->where('tipe', $request->tipe);
             });
         }
-
+        
         // Filter berdasarkan tahun
         if ($request->filled('tahun')) {
             $query->whereHas('periode', function ($q) use ($request) {
@@ -46,23 +40,31 @@ class DokumenController extends Controller
             });
         }
 
-        
-        // // Filter berdasarkan tanggal unggah
-        // if ($request->filled('tanggal')) {
-        //     $query->whereDate('tanggal_unggah', $request->tanggal);
-        // }
-
+            // Jika admin/supervisor → bisa lihat semua data, plus filter opsional
+            if (in_array($user->role, ['Admin', 'Supervisor'])) {
+                // Jika memilih filter user_id, maka tampilkan dokumen user itu
+                if ($request->filled('user_id')) {
+                    $query->where('user_id', $request->user_id);
+                }
+                // Ambil semua user untuk dropdown filter
+                $pegawai = NamaPegawai::all();
+            } 
+            // Jika pegawai → hanya data miliknya
+            else {
+                $query->where('user_id', $user->id);
+                $pegawai = collect(); // kosong
+            }
         // Ambil data dengan relasi
-        $dokumen = $query->with(['jenisDokumen', 'periode', 'user'])
+        $dokumen = $query->with(['jenisDokumen', 'periode', 'user',])
                          ->paginate(10)
                          ->withQueryString();
 
         // Untuk dropdown filter
         $jenisDokumen = JenisDokumen::all();
         $periode = Periode::select('tipe', 'tahun')->distinct()->get();
-        $namaPegawai = NamaPegawai::all();
+        $pegawai = NamaPegawai::all();
 
-        return view('pages.tables', compact('dokumen', 'jenisDokumen', 'periode', 'namaPegawai'));
+        return view('pages.tables', compact('dokumen', 'jenisDokumen', 'periode', 'user', 'pegawai'));
     }
 
     /**

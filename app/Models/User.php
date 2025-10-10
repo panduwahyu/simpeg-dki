@@ -59,4 +59,9 @@ class User extends Authenticatable
             $this->attributes['password'] = bcrypt($password);
         }
     }
+
+    public function dokumen()
+    {
+        return $this->hasMany(Dokumen::class, 'user_id');
+    }
 }
