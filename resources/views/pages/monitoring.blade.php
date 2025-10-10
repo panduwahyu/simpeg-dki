@@ -139,19 +139,18 @@ document.getElementById('nama_dokumen').addEventListener('change', function() {
             document.getElementById('periode').value = data.periode_tipe;
 
             // tampilkan progress bar
-document.getElementById('progressBars').style.display = 'block';
-document.getElementById('progressUploadedText').innerText = data.progressUploadedText;
-document.getElementById('progressSignedText').innerText = data.progressSignedText;
+            document.getElementById('progressBars').style.display = 'block';
+            document.getElementById('progressUploadedText').innerText = data.progressUploadedText;
+            document.getElementById('progressSignedText').innerText = data.progressSignedText;
 
-// opsional: kalau mau tetap ada visual bar, bisa proporsional
-const totalUploaded = parseInt(data.progressUploadedText.split(' ')[0]);
-const totalDocs = parseInt(data.progressUploadedText.split(' ')[2]);
-document.getElementById('progressUploadedBar').style.width = totalDocs > 0 ? (totalUploaded / totalDocs * 100) + '%' : '0%';
+            // opsional: kalau mau tetap ada visual bar, bisa proporsional
+            const totalUploaded = parseInt(data.progressUploadedText.split(' ')[0]);
+            const totalDocs = parseInt(data.progressUploadedText.split(' ')[2]);
+            document.getElementById('progressUploadedBar').style.width = totalDocs > 0 ? (totalUploaded / totalDocs * 100) + '%' : '0%';
 
-const totalSigned = parseInt(data.progressSignedText.split(' ')[0]);
-const totalUploadedForSigned = parseInt(data.progressSignedText.split(' ')[2]);
-document.getElementById('progressSignedBar').style.width = totalUploadedForSigned > 0 ? (totalSigned / totalUploadedForSigned * 100) + '%' : '0%';
-
+            const totalSigned = parseInt(data.progressSignedText.split(' ')[0]);
+            const totalUploadedForSigned = parseInt(data.progressSignedText.split(' ')[2]);
+            document.getElementById('progressSignedBar').style.width = totalUploadedForSigned > 0 ? (totalSigned / totalUploadedForSigned * 100) + '%' : '0%';
 
             const tableWrapper = document.querySelector('.custom-table-wrapper');
             if (data.monitoring.tabel.length === 0) {
