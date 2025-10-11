@@ -33,22 +33,36 @@
                             </div>
                         </div>
 
-                        {{-- Tombol Tambah User --}}
-                        <div class="me-3 my-3 text-end">
-                            <a class="btn bg-gradient-dark mb-0" href="{{ route('user-management.create') }}">
-                                <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User Baru
-                            </a>
-                        </div>
+                        <div class="d-flex justify-content-between align-items-center my-3 mx-3">
+                            <!-- Kolom Pencarian -->
+                            <div class="col-md-4 p-0">
+                                <input type="text" id="searchUser" class="form-control border border-primary rounded" placeholder="Cari user..." />
+                            </div>
 
-                        {{-- Tombol Export & Import --}}
-                        <div class="mb-3 ms-3">
-                            <a href="{{ route('user.export') }}" class="btn btn-success">Export Users</a>
+                            <!-- Tombol Tambah & Export -->
+                            <div class="me-3 text-end">
+                                <div class="btn-group">
+                                    <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('user-management.create') }}">
+                                                Tambah Manual
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
+                                                Impor dari Excel
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data" style="display:inline-block;">
-                                @csrf
-                                <input type="file" name="file" required>
-                                <button type="submit" class="btn btn-primary">Import Users</button>
-                            </form>
+                                <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
+                                    <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
+                                </a>
+                            </div>
                         </div>
 
                         {{-- Tabel Users --}}
@@ -57,7 +71,7 @@
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">NO.</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">FOTO</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAMA LENGKAP</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">EMAIL</th>
@@ -72,25 +86,19 @@
                                             <td>
                                                 <div class="d-flex px-2 py-1">
                                                     <div class="d-flex flex-column justify-content-center">
-                                                        <p class="mb-0 text-sm">{{ $user->id }}</p>
+                                                        <p class="mb-0 text-sm">{{ $loop->iteration + ($users->currentPage() - 1) * $users->perPage() }}</p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="d-flex px-2 py-1">
-                                                    <div>
-                                                        @php
-                                                            $photo = $user->photo 
-                                                                ? (Str::startsWith($user->photo, ['http://','https://']) 
-                                                                    ? $user->photo 
-                                                                    : asset('storage/' . $user->photo)) 
-                                                                : asset('assets/img/bruce-mars.jpg');
-                                                        @endphp
-                                                        <img src="{{ $photo }}" 
-                                                            class="avatar avatar-sm me-3 border-radius-lg" 
-                                                            alt="{{ $user->name }}">
-                                                    </div>
-                                                </div>
+                                                @php
+                                                    $photo = $user->photo 
+                                                        ? (Str::startsWith($user->photo, ['http://','https://']) 
+                                                            ? $user->photo 
+                                                            : asset('storage/' . $user->photo)) 
+                                                        : asset('assets/img/bruce-mars.jpg');
+                                                @endphp
+                                                <img src="{{ $photo }}" class="avatar avatar-sm me-3 border-radius-lg" alt="{{ $user->name }}">
                                             </td>
                                             <td>
                                                 <div class="d-flex flex-column justify-content-center">
@@ -109,16 +117,12 @@
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                {{-- Tombol Edit --}}
                                                 <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link">
                                                     <i class="material-icons">edit</i>
                                                 </a>
-
-                                                {{-- Tombol Delete dengan SweetAlert --}}
                                                 <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})">
                                                     <i class="material-icons">close</i>
                                                 </button>
-
                                                 <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
                                                     @csrf
                                                     @method('DELETE')
@@ -128,6 +132,11 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                {{-- Pagination --}}
+                                <div class="d-flex justify-content-end mt-3 me-3">
+                                    {{ $users->links('vendor.pagination.bootstrap-5') }}
+                                </div>
                             </div>
                         </div>
 
@@ -139,9 +148,112 @@
 
     <x-plugins></x-plugins>
 
-    {{-- SweetAlert Delete --}}
+    {{-- Modal Import --}}
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="importForm" action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="importModalLabel">Import Users dari Excel / CSV</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Pilih File (.xlsx / .csv)</label>
+                            <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
+                        </div>
+                        <div class="alert alert-secondary" role="alert">
+                            <span class="text-white">Pastikan format sesuai template.</span>  
+                            <a href="{{ asset('storage/template/users_template.xlsx') }}" class="fw-bold text-primary" target="_blank">
+                                Download Template Unggah User
+                            </a>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- SweetAlert & AJAX --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
+        $(document).ready(function() {
+            // Search AJAX
+            $('#searchUser').on('keyup', function() {
+                let query = $(this).val();
+                $.ajax({
+                    url: "{{ route('user-management.search') }}",
+                    type: "GET",
+                    data: { keyword: query },
+                    success: function(response) {
+                        $('table tbody').html(response);
+                    }
+                });
+            });
+
+            // Import AJAX dengan SweetAlert progress
+            $('#importForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const fileInput = $('#file')[0].files[0];
+                if (!fileInput) return Swal.fire('Error', 'Silakan pilih file', 'error');
+
+                let allowedExtensions = /(\.xlsx|\.csv)$/i;
+                if (!allowedExtensions.exec(fileInput.name)) {
+                    return Swal.fire('Format tidak valid', 'Pilih file .xlsx atau .csv', 'error');
+                }
+
+                let formData = new FormData(this);
+
+                Swal.fire({
+                    title: 'Sedang mengimpor...',
+                    html: 'Mohon tunggu proses import selesai.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading()
+                    }
+                });
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(res) {
+                        Swal.close();
+                        let successRows = res.rows.filter(r => r.status === 'success').length;
+                        let errorRows = res.rows.filter(r => r.status === 'error');
+                        
+                        let message = `Berhasil: ${successRows} baris.\nGagal: ${errorRows.length} baris.`;
+                        
+                        if (errorRows.length > 0) {
+                            message += '\n\nDetail Gagal:\n';
+                            errorRows.forEach(r => {
+                                message += `Baris ${r.row}: ${r.message}\n`;
+                            });
+                        }
+
+                        Swal.fire({
+                            title: 'Import Selesai',
+                            html: `<pre style="text-align:left">${message}</pre>`,
+                            icon: 'success'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            });
+        });
+
+        // Konfirmasi hapus user
         function deleteUser(id) {
             Swal.fire({
                 title: 'Yakin?',

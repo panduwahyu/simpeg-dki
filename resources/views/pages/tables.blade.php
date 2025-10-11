@@ -169,11 +169,26 @@
                                             </label>
                                             <input type="text" class="form-control" id="tahun" name="tahun">
                                         </div>
+                                        {{-- <div class="mb-3">
+                                            <label for="inputGroupFile01" class="form-label fw-semibold">Upload File</label>
+                                            <input type="file" class="form-control border border-secondary rounded-3 shadow-sm" id="inputGroupFile01">
+                                        </div> --}}
                                         <div class="mb-3">
-                                            <input type="file" class="form-control" id="inputGroupFile01">
+                                            <label for="inputGroupFile01" class="form-label fw-semibold">Upload File</label>
+                                            <input 
+                                                type="file" 
+                                                class="form-control border border-secondary rounded-3 shadow-sm" 
+                                                id="inputGroupFile01" 
+                                                name="file" 
+                                                accept=".pdf"
+                                            >
+                                            <div class="form-text text-muted">
+                                                📄 Pastikan file berformat <strong>PDF</strong> dengan ukuran <strong>&lt; 5MB</strong>.
+                                            </div>
+                                            <div class="invalid-feedback mt-1" id="fileError"></div>
                                         </div>
                                         <button type="submit" class="btn btn-success w-100">
-                                            Simpan
+                                            &#128190;Simpan
                                         </button>
                                     </form>
                                 </div>
@@ -213,6 +228,41 @@
                     }
                 }
             </style>
+
+            <script>
+            document.getElementById('inputGroupFile01').addEventListener('change', function() {
+                const file = this.files[0];
+                const errorDiv = document.getElementById('fileError');
+                const input = this;
+                errorDiv.textContent = ''; // reset pesan error
+                input.classList.remove('is-invalid'); // reset status error
+
+                if (!file) return; // kalau belum pilih file, abaikan
+
+                const maxSize = 5 * 1024 * 1024; // 5 MB
+                const fileType = file.type;
+
+                // Cek tipe file
+                if (fileType !== 'application/pdf') {
+                    input.classList.add('is-invalid');
+                    errorDiv.textContent = '❌ Hanya file berformat PDF yang diperbolehkan.';
+                    input.value = ''; // reset input
+                    return;
+                }
+
+                // Cek ukuran file
+                if (file.size > maxSize) {
+                    input.classList.add('is-invalid');
+                    errorDiv.textContent = '⚠️ Ukuran file melebihi 5MB. Silakan pilih file yang lebih kecil.';
+                    input.value = ''; // reset input
+                    return;
+                }
+
+                // Jika lolos semua
+                input.classList.remove('is-invalid');
+                errorDiv.textContent = '';
+            });
+            </script>
 
         </div>
     </main>
