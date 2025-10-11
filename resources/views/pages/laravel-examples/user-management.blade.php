@@ -98,11 +98,11 @@
                                                             : asset('storage/' . $user->photo)) 
                                                         : asset('assets/img/bruce-mars.jpg');
                                                 @endphp
-                                                <img src="{{ $photo }}" class="avatar avatar-sm me-3 border-radius-lg" alt="{{ $user->name }}">
+                                                <img src="{{ $photo }}" class="avatar avatar-sm me-3 border-radius-lg" alt="{{ $user->nama_gelar }}">
                                             </td>
                                             <td>
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $user->name }}</h6>
+                                                    <h6 class="mb-0 text-sm">{{ $user->nama_gelar }}</h6>
                                                 </div>
                                             </td>
                                             <td class="align-middle text-center text-sm">

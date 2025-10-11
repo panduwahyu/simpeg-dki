@@ -28,7 +28,7 @@
                         </div>
                     </div>
                     <div class="col my-auto">
-                        <h4 class="mb-1">{{ auth()->user()->name }}</h4>
+                        <h4 class="mb-1">{{ auth()->user()->nama_gelar }}</h4>
                         <p class="mb-0 text-sm text-muted">
                             {{ auth()->user()->jabatan ?? '-' }} — {{ auth()->user()->unit_kerja ?? '-' }}
                         </p>

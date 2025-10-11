@@ -1,4 +1,4 @@
-<script>
+{{-- <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const dokumenSelect = document.getElementById('dokumenSelect');
                 const periodeSelect = document.getElementById('periodeSelect');
@@ -500,4 +500,4 @@
 
     </script>
     @endpush
-</x-layout>
+</x-layout> --}}

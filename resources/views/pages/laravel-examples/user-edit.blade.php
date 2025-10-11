@@ -11,11 +11,11 @@
                         @csrf
                         @method('PUT')
 
-                        {{-- Name --}}
+                        {{-- Nama --}}
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
-                            @error('name')<small class="text-danger">{{ $message }}</small>@enderror
+                            <label class="form-label">Nama Lengkap (beserta gelar)</label>
+                            <input type="text" name="nama_gelar" class="form-control" value="{{ old('nama_gelar', $user->nama_gelar) }}" required>
+                            @error('nama_gelar')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
                         {{-- Email (readonly) --}}
