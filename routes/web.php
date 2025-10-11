@@ -64,7 +64,15 @@ Route::middleware('auth')->group(function () {
     
     // Dashboard
     Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+     // Dashboard / redirect sesuai role
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user->role === 'Pegawai') {
+            return redirect()->route('pegawai-dashboard');
+        }
+        return redirect()->route('monitoring.index'); // Admin & Supervisor
+    })->name('dashboard');
     
     // Dokumen
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
