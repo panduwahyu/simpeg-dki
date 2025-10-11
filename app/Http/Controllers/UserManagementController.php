@@ -177,7 +177,7 @@ class UserManagementController extends Controller
         $responseRows = [];
 
         foreach ($rows as $index => $r) {
-            $rowNumber = $index + 2;
+            $rowNumber = $index + 2; // nomor baris di Excel
             $email      = trim($r[0] ?? '');
             $nama_gelar = trim($r[1] ?? '');
             $nip_bps    = trim($r[2] ?? '');
@@ -189,24 +189,49 @@ class UserManagementController extends Controller
             $golongan   = strtoupper(trim($r[8] ?? ''));
             $pangkat    = $pangkatMap[$golongan] ?? null;
 
+            $warnings = []; // menampung peringatan untuk baris ini
+
+            // Cek email
             if (empty($email)) {
-                $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email kosong'];
+                $responseRows[] = [
+                    'row' => $rowNumber - 1,
+                    'status' => 'error',
+                    'message' => 'Email kosong'
+                ];
                 continue;
             }
 
             if (User::where('email', $email)->exists()) {
-                $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email sudah ada'];
+                $responseRows[] = [
+                    'row' => $rowNumber - 1,
+                    'status' => 'error',
+                    'message' => 'Email sudah ada'
+                ];
                 continue;
             }
 
-            $role = match ($roleInput) {
-                'admin' => 'Admin',
-                'supervisor' => 'Supervisor',
-                default => 'Pegawai',
-            };
+            // Cek role
+            $validRoles = ['admin', 'supervisor'];
+            if (in_array($roleInput, $validRoles)) {
+                $role = match ($roleInput) {
+                    'admin' => 'Admin',
+                    'supervisor' => 'Supervisor',
+                };
+            } else {
+                $role = 'Pegawai';
+                $warnings[] = "kolom status otomatis dibuat Pegawai karena role kosong atau salah input";
+            }
 
+            // Cek golongan
+            if (!empty($golongan) && !isset($pangkatMap[$golongan])) {
+                $golongan = null;
+                $pangkat = null;
+                $warnings[] = "kolom golongan dikosongkan karena salah input";
+            }
+
+            // Simpan user
             User::create([
-                'name'        => $nama_gelar, // wajib diisi
+                'name'        => $nama_gelar,
                 'nama_gelar'  => $nama_gelar,
                 'email'       => $email,
                 'nip_bps'     => $nip_bps ?: null,
@@ -220,7 +245,19 @@ class UserManagementController extends Controller
                 'password'    => bcrypt('password'),
             ]);
 
-            $responseRows[] = ['row' => $rowNumber, 'status' => 'success', 'message' => 'Berhasil diimpor'];
+            if (!empty($warnings)) {
+                $responseRows[] = [
+                    'row' => $rowNumber - 1,
+                    'status' => 'warning',
+                    'message' => "Tetap input baris " . ($rowNumber - 1) . "; email: $email; " . implode("; ", $warnings)
+                ];
+            } else {
+                $responseRows[] = [
+                    'row' => $rowNumber - 1,
+                    'status' => 'success',
+                    'message' => "Berhasil diimpor"
+                ];
+            }
         }
 
         return response()->json(['rows' => $responseRows]);

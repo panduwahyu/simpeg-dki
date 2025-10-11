@@ -6,7 +6,7 @@
 
         <div class="container-fluid py-4">
 
-            {{-- SweetAlert untuk notifikasi sukses --}}
+            {{-- SweetAlert notifikasi sukses --}}
             @if (session('status'))
                 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                 <script>
@@ -25,37 +25,27 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
+                        {{-- Header --}}
                         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                             <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                                <h6 class="text-white mx-3">
-                                    <strong>Kelola Akun User</strong>
-                                </h6>
+                                <h6 class="text-white mx-3"><strong>Kelola Akun User</strong></h6>
                             </div>
                         </div>
 
+                        {{-- Toolbar --}}
                         <div class="d-flex justify-content-between align-items-center my-3 mx-3">
-                            <!-- Kolom Pencarian -->
                             <div class="col-md-4 p-0">
                                 <input type="text" id="searchUser" class="form-control border border-primary rounded" placeholder="Cari user..." />
                             </div>
 
-                            <!-- Tombol Tambah & Export -->
                             <div class="me-3 text-end">
                                 <div class="btn-group">
                                     <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('user-management.create') }}">
-                                                Tambah Manual
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
-                                                Impor dari Excel
-                                            </a>
-                                        </li>
+                                        <li><a class="dropdown-item" href="{{ route('user-management.create') }}">Tambah Manual</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">Impor dari Excel</a></li>
                                     </ul>
                                 </div>
 
@@ -80,7 +70,7 @@
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="usersTableBody">
                                         @foreach ($users as $user)
                                         <tr>
                                             <td>
@@ -112,17 +102,11 @@
                                                 <span class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
                                             </td>
                                             <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">
-                                                    {{ optional($user->created_at)->format('d/m/Y') }}
-                                                </span>
+                                                <span class="text-secondary text-xs font-weight-bold">{{ optional($user->created_at)->format('d/m/Y') }}</span>
                                             </td>
                                             <td class="align-middle">
-                                                <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link">
-                                                    <i class="material-icons">edit</i>
-                                                </a>
-                                                <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})">
-                                                    <i class="material-icons">close</i>
-                                                </button>
+                                                <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link"><i class="material-icons">edit</i></a>
+                                                <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})"><i class="material-icons">close</i></button>
                                                 <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
                                                     @csrf
                                                     @method('DELETE')
@@ -193,12 +177,12 @@
                     type: "GET",
                     data: { keyword: query },
                     success: function(response) {
-                        $('table tbody').html(response);
+                        $('#usersTableBody').html(response);
                     }
                 });
             });
 
-            // Import AJAX dengan SweetAlert progress
+            // Import AJAX dengan SweetAlert tabel berwarna
             $('#importForm').on('submit', function(e) {
                 e.preventDefault();
 
@@ -214,11 +198,9 @@
 
                 Swal.fire({
                     title: 'Sedang mengimpor...',
-                    html: 'Mohon tunggu proses import selesai.',
+                    html: 'JANGAN KLIK APAPUN! Mohon tunggu proses impor.',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading()
-                    }
+                    didOpen: () => Swal.showLoading()
                 });
 
                 $.ajax({
@@ -229,25 +211,35 @@
                     processData: false,
                     success: function(res) {
                         Swal.close();
-                        let successRows = res.rows.filter(r => r.status === 'success').length;
-                        let errorRows = res.rows.filter(r => r.status === 'error');
-                        
-                        let message = `Berhasil: ${successRows} baris.\nGagal: ${errorRows.length} baris.`;
-                        
-                        if (errorRows.length > 0) {
-                            message += '\n\nDetail Gagal:\n';
-                            errorRows.forEach(r => {
-                                message += `Baris ${r.row}: ${r.message}\n`;
-                            });
-                        }
+
+                        let warnings = res.rows.filter(r => r.status === 'warning');
+                        let errors   = res.rows.filter(r => r.status === 'error');
+                        let success  = res.rows.filter(r => r.status === 'success');
+
+                        // Buat tabel HTML scrollable dengan lebar kolom
+                        let htmlMsg = `<div style="overflow-x:auto"><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%">`;
+                        htmlMsg += `<tr style="background-color:#f1f1f1"><th style="width:33%">Status</th><th style="width:67%">Pesan</th></tr>`;
+
+                        success.forEach(s => {
+                            htmlMsg += `<tr style="background-color:#d4edda"><td>Berhasil</td><td>Baris ${s.row}: ${s.message}</td></tr>`;
+                        });
+
+                        warnings.forEach(w => {
+                            htmlMsg += `<tr style="background-color:#fff3cd"><td>Peringatan</td><td>Baris ${w.row}: ${w.message}</td></tr>`;
+                        });
+
+                        errors.forEach(e => {
+                            htmlMsg += `<tr style="background-color:#f8d7da"><td>Gagal</td><td>Baris ${e.row}: ${e.message}</td></tr>`;
+                        });
+
+                        htmlMsg += `</table></div>`;
 
                         Swal.fire({
                             title: 'Import Selesai',
-                            html: `<pre style="text-align:left">${message}</pre>`,
-                            icon: 'success'
-                        }).then(() => {
-                            location.reload();
-                        });
+                            html: htmlMsg,
+                            width: '800px',
+                            icon: errors.length > 0 ? 'warning' : 'success'
+                        }).then(() => location.reload());
                     }
                 });
             });
