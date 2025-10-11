@@ -85,6 +85,7 @@
                                     <label class="form-label">Pangkat</label>
                                     <select name="pangkat" id="pangkat" class="form-control">
                                         <option value="">-- Pilih Pangkat --</option>
+                                        {{-- PNS Klasik --}}
                                         <option value="Juru Muda">Juru Muda</option>
                                         <option value="Juru Muda Tingkat I">Juru Muda Tingkat I</option>
                                         <option value="Juru">Juru</option>
@@ -102,7 +103,6 @@
                                         <option value="Pembina Utama Muda">Pembina Utama Muda</option>
                                         <option value="Pembina Utama Madya">Pembina Utama Madya</option>
                                         <option value="Pembina Utama">Pembina Utama</option>
-
                                         {{-- PPPK / ASN Modern --}}
                                         <option value="Pemula">Pemula</option>
                                         <option value="Terampil">Terampil</option>
@@ -126,26 +126,24 @@
                                     <label class="form-label">Golongan</label>
                                     <select name="golongan" id="golongan" class="form-control">
                                         <option value="">-- Pilih Golongan --</option>
-
                                         {{-- PNS Klasik --}}
-                                        <option value="I/a">I/a</option>
-                                        <option value="I/b">I/b</option>
-                                        <option value="I/c">I/c</option>
-                                        <option value="I/d">I/d</option>
-                                        <option value="II/a">II/a</option>
-                                        <option value="II/b">II/b</option>
-                                        <option value="II/c">II/c</option>
-                                        <option value="II/d">II/d</option>
-                                        <option value="III/a">III/a</option>
-                                        <option value="III/b">III/b</option>
-                                        <option value="III/c">III/c</option>
-                                        <option value="III/d">III/d</option>
-                                        <option value="IV/a">IV/a</option>
-                                        <option value="IV/b">IV/b</option>
-                                        <option value="IV/c">IV/c</option>
-                                        <option value="IV/d">IV/d</option>
-                                        <option value="IV/e">IV/e</option>
-
+                                        <option value="I/A">I/A</option>
+                                        <option value="I/B">I/B</option>
+                                        <option value="I/C">I/C</option>
+                                        <option value="I/D">I/D</option>
+                                        <option value="II/A">II/A</option>
+                                        <option value="II/B">II/B</option>
+                                        <option value="II/C">II/C</option>
+                                        <option value="II/D">II/D</option>
+                                        <option value="III/A">III/A</option>
+                                        <option value="III/B">III/B</option>
+                                        <option value="III/C">III/C</option>
+                                        <option value="III/D">III/D</option>
+                                        <option value="IV/A">IV/A</option>
+                                        <option value="IV/B">IV/B</option>
+                                        <option value="IV/C">IV/C</option>
+                                        <option value="IV/D">IV/D</option>
+                                        <option value="IV/E">IV/E</option>
                                         {{-- PPPK / ASN Modern --}}
                                         <option value="I">I</option>
                                         <option value="II">II</option>
@@ -179,29 +177,26 @@
         {{-- SCRIPT PANGKAT ↔ GOLONGAN OTOMATIS --}}
         <script>
             const mapping = {
-                // PNS klasik
+                // PNS Klasik
                 "I/A": "Juru Muda",
                 "I/B": "Juru Muda Tingkat I",
                 "I/C": "Juru",
                 "I/D": "Juru Tingkat I",
-
                 "II/A": "Pengatur Muda",
                 "II/B": "Pengatur Muda Tingkat I",
                 "II/C": "Pengatur",
                 "II/D": "Pengatur Tingkat I",
-
                 "III/A": "Penata Muda",
                 "III/B": "Penata Muda Tingkat I",
                 "III/C": "Penata",
                 "III/D": "Penata Tingkat I",
-
                 "IV/A": "Pembina",
                 "IV/B": "Pembina Tingkat I",
                 "IV/C": "Pembina Utama Muda",
                 "IV/D": "Pembina Utama Madya",
-                "IV/E": "Pembina Utama"
+                "IV/E": "Pembina Utama",
 
-                // PPPK / ASN modern
+                // PPPK / ASN Modern
                 "I": "Pemula",
                 "II": "Terampil",
                 "III": "Mahir",
@@ -224,13 +219,11 @@
             const golonganSelect = document.getElementById('golongan');
             const pangkatSelect = document.getElementById('pangkat');
 
-            // Jika golongan diubah → pangkat ikut otomatis
             golonganSelect.addEventListener('change', function () {
                 const selectedGol = this.value;
                 pangkatSelect.value = mapping[selectedGol] || "";
             });
 
-            // Jika pangkat diubah → golongan ikut otomatis
             pangkatSelect.addEventListener('change', function () {
                 const selectedPangkat = this.value;
                 const found = Object.entries(mapping).find(([gol, pangkat]) => pangkat === selectedPangkat);
