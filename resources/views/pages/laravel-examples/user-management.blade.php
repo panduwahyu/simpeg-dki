@@ -36,7 +36,10 @@
                         {{-- Tombol Tambah Manual / Import Excel --}}
                         <div class="me-3 my-3 text-end">
                             <div class="btn-group">
-                                <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <button type="button" 
+                                        class="btn bg-gradient-dark dropdown-toggle" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false">
                                     <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -47,13 +50,20 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
-                                            Import dari Excel
+                                            Impor dari Excel
                                         </a>
                                     </li>
                                 </ul>
                             </div>
+
+                            <!-- Tombol Download Template Excel -->
+                            <a href="{{ route('user.template') }}" class="btn btn-info ms-2">
+                                <i class="material-icons text-sm">description</i>&nbsp;&nbsp;Template Impor User Baru
+                            </a>
+
+                            <!-- Tombol Export -->
                             <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
-                                <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Export Users
+                                <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
                             </a>
                         </div>
 
@@ -143,7 +153,7 @@
     {{-- Modal Import --}}
     <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data">
+            <form id="importForm" action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
@@ -155,6 +165,12 @@
                             <label for="file" class="form-label">Pilih File (.xlsx / .csv)</label>
                             <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
                         </div>
+                        <div class="alert alert-secondary" role="alert">
+                            Pastikan format sesuai template.  
+                            <a href="{{ asset('storage/template/users_template.xlsx') }}" class="fw-bold text-primary" target="_blank">
+                                Download Template Unggah User
+                            </a>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -165,9 +181,10 @@
         </div>
     </div>
 
-    {{-- SweetAlert Delete --}}
+    {{-- SweetAlert Delete & Validasi Import --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Konfirmasi hapus user
         function deleteUser(id) {
             Swal.fire({
                 title: 'Yakin?',
@@ -184,6 +201,24 @@
                 }
             });
         }
+
+        // Validasi file import Excel
+        document.getElementById('importForm').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('file');
+            const filePath = fileInput.value;
+            const allowedExtensions = /(\.xlsx|\.csv)$/i;
+
+            if (!allowedExtensions.exec(filePath)) {
+                e.preventDefault(); // batalkan submit
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Format tidak valid!',
+                    text: 'Silakan pilih file dengan format .xlsx atau .csv',
+                });
+                fileInput.value = ''; // reset input
+                return false;
+            }
+        });
     </script>
 
 </x-layout>
