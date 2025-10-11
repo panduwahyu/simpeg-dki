@@ -13,7 +13,7 @@
 
                         {{-- Nama --}}
                         <div class="mb-3">
-                            <label class="form-label">Nama</label>
+                            <label class="form-label">Nama Lengkap (beserta gelar)</label>
                             <input type="text" name="nama_gelar" class="form-control" value="{{ old('nama_gelar', $user->nama_gelar) }}" required>
                             @error('nama_gelar')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>

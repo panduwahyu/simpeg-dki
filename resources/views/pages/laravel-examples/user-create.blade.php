@@ -28,9 +28,9 @@
                             <form action="{{ route('user-management.store') }}" method="POST">
                                 @csrf
 
-                                {{-- Nama --}}
+                                {{-- Nama Lengkap --}}
                                 <div class="mb-3">
-                                    <label class="form-label">Nama</label>
+                                    <label class="form-label">Nama Lengkap (beserta gelar)</label>
                                     <input type="text" name="nama_gelar" class="form-control" value="{{ old('nama_gelar') }}" required>
                                 </div>
 
