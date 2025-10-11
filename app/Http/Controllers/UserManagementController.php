@@ -13,7 +13,7 @@ class UserManagementController extends Controller
     /** Tampilkan daftar semua user */
     public function index()
     {
-        $users = User::orderBy('name')->paginate(10);
+        $users = User::orderBy('nama_gelar')->paginate(10);
         return view('pages.laravel-examples.user-management', compact('users'));
     }
 
@@ -27,15 +27,15 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'role'       => 'required|string|max:50',
-            'nip_bps'    => 'nullable|string|max:50',
-            'nip'        => 'nullable|string|max:50',
-            'wilayah'    => 'nullable|string|max:255',
-            'unit_kerja' => 'nullable|string|max:255',
-            'jabatan'    => 'nullable|string|max:255',
-            'golongan'   => 'nullable|string|max:255',
+            'nama_gelar'       => 'required|string|max:255',
+            'email'            => 'required|email|unique:users,email',
+            'role'             => 'required|string|max:50',
+            'nip_bps'          => 'nullable|string|max:50',
+            'nip'              => 'nullable|string|max:50',
+            'wilayah'          => 'nullable|string|max:255',
+            'unit_kerja'       => 'nullable|string|max:255',
+            'jabatan'          => 'nullable|string|max:255',
+            'golongan'         => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
@@ -43,17 +43,18 @@ class UserManagementController extends Controller
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
         User::create([
-            'name'       => $validated['name'],
-            'email'      => $validated['email'],
-            'role'       => $role,
-            'nip_bps'    => $validated['nip_bps'] ?? null,
-            'nip'        => $validated['nip'] ?? null,
-            'wilayah'    => $validated['wilayah'] ?? null,
-            'unit_kerja' => $validated['unit_kerja'] ?? null,
-            'jabatan'    => $validated['jabatan'] ?? null,
-            'golongan'   => $validated['golongan'] ?? null,
-            'pangkat'    => $pangkat,
-            'password'   => bcrypt('password'),
+            'name'            => $validated['nama_gelar'], // wajib isi agar SSO aman
+            'nama_gelar'      => $validated['nama_gelar'],
+            'email'           => $validated['email'],
+            'role'            => $role,
+            'nip_bps'         => $validated['nip_bps'] ?? null,
+            'nip'             => $validated['nip'] ?? null,
+            'wilayah'         => $validated['wilayah'] ?? null,
+            'unit_kerja'      => $validated['unit_kerja'] ?? null,
+            'jabatan'         => $validated['jabatan'] ?? null,
+            'golongan'        => $validated['golongan'] ?? null,
+            'pangkat'         => $pangkat,
+            'password'        => bcrypt('password'),
         ]);
 
         return redirect()->route('user-management')->with('status', 'User baru berhasil ditambahkan!');
@@ -69,15 +70,15 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'role'       => 'required|string|max:50',
-            'nip_bps'    => 'nullable|string|max:50',
-            'nip'        => 'nullable|string|max:50',
-            'wilayah'    => 'nullable|string|max:255',
-            'unit_kerja' => 'nullable|string|max:255',
-            'jabatan'    => 'nullable|string|max:255',
-            'golongan'   => 'nullable|string|max:255',
+            'nama_gelar'       => 'required|string|max:255',
+            'email'            => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'role'             => 'required|string|max:50',
+            'nip_bps'          => 'nullable|string|max:50',
+            'nip'              => 'nullable|string|max:50',
+            'wilayah'          => 'nullable|string|max:255',
+            'unit_kerja'       => 'nullable|string|max:255',
+            'jabatan'          => 'nullable|string|max:255',
+            'golongan'         => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
@@ -85,16 +86,17 @@ class UserManagementController extends Controller
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
         $user->update([
-            'name'       => $validated['name'],
-            'email'      => $validated['email'],
-            'role'       => $role,
-            'nip_bps'    => $validated['nip_bps'] ?? null,
-            'nip'        => $validated['nip'] ?? null,
-            'wilayah'    => $validated['wilayah'] ?? null,
-            'unit_kerja' => $validated['unit_kerja'] ?? null,
-            'jabatan'    => $validated['jabatan'] ?? null,
-            'golongan'   => $validated['golongan'] ?? null,
-            'pangkat'    => $pangkat,
+            'name'            => $validated['nama_gelar'], // update juga kolom name
+            'nama_gelar'      => $validated['nama_gelar'],
+            'email'           => $validated['email'],
+            'role'            => $role,
+            'nip_bps'         => $validated['nip_bps'] ?? null,
+            'nip'             => $validated['nip'] ?? null,
+            'wilayah'         => $validated['wilayah'] ?? null,
+            'unit_kerja'      => $validated['unit_kerja'] ?? null,
+            'jabatan'         => $validated['jabatan'] ?? null,
+            'golongan'        => $validated['golongan'] ?? null,
+            'pangkat'         => $pangkat,
         ]);
 
         return redirect()->route('user-management')->with('status', 'User berhasil diupdate!');
@@ -111,7 +113,7 @@ class UserManagementController extends Controller
     public function export()
     {
         $users = User::all([
-            'email', 'name', 'nip_bps', 'nip', 'role', 'wilayah', 'unit_kerja', 'jabatan', 'golongan'
+            'email', 'nama_gelar', 'nip_bps', 'nip', 'role', 'wilayah', 'unit_kerja', 'jabatan', 'golongan'
         ]);
 
         $spreadsheet = new Spreadsheet();
@@ -125,7 +127,7 @@ class UserManagementController extends Controller
         foreach ($users as $user) {
             $sheet->fromArray([
                 $user->email,
-                $user->name,
+                $user->nama_gelar,
                 $user->nip_bps,
                 $user->nip,
                 $user->role,
@@ -175,22 +177,22 @@ class UserManagementController extends Controller
         $responseRows = [];
 
         foreach ($rows as $index => $r) {
-            $rowNumber = $index + 2; // sesuaikan nomor baris Excel
-            if (empty($r[0])) {
+            $rowNumber = $index + 2;
+            $email      = trim($r[0] ?? '');
+            $nama_gelar = trim($r[1] ?? '');
+            $nip_bps    = trim($r[2] ?? '');
+            $nip        = trim($r[3] ?? '');
+            $roleInput  = strtolower(trim($r[4] ?? ''));
+            $wilayah    = trim($r[5] ?? '');
+            $unit_kerja = trim($r[6] ?? '');
+            $jabatan    = trim($r[7] ?? '');
+            $golongan   = strtoupper(trim($r[8] ?? ''));
+            $pangkat    = $pangkatMap[$golongan] ?? null;
+
+            if (empty($email)) {
                 $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email kosong'];
                 continue;
             }
-
-            $email      = trim($r[0]);
-            $name       = trim($r[1]);
-            $nip_bps    = trim($r[2]);
-            $nip        = trim($r[3]);
-            $roleInput  = strtolower(trim($r[4]));
-            $wilayah    = trim($r[5]);
-            $unit_kerja = trim($r[6]);
-            $jabatan    = trim($r[7]);
-            $golongan   = strtoupper(trim($r[8] ?? ''));
-            $pangkat    = $pangkatMap[$golongan] ?? null;
 
             if (User::where('email', $email)->exists()) {
                 $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email sudah ada'];
@@ -204,17 +206,18 @@ class UserManagementController extends Controller
             };
 
             User::create([
-                'email'      => $email,
-                'name'       => $name,
-                'nip_bps'    => $nip_bps ?: null,
-                'nip'        => $nip ?: null,
-                'role'       => $role,
-                'wilayah'    => $wilayah ?: null,
-                'unit_kerja' => $unit_kerja ?: null,
-                'jabatan'    => $jabatan ?: null,
-                'golongan'   => $golongan ?: null,
-                'pangkat'    => $pangkat ?: null,
-                'password'   => bcrypt('password'),
+                'name'        => $nama_gelar, // wajib diisi
+                'nama_gelar'  => $nama_gelar,
+                'email'       => $email,
+                'nip_bps'     => $nip_bps ?: null,
+                'nip'         => $nip ?: null,
+                'role'        => $role,
+                'wilayah'     => $wilayah ?: null,
+                'unit_kerja'  => $unit_kerja ?: null,
+                'jabatan'     => $jabatan ?: null,
+                'golongan'    => $golongan ?: null,
+                'pangkat'     => $pangkat ?: null,
+                'password'    => bcrypt('password'),
             ]);
 
             $responseRows[] = ['row' => $rowNumber, 'status' => 'success', 'message' => 'Berhasil diimpor'];
@@ -244,12 +247,12 @@ class UserManagementController extends Controller
     public function search(Request $request)
     {
         $keyword = $request->get('keyword', '');
-        $users = User::where('name', 'like', "%{$keyword}%")
+        $users = User::where('nama_gelar', 'like', "%{$keyword}%")
             ->orWhere('email', 'like', "%{$keyword}%")
             ->orWhere('role', 'like', "%{$keyword}%")
             ->orWhere('nip_bps', 'like', "%{$keyword}%")
             ->orWhere('nip', 'like', "%{$keyword}%")
-            ->orderBy('name')
+            ->orderBy('nama_gelar')
             ->paginate(10);
 
         return view('pages.laravel-examples.user-search-result', compact('users'));
