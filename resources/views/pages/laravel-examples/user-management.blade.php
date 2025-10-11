@@ -33,22 +33,28 @@
                             </div>
                         </div>
 
-                        {{-- Tombol Tambah User --}}
+                        {{-- Tombol Tambah Manual / Import Excel --}}
                         <div class="me-3 my-3 text-end">
-                            <a class="btn bg-gradient-dark mb-0" href="{{ route('user-management.create') }}">
-                                <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User Baru
+                            <div class="btn-group">
+                                <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('user-management.create') }}">
+                                            Tambah Manual
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
+                                            Import dari Excel
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
+                                <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Export Users
                             </a>
-                        </div>
-
-                        {{-- Tombol Export & Import --}}
-                        <div class="mb-3 ms-3">
-                            <a href="{{ route('user.export') }}" class="btn btn-success">Export Users</a>
-
-                            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data" style="display:inline-block;">
-                                @csrf
-                                <input type="file" name="file" required>
-                                <button type="submit" class="btn btn-primary">Import Users</button>
-                            </form>
                         </div>
 
                         {{-- Tabel Users --}}
@@ -72,25 +78,19 @@
                                             <td>
                                                 <div class="d-flex px-2 py-1">
                                                     <div class="d-flex flex-column justify-content-center">
-                                                        <p class="mb-0 text-sm">{{ $loop->iteration }}</p>
+                                                        <p class="mb-0 text-sm">{{ $loop->iteration + ($users->currentPage() - 1) * $users->perPage() }}</p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="d-flex px-2 py-1">
-                                                    <div>
-                                                        @php
-                                                            $photo = $user->photo 
-                                                                ? (Str::startsWith($user->photo, ['http://','https://']) 
-                                                                    ? $user->photo 
-                                                                    : asset('storage/' . $user->photo)) 
-                                                                : asset('assets/img/bruce-mars.jpg');
-                                                        @endphp
-                                                        <img src="{{ $photo }}" 
-                                                            class="avatar avatar-sm me-3 border-radius-lg" 
-                                                            alt="{{ $user->name }}">
-                                                    </div>
-                                                </div>
+                                                @php
+                                                    $photo = $user->photo 
+                                                        ? (Str::startsWith($user->photo, ['http://','https://']) 
+                                                            ? $user->photo 
+                                                            : asset('storage/' . $user->photo)) 
+                                                        : asset('assets/img/bruce-mars.jpg');
+                                                @endphp
+                                                <img src="{{ $photo }}" class="avatar avatar-sm me-3 border-radius-lg" alt="{{ $user->name }}">
                                             </td>
                                             <td>
                                                 <div class="d-flex flex-column justify-content-center">
@@ -109,16 +109,12 @@
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                {{-- Tombol Edit --}}
                                                 <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link">
                                                     <i class="material-icons">edit</i>
                                                 </a>
-
-                                                {{-- Tombol Delete dengan SweetAlert --}}
                                                 <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})">
                                                     <i class="material-icons">close</i>
                                                 </button>
-
                                                 <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
                                                     @csrf
                                                     @method('DELETE')
@@ -128,6 +124,11 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                {{-- Pagination --}}
+                                <div class="d-flex justify-content-end mt-3 me-3">
+                                    {{ $users->links('vendor.pagination.bootstrap-5') }}
+                                </div>
                             </div>
                         </div>
 
@@ -138,6 +139,31 @@
     </main>
 
     <x-plugins></x-plugins>
+
+    {{-- Modal Import --}}
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="importModalLabel">Import Users dari Excel / CSV</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Pilih File (.xlsx / .csv)</label>
+                            <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     {{-- SweetAlert Delete --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

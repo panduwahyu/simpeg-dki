@@ -16,7 +16,7 @@ class UserManagementController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = User::orderBy('name')->paginate(10);
         return view('pages.laravel-examples.user-management', compact('users'));
     }
 
