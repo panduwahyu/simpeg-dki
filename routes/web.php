@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+        Route::get('/user-management/search', [UserManagementController::class, 'search'])->name('user-management.search');
 
         // === Route untuk download template Excel ===
         Route::get('/user/template', function () {

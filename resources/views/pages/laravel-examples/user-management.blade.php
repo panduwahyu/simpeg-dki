@@ -33,33 +33,36 @@
                             </div>
                         </div>
 
-                        {{-- Tombol Tambah Manual / Import Excel --}}
-                        <div class="me-3 my-3 text-end">
-                            <div class="btn-group">
-                                <button type="button" 
-                                        class="btn bg-gradient-dark dropdown-toggle" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
-                                    <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('user-management.create') }}">
-                                            Tambah Manual
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
-                                            Impor dari Excel
-                                        </a>
-                                    </li>
-                                </ul>
+                        <div class="d-flex justify-content-between align-items-center my-3 mx-3">
+                            <!-- Kolom Pencarian -->
+                            <div class="col-md-4 p-0">
+                                <input type="text" id="searchUser" class="form-control border border-primary rounded" placeholder="Cari user..." />
                             </div>
 
-                            <!-- Tombol Export -->
-                            <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
-                                <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
-                            </a>
+                            <!-- Tombol Tambah & Export -->
+                            <div class="me-3 text-end">
+                                <div class="btn-group">
+                                    <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('user-management.create') }}">
+                                                Tambah Manual
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
+                                                Impor dari Excel
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
+                                    <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
+                                </a>
+                            </div>
                         </div>
 
                         {{-- Tabel Users --}}
@@ -178,7 +181,25 @@
 
     {{-- SweetAlert Delete & Validasi Import --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
+        $(document).ready(function() {
+            $('#searchUser').on('keyup', function() {
+                let query = $(this).val();
+
+                $.ajax({
+                    url: "{{ route('user-management.search') }}",
+                    type: "GET",
+                    data: { keyword: query },
+                    success: function(response) {
+                        // Ganti tbody dengan hasil baru
+                        $('table tbody').html(response);
+                    }
+                });
+            });
+        });
+        
         // Konfirmasi hapus user
         function deleteUser(id) {
             Swal.fire({

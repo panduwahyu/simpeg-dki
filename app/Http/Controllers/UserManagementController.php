@@ -236,4 +236,22 @@ class UserManagementController extends Controller
             'XV' => 'Pejabat Pimpinan Tinggi Pratama', 'XVI' => 'Pejabat Pimpinan Tinggi Madya', 'XVII' => 'Pejabat Pimpinan Tinggi Utama',
         ];
     }
+
+    /** Pencarian AJAX user */
+    public function search(Request $request)
+    {
+        $keyword = $request->get('keyword', '');
+
+        $users = User::where('name', 'like', "%{$keyword}%")
+            ->orWhere('email', 'like', "%{$keyword}%")
+            ->orWhere('role', 'like', "%{$keyword}%")
+            ->orWhere('nip_bps', 'like', "%{$keyword}%")
+            ->orWhere('nip', 'like', "%{$keyword}%")
+            ->orderBy('name')
+            ->paginate(10);
+
+        // Render hanya baris <tr> untuk tbody
+        return view('pages.laravel-examples.user-search-result', compact('users'));
+    }
+
 }
