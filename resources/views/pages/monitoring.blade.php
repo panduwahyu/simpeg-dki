@@ -2,7 +2,7 @@
     <x-navbars.sidebar activePage="monitoring-pegawai"></x-navbars.sidebar>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-navbars.navs.auth titlePage="Monitoring Dokumen"></x-navbars.navs.auth>
+        <x-navbars.navs.auth titlePage="Monitoring"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
             <div class="card mb-4 shadow-sm">
