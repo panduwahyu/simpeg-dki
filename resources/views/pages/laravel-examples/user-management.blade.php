@@ -179,27 +179,80 @@
         </div>
     </div>
 
-    {{-- SweetAlert Delete & Validasi Import --}}
+    {{-- SweetAlert & AJAX --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
         $(document).ready(function() {
+            // Search AJAX
             $('#searchUser').on('keyup', function() {
                 let query = $(this).val();
-
                 $.ajax({
                     url: "{{ route('user-management.search') }}",
                     type: "GET",
                     data: { keyword: query },
                     success: function(response) {
-                        // Ganti tbody dengan hasil baru
                         $('table tbody').html(response);
                     }
                 });
             });
+
+            // Import AJAX dengan SweetAlert progress
+            $('#importForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const fileInput = $('#file')[0].files[0];
+                if (!fileInput) return Swal.fire('Error', 'Silakan pilih file', 'error');
+
+                let allowedExtensions = /(\.xlsx|\.csv)$/i;
+                if (!allowedExtensions.exec(fileInput.name)) {
+                    return Swal.fire('Format tidak valid', 'Pilih file .xlsx atau .csv', 'error');
+                }
+
+                let formData = new FormData(this);
+
+                Swal.fire({
+                    title: 'Sedang mengimpor...',
+                    html: 'Mohon tunggu proses import selesai.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading()
+                    }
+                });
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(res) {
+                        Swal.close();
+                        let successRows = res.rows.filter(r => r.status === 'success').length;
+                        let errorRows = res.rows.filter(r => r.status === 'error');
+                        
+                        let message = `Berhasil: ${successRows} baris.\nGagal: ${errorRows.length} baris.`;
+                        
+                        if (errorRows.length > 0) {
+                            message += '\n\nDetail Gagal:\n';
+                            errorRows.forEach(r => {
+                                message += `Baris ${r.row}: ${r.message}\n`;
+                            });
+                        }
+
+                        Swal.fire({
+                            title: 'Import Selesai',
+                            html: `<pre style="text-align:left">${message}</pre>`,
+                            icon: 'success'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            });
         });
-        
+
         // Konfirmasi hapus user
         function deleteUser(id) {
             Swal.fire({
@@ -217,24 +270,6 @@
                 }
             });
         }
-
-        // Validasi file import Excel
-        document.getElementById('importForm').addEventListener('submit', function(e) {
-            const fileInput = document.getElementById('file');
-            const filePath = fileInput.value;
-            const allowedExtensions = /(\.xlsx|\.csv)$/i;
-
-            if (!allowedExtensions.exec(filePath)) {
-                e.preventDefault(); // batalkan submit
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Format tidak valid!',
-                    text: 'Silakan pilih file dengan format .xlsx atau .csv',
-                });
-                fileInput.value = ''; // reset input
-                return false;
-            }
-        });
     </script>
 
 </x-layout>

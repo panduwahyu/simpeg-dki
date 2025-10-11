@@ -117,12 +117,10 @@ class UserManagementController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Header kolom
         $sheet->fromArray([
             'Email', 'Nama', 'NIP BPS', 'NIP', 'Status', 'Wilayah', 'Unit Kerja', 'Jabatan', 'Golongan',
         ], null, 'A1');
 
-        // Isi data
         $rowNumber = 2;
         foreach ($users as $user) {
             $sheet->fromArray([
@@ -150,12 +148,10 @@ class UserManagementController extends Controller
         return response()->download($filename)->deleteFileAfterSend(true);
     }
 
-    /** Import users dari Excel / CSV */
+    /** Import users dari Excel / CSV dengan response JSON */
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv,txt',
-        ]);
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv,txt']);
 
         $file = $request->file('file');
         $rows = [];
@@ -171,15 +167,19 @@ class UserManagementController extends Controller
         }
 
         if (count($rows) <= 1) {
-            return back()->with('status', 'File kosong atau tidak ada data!');
+            return response()->json(['rows' => []]);
         }
 
         unset($rows[0]); // hapus header
-
         $pangkatMap = $this->getPangkatMap();
+        $responseRows = [];
 
-        foreach ($rows as $r) {
-            if (empty($r[0])) continue;
+        foreach ($rows as $index => $r) {
+            $rowNumber = $index + 2; // sesuaikan nomor baris Excel
+            if (empty($r[0])) {
+                $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email kosong'];
+                continue;
+            }
 
             $email      = trim($r[0]);
             $name       = trim($r[1]);
@@ -192,7 +192,10 @@ class UserManagementController extends Controller
             $golongan   = strtoupper(trim($r[8] ?? ''));
             $pangkat    = $pangkatMap[$golongan] ?? null;
 
-            if (User::where('email', $email)->exists()) continue;
+            if (User::where('email', $email)->exists()) {
+                $responseRows[] = ['row' => $rowNumber, 'status' => 'error', 'message' => 'Email sudah ada'];
+                continue;
+            }
 
             $role = match ($roleInput) {
                 'admin' => 'Admin',
@@ -213,9 +216,11 @@ class UserManagementController extends Controller
                 'pangkat'    => $pangkat ?: null,
                 'password'   => bcrypt('password'),
             ]);
+
+            $responseRows[] = ['row' => $rowNumber, 'status' => 'success', 'message' => 'Berhasil diimpor'];
         }
 
-        return redirect()->route('user-management')->with('status', 'Users berhasil diimpor!');
+        return response()->json(['rows' => $responseRows]);
     }
 
     /** Mapping pangkat otomatis berdasarkan golongan */
@@ -227,8 +232,6 @@ class UserManagementController extends Controller
             'III/A' => 'Penata Muda', 'III/B' => 'Penata Muda Tingkat I', 'III/C' => 'Penata', 'III/D' => 'Penata Tingkat I',
             'IV/A' => 'Pembina', 'IV/B' => 'Pembina Tingkat I', 'IV/C' => 'Pembina Utama Muda',
             'IV/D' => 'Pembina Utama Madya', 'IV/E' => 'Pembina Utama',
-
-            // Golongan PPPK
             'I' => 'Pemula', 'II' => 'Terampil', 'III' => 'Mahir', 'IV' => 'Penyelia',
             'V' => 'Ahli Pertama', 'VI' => 'Ahli Muda', 'VII' => 'Ahli Madya', 'VIII' => 'Ahli Utama',
             'IX' => 'Fungsional Tingkat Lanjut I', 'X' => 'Fungsional Tingkat Lanjut II', 'XI' => 'Fungsional Tingkat Lanjut III',
@@ -241,7 +244,6 @@ class UserManagementController extends Controller
     public function search(Request $request)
     {
         $keyword = $request->get('keyword', '');
-
         $users = User::where('name', 'like', "%{$keyword}%")
             ->orWhere('email', 'like', "%{$keyword}%")
             ->orWhere('role', 'like', "%{$keyword}%")
@@ -250,8 +252,6 @@ class UserManagementController extends Controller
             ->orderBy('name')
             ->paginate(10);
 
-        // Render hanya baris <tr> untuk tbody
         return view('pages.laravel-examples.user-search-result', compact('users'));
     }
-
 }
