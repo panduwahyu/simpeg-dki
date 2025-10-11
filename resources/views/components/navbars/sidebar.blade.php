@@ -10,6 +10,12 @@
             <img src="{{ asset('assets/img/logo-ct.png') }}" class="navbar-brand-img" style="height: 55px;" alt="main_logo">
             <span class="ms-2 fw-bold text-white" style="font-size: 2rem; line-height: 1;">SIPETRA</span>
         </a>
+        @else
+        <a class="navbar-brand d-flex align-items-center" href="{{ route('pegawai-dashboard') }}">
+            <img src="{{ asset('assets/img/logo-ct.png') }}" class="navbar-brand-img" style="height: 55px;" alt="main_logo">
+            <span class="ms-2 fw-bold text-white" style="font-size: 2rem; line-height: 1;">SIPETRA</span>
+        </a>
+        @endif  
     </div>
     <hr class="horizontal light mt-0 mb-2">
     <div class="sidenav w-auto max-height-vh-100" id="sidenav-main">
