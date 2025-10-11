@@ -8,18 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('wilayah', function (Blueprint $table) {
-            $table->id();
-            $table->string('kode')->unique(); // contoh: 11, 1101, 110101
-            $table->string('nama');
-            $table->enum('tingkat', ['provinsi', 'kabupaten', 'kecamatan', 'desa']);
-            $table->string('kode_induk')->nullable(); // relasi ke wilayah induk
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('nip_bps')->nullable()->after('email');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('wilayah');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('nip_bps');
+        });
     }
 };
