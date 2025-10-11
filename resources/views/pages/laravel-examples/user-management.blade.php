@@ -56,11 +56,6 @@
                                 </ul>
                             </div>
 
-                            <!-- Tombol Download Template Excel -->
-                            <a href="{{ route('user.template') }}" class="btn btn-info ms-2">
-                                <i class="material-icons text-sm">description</i>&nbsp;&nbsp;Template Impor User Baru
-                            </a>
-
                             <!-- Tombol Export -->
                             <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
                                 <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
@@ -166,7 +161,7 @@
                             <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
                         </div>
                         <div class="alert alert-secondary" role="alert">
-                            Pastikan format sesuai template.  
+                            <span class="text-white">Pastikan format sesuai template.</span>  
                             <a href="{{ asset('storage/template/users_template.xlsx') }}" class="fw-bold text-primary" target="_blank">
                                 Download Template Unggah User
                             </a>

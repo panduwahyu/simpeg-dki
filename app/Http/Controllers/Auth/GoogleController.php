@@ -28,7 +28,6 @@ class GoogleController extends Controller
             $user = User::updateOrCreate(
                 ['email' => $googleUser->getEmail()], // cari berdasarkan email
                 [
-                    'name'     => $googleUser->getName(),
                     'photo'    => $googleUser->getAvatar(),      // simpan foto ke kolom photo
                     'password' => bcrypt(Str::random(16)),       // password random
                 ]

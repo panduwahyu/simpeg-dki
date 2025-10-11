@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Illuminate\Support\Facades\Log;
 
 class UserManagementController extends Controller
 {
@@ -31,15 +30,15 @@ class UserManagementController extends Controller
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|unique:users,email',
             'role'       => 'required|string|max:50',
+            'nip_bps'    => 'nullable|string|max:50',
             'nip'        => 'nullable|string|max:50',
+            'wilayah'    => 'nullable|string|max:255',
             'unit_kerja' => 'nullable|string|max:255',
             'jabatan'    => 'nullable|string|max:255',
             'golongan'   => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
-
-        // Otomatis isi pangkat dari golongan
         $pangkatMap = $this->getPangkatMap();
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
@@ -47,7 +46,9 @@ class UserManagementController extends Controller
             'name'       => $validated['name'],
             'email'      => $validated['email'],
             'role'       => $role,
+            'nip_bps'    => $validated['nip_bps'] ?? null,
             'nip'        => $validated['nip'] ?? null,
+            'wilayah'    => $validated['wilayah'] ?? null,
             'unit_kerja' => $validated['unit_kerja'] ?? null,
             'jabatan'    => $validated['jabatan'] ?? null,
             'golongan'   => $validated['golongan'] ?? null,
@@ -71,14 +72,15 @@ class UserManagementController extends Controller
             'name'       => 'required|string|max:255',
             'email'      => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'role'       => 'required|string|max:50',
+            'nip_bps'    => 'nullable|string|max:50',
             'nip'        => 'nullable|string|max:50',
+            'wilayah'    => 'nullable|string|max:255',
             'unit_kerja' => 'nullable|string|max:255',
             'jabatan'    => 'nullable|string|max:255',
             'golongan'   => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
-
         $pangkatMap = $this->getPangkatMap();
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
@@ -86,7 +88,9 @@ class UserManagementController extends Controller
             'name'       => $validated['name'],
             'email'      => $validated['email'],
             'role'       => $role,
+            'nip_bps'    => $validated['nip_bps'] ?? null,
             'nip'        => $validated['nip'] ?? null,
+            'wilayah'    => $validated['wilayah'] ?? null,
             'unit_kerja' => $validated['unit_kerja'] ?? null,
             'jabatan'    => $validated['jabatan'] ?? null,
             'golongan'   => $validated['golongan'] ?? null,
@@ -107,15 +111,7 @@ class UserManagementController extends Controller
     public function export()
     {
         $users = User::all([
-            'email',
-            'name',
-            'nip_bps',
-            'nip',
-            'role',
-            'wilayah',
-            'unit_kerja',
-            'jabatan',
-            'golongan'
+            'email', 'name', 'nip_bps', 'nip', 'role', 'wilayah', 'unit_kerja', 'jabatan', 'golongan'
         ]);
 
         $spreadsheet = new Spreadsheet();
@@ -123,15 +119,7 @@ class UserManagementController extends Controller
 
         // Header kolom
         $sheet->fromArray([
-            'Email',
-            'Nama',
-            'NIP BPS',
-            'NIP',
-            'Status',
-            'Wilayah',
-            'Unit Kerja',
-            'Jabatan',
-            'Golongan',
+            'Email', 'Nama', 'NIP BPS', 'NIP', 'Status', 'Wilayah', 'Unit Kerja', 'Jabatan', 'Golongan',
         ], null, 'A1');
 
         // Isi data
