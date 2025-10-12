@@ -161,8 +161,10 @@ class FormController extends Controller
             ->where('tahun', $request->tahun)
             ->delete();
 
-        return redirect()->route('form.index')
-                        ->with('success', "$deleted dokumen berhasil dihapus!");
+        return response()->json([
+            'status' => 'success',
+            'message' => "$deleted dokumen berhasil dihapus!"
+        ]);
     }
 
     /**

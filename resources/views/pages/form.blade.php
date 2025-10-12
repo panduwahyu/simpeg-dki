@@ -226,11 +226,12 @@
             });
         });
 
-        // Konfirmasi hapus
+        // Konfirmasi hapus dengan SweetAlert + AJAX
         document.querySelectorAll('.btn-hapus').forEach(button => {
             button.addEventListener('click', function(e){
                 e.preventDefault();
                 const form = this.closest('form');
+                
                 Swal.fire({
                     title: 'Yakin ingin hapus?',
                     text: 'Data tidak bisa dikembalikan!',
@@ -238,8 +239,38 @@
                     showCancelButton:true,
                     confirmButtonText:'Ya, hapus!',
                     cancelButtonText:'Batal'
-                }).then(result=>{
-                    if(result.isConfirmed) form.submit();
+                }).then(result => {
+                    if(result.isConfirmed){
+                        const formData = new FormData(form);
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.status === 'success'){
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: data.message
+                                }).then(() => {
+                                    // Hapus row dari tabel
+                                    form.closest('tr').remove();
+                                });
+                            } else {
+                                Swal.fire({icon:'error', title:'Gagal', text:data.message});
+                            }
+                        })
+                        .catch(err=>{
+                            Swal.fire({icon:'error', title:'Gagal', text:'Terjadi kesalahan server.'});
+                            console.error(err);
+                        });
+                    }
                 });
             });
         });
