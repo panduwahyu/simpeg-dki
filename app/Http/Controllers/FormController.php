@@ -42,6 +42,16 @@ class FormController extends Controller
             'pegawai_ids.required' => 'Pilih minimal 1 pegawai.'
         ]);
 
+        // Cek apakah kombinasi sudah ada
+        $exists = JenisDokumen::where('nama_dokumen', $request->nama_dokumen)
+            ->where('periode_tipe', $request->periode_tipe)
+            ->where('tahun', $request->tahun)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Dokumen sudah pernah dibuat.');
+        }
+
         DB::transaction(function() use ($request) {
 
             // Buat jenis dokumen baru
@@ -174,6 +184,22 @@ class FormController extends Controller
         try {
             $jenisDokumen = JenisDokumen::findOrFail($id);
 
+            // Cek duplikasi nama dokumen jika diubah
+            if ($request->nama_dokumen !== $jenisDokumen->nama_dokumen) {
+                $exists = JenisDokumen::where('nama_dokumen', $request->nama_dokumen)
+                    ->where('periode_tipe', $jenisDokumen->periode_tipe)
+                    ->where('tahun', $jenisDokumen->tahun)
+                    ->exists();
+
+                if ($exists) {
+                    DB::rollBack(); // rollback transaksi
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Dokumen sudah pernah dibuat.'
+                    ], 409); // 409 Conflict
+                }
+            }
+
             // Update nama dokumen
             $jenisDokumen->update([
                 'nama_dokumen' => $request->nama_dokumen,
@@ -181,12 +207,6 @@ class FormController extends Controller
 
             // Ambil semua periode terkait dokumen ini
             $periodeIds = $jenisDokumen->periode->pluck('id')->toArray();
-
-            // Ambil semua pegawai sebelumnya di pivot table
-            $existingPegawai = DB::table('mandatory_uploads')
-                ->where('jenis_dokumen_id', $id)
-                ->pluck('user_id', 'periode_id'); // key = periode_id, value = user_id
-
             $newPegawaiIds = $request->pegawai_ids;
 
             foreach ($periodeIds as $periodeId) {
@@ -206,7 +226,6 @@ class FormController extends Controller
                         ->first();
 
                     if (!$existing) {
-                        // hanya buat baru kalau belum ada
                         DB::table('mandatory_uploads')->insert([
                             'jenis_dokumen_id' => $id,
                             'periode_id' => $periodeId,
@@ -218,10 +237,17 @@ class FormController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('form.index')->with('success', 'Data berhasil diperbarui.');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil diperbarui.'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+            ], 500);
         }
     }
 
