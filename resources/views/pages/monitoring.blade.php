@@ -107,6 +107,8 @@
         }
 
         .table thead tr:nth-child(2) th {
+            position: sticky;
+            top: 50px;
             background: #f8f9fa;
             z-index: 3;
         }
