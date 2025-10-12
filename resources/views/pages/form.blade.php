@@ -15,6 +15,7 @@
                             </div>
                         </div>
                         <div class="card-body px-4 pb-2">
+
                             <form id="dokumenForm" action="{{ route('form.store') }}" method="POST">
                                 @csrf
 
@@ -96,40 +97,48 @@
                             </div>
                         </div>
                         <div class="card-body px-4 pb-2">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>No.</th>
-                                        <th>Nama Dokumen</th>
-                                        <th>Tipe Periode</th>
-                                        <th>Tahun Terbaru</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php $no = 1; @endphp
-                                    @foreach($jenisDokumen->sortByDesc(fn($jd) => $jd->periode->max('tahun')) as $jd)
-                                        @php $latestPeriode = $jd->periode->sortByDesc('tahun')->first(); @endphp
+                            <div class="mb-3">
+                                <input type="text" id="searchDokumen" class="form-control" 
+                                    placeholder="Cari dokumen..." 
+                                    style="border: 2px solid #3498db; border-radius: 5px; padding: 8px;">
+                            </div>
+
+                            <div id="dokumenTableContainer">
+                                <table class="table table-bordered table-striped" id="dokumenTable">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $no++ }}</td>
-                                            <td>{{ $jd->nama_dokumen }}</td>
-                                            <td>{{ $jd->periode_tipe }}</td>
-                                            <td>{{ $latestPeriode?->tahun ?? '-' }}</td>
-                                            <td>
-                                                <a href="javascript:void(0)" class="btn btn-sm btn-warning btn-edit" data-id="{{ $jd->id }}">Edit</a>
-                                                <form action="{{ route('jenis-dokumen.destroy') }}" method="POST" style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="nama_dokumen" value="{{ $jd->nama_dokumen }}">
-                                                    <input type="hidden" name="periode_tipe" value="{{ $jd->periode_tipe }}">
-                                                    <input type="hidden" name="tahun" value="{{ $jd->periode->max('tahun') }}">
-                                                    <button type="submit" class="btn btn-sm btn-danger btn-hapus">Hapus</button>
-                                                </form>
-                                            </td>
+                                            <th>No.</th>
+                                            <th>Nama Dokumen</th>
+                                            <th>Tipe Periode</th>
+                                            <th>Tahun Terbaru</th>
+                                            <th>Aksi</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @php $no = 1; @endphp
+                                        @foreach($jenisDokumen->sortByDesc(fn($jd) => $jd->periode->max('tahun')) as $jd)
+                                            @php $latestPeriode = $jd->periode->sortByDesc('tahun')->first(); @endphp
+                                            <tr>
+                                                <td>{{ $no++ }}</td>
+                                                <td class="dokumen-nama">{{ $jd->nama_dokumen }}</td>
+                                                <td>{{ $jd->periode_tipe }}</td>
+                                                <td>{{ $latestPeriode?->tahun ?? '-' }}</td>
+                                                <td>
+                                                    <a href="javascript:void(0)" class="btn btn-sm btn-warning btn-edit" data-id="{{ $jd->id }}">Edit</a>
+                                                    <form action="{{ route('jenis-dokumen.destroy') }}" method="POST" style="display:inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="nama_dokumen" value="{{ $jd->nama_dokumen }}">
+                                                        <input type="hidden" name="periode_tipe" value="{{ $jd->periode_tipe }}">
+                                                        <input type="hidden" name="tahun" value="{{ $jd->periode->max('tahun') }}">
+                                                        <button type="submit" class="btn btn-sm btn-danger btn-hapus">Hapus</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -148,6 +157,19 @@
         const btnSubmit = document.getElementById('btnSubmit');
         const periodeTipe = document.getElementById('periode_tipe');
         const namaDokumen = document.getElementById('nama_dokumen');
+
+        // Pencarian otomatis
+        const searchInput = document.getElementById('searchDokumen');
+        const table = document.getElementById('dokumenTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            Array.from(rows).forEach(row => {
+                const namaDokumen = row.querySelector('.dokumen-nama').textContent.toLowerCase();
+                row.style.display = namaDokumen.includes(filter) ? '' : 'none';
+            });
+        });
 
         function togglePegawaiCheckbox() {
             checkboxContainer.style.display = 'block';
@@ -182,7 +204,10 @@
                     const formData = new FormData(dokumenForm);
                     fetch(dokumenForm.action, {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value },
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
                         body: formData
                     })
                     .then(res => res.json())

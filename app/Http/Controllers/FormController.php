@@ -49,89 +49,103 @@ class FormController extends Controller
             ->exists();
 
         if ($exists) {
-            return back()->with('error', 'Dokumen sudah pernah dibuat.');
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dokumen sudah pernah dibuat.'
+            ], 409);
         }
 
-        DB::transaction(function() use ($request) {
+        try {
+            DB::transaction(function() use ($request) {
 
-            // Buat jenis dokumen baru
-            $jenisDokumen = JenisDokumen::create([
-                'nama_dokumen' => $request->nama_dokumen,
-                'periode_tipe' => $request->periode_tipe,
-                'tahun' => $request->tahun,
+                // Buat jenis dokumen baru
+                $jenisDokumen = JenisDokumen::create([
+                    'nama_dokumen' => $request->nama_dokumen,
+                    'periode_tipe' => $request->periode_tipe,
+                    'tahun' => $request->tahun,
+                ]);
+
+                $tahun = $request->tahun;
+                $tipe  = $request->periode_tipe;
+                $pegawaiIds = $request->pegawai_ids;
+
+                if ($tipe === 'bulanan') {
+                    for ($bulan = 1; $bulan <= 12; $bulan++) {
+                        $periodeKey = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+                        $label = Carbon::createFromDate($tahun, $bulan, 1)
+                            ->locale('id')
+                            ->translatedFormat('F Y');
+
+                        $periode = Periode::firstOrCreate(
+                            ['periode_key' => $periodeKey, 'tipe' => 'bulanan', 'tahun' => $tahun, 'bulan' => $bulan],
+                            ['label' => $label]
+                        );
+
+                        foreach ($pegawaiIds as $userId) {
+                            DB::table('mandatory_uploads')->updateOrInsert(
+                                [
+                                    'jenis_dokumen_id' => $jenisDokumen->id,
+                                    'periode_id' => $periode->id,
+                                    'user_id' => $userId
+                                ],
+                                ['is_uploaded' => 0]
+                            );
+                        }
+                    }
+                } elseif ($tipe === 'triwulanan') {
+                    for ($q = 1; $q <= 4; $q++) {
+                        $periodeKey = $tahun . '-Q' . $q;
+                        $label = 'Triwulan ' . $q . ' ' . $tahun;
+
+                        $periode = Periode::firstOrCreate(
+                            ['periode_key' => $periodeKey, 'tipe' => 'triwulanan', 'tahun' => $tahun, 'triwulan' => $q],
+                            ['label' => $label]
+                        );
+
+                        foreach ($pegawaiIds as $userId) {
+                            DB::table('mandatory_uploads')->updateOrInsert(
+                                [
+                                    'jenis_dokumen_id' => $jenisDokumen->id,
+                                    'periode_id' => $periode->id,
+                                    'user_id' => $userId
+                                ],
+                                ['is_uploaded' => 0]
+                            );
+                        }
+                    }
+                } elseif ($tipe === 'tahunan') {
+                    $periodeKey = $tahun;
+                    $label = 'Tahun ' . $tahun;
+
+                    $periode = Periode::firstOrCreate(
+                        ['periode_key' => $periodeKey, 'tipe' => 'tahunan', 'tahun' => $tahun],
+                        ['label' => $label]
+                    );
+
+                    foreach ($pegawaiIds as $userId) {
+                        DB::table('mandatory_uploads')->updateOrInsert(
+                            [
+                                'jenis_dokumen_id' => $jenisDokumen->id,
+                                'periode_id' => $periode->id,
+                                'user_id' => $userId
+                            ],
+                            ['is_uploaded' => 0]
+                        );
+                    }
+                }
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Dokumen berhasil dibuat!'
             ]);
 
-            $tahun = $request->tahun;
-            $tipe  = $request->periode_tipe;
-            $pegawaiIds = $request->pegawai_ids;
-
-            if ($tipe === 'bulanan') {
-                for ($bulan = 1; $bulan <= 12; $bulan++) {
-                    $periodeKey = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
-                    $label = Carbon::createFromDate($tahun, $bulan, 1)
-                        ->locale('id')
-                        ->translatedFormat('F Y');
-
-                    $periode = Periode::firstOrCreate(
-                        ['periode_key' => $periodeKey, 'tipe' => 'bulanan', 'tahun' => $tahun, 'bulan' => $bulan],
-                        ['label' => $label]
-                    );
-
-                    foreach ($pegawaiIds as $userId) {
-                        DB::table('mandatory_uploads')->updateOrInsert(
-                            [
-                                'jenis_dokumen_id' => $jenisDokumen->id,
-                                'periode_id' => $periode->id,
-                                'user_id' => $userId
-                            ],
-                            ['is_uploaded' => 0]
-                        );
-                    }
-                }
-            } elseif ($tipe === 'triwulanan') {
-                for ($q = 1; $q <= 4; $q++) {
-                    $periodeKey = $tahun . '-Q' . $q;
-                    $label = 'Triwulan ' . $q . ' ' . $tahun;
-
-                    $periode = Periode::firstOrCreate(
-                        ['periode_key' => $periodeKey, 'tipe' => 'triwulanan', 'tahun' => $tahun, 'triwulan' => $q],
-                        ['label' => $label]
-                    );
-
-                    foreach ($pegawaiIds as $userId) {
-                        DB::table('mandatory_uploads')->updateOrInsert(
-                            [
-                                'jenis_dokumen_id' => $jenisDokumen->id,
-                                'periode_id' => $periode->id,
-                                'user_id' => $userId
-                            ],
-                            ['is_uploaded' => 0]
-                        );
-                    }
-                }
-            } elseif ($tipe === 'tahunan') {
-                $periodeKey = $tahun;
-                $label = 'Tahun ' . $tahun;
-
-                $periode = Periode::firstOrCreate(
-                    ['periode_key' => $periodeKey, 'tipe' => 'tahunan', 'tahun' => $tahun],
-                    ['label' => $label]
-                );
-
-                foreach ($pegawaiIds as $userId) {
-                    DB::table('mandatory_uploads')->updateOrInsert(
-                        [
-                            'jenis_dokumen_id' => $jenisDokumen->id,
-                            'periode_id' => $periode->id,
-                            'user_id' => $userId
-                        ],
-                        ['is_uploaded' => 0]
-                    );
-                }
-            }
-        });
-
-        return redirect()->route('form.index')->with('success', 'Dokumen berhasil dibuat!');
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Request $request)
