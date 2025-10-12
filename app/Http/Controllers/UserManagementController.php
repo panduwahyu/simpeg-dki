@@ -13,7 +13,10 @@ class UserManagementController extends Controller
     /** Tampilkan daftar semua user */
     public function index()
     {
-        $users = User::orderBy('nama_gelar')->paginate(10);
+        $users = User::orderBy('nama_gelar')
+            ->paginate(10)
+            ->onEachSide(1); // hanya tampil 3 nomor halaman
+
         return view('pages.laravel-examples.user-management', compact('users'));
     }
 
@@ -27,15 +30,15 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nama_gelar'       => 'required|string|max:255',
-            'email'            => 'required|email|unique:users,email',
-            'role'             => 'required|string|max:50',
-            'nip_bps'          => 'nullable|string|max:50',
-            'nip'              => 'nullable|string|max:50',
-            'wilayah'          => 'nullable|string|max:255',
-            'unit_kerja'       => 'nullable|string|max:255',
-            'jabatan'          => 'nullable|string|max:255',
-            'golongan'         => 'nullable|string|max:255',
+            'nama_gelar' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'role' => 'required|string|max:50',
+            'nip_bps' => 'nullable|string|max:50',
+            'nip' => 'nullable|string|max:50',
+            'wilayah' => 'nullable|string|max:255',
+            'unit_kerja' => 'nullable|string|max:255',
+            'jabatan' => 'nullable|string|max:255',
+            'golongan' => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
@@ -43,18 +46,18 @@ class UserManagementController extends Controller
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
         User::create([
-            'name'            => $validated['nama_gelar'], // wajib isi agar SSO aman
-            'nama_gelar'      => $validated['nama_gelar'],
-            'email'           => $validated['email'],
-            'role'            => $role,
-            'nip_bps'         => $validated['nip_bps'] ?? null,
-            'nip'             => $validated['nip'] ?? null,
-            'wilayah'         => $validated['wilayah'] ?? null,
-            'unit_kerja'      => $validated['unit_kerja'] ?? null,
-            'jabatan'         => $validated['jabatan'] ?? null,
-            'golongan'        => $validated['golongan'] ?? null,
-            'pangkat'         => $pangkat,
-            'password'        => bcrypt('password'),
+            'name' => $validated['nama_gelar'], // untuk SSO
+            'nama_gelar' => $validated['nama_gelar'],
+            'email' => $validated['email'],
+            'role' => $role,
+            'nip_bps' => $validated['nip_bps'] ?? null,
+            'nip' => $validated['nip'] ?? null,
+            'wilayah' => $validated['wilayah'] ?? null,
+            'unit_kerja' => $validated['unit_kerja'] ?? null,
+            'jabatan' => $validated['jabatan'] ?? null,
+            'golongan' => $validated['golongan'] ?? null,
+            'pangkat' => $pangkat,
+            'password' => bcrypt('password'),
         ]);
 
         return redirect()->route('user-management')->with('status', 'User baru berhasil ditambahkan!');
@@ -70,15 +73,15 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'nama_gelar'       => 'required|string|max:255',
-            'email'            => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'role'             => 'required|string|max:50',
-            'nip_bps'          => 'nullable|string|max:50',
-            'nip'              => 'nullable|string|max:50',
-            'wilayah'          => 'nullable|string|max:255',
-            'unit_kerja'       => 'nullable|string|max:255',
-            'jabatan'          => 'nullable|string|max:255',
-            'golongan'         => 'nullable|string|max:255',
+            'nama_gelar' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'role' => 'required|string|max:50',
+            'nip_bps' => 'nullable|string|max:50',
+            'nip' => 'nullable|string|max:50',
+            'wilayah' => 'nullable|string|max:255',
+            'unit_kerja' => 'nullable|string|max:255',
+            'jabatan' => 'nullable|string|max:255',
+            'golongan' => 'nullable|string|max:255',
         ]);
 
         $role = ucfirst(strtolower($validated['role']));
@@ -86,17 +89,17 @@ class UserManagementController extends Controller
         $pangkat = $pangkatMap[$validated['golongan']] ?? null;
 
         $user->update([
-            'name'            => $validated['nama_gelar'], // update juga kolom name
-            'nama_gelar'      => $validated['nama_gelar'],
-            'email'           => $validated['email'],
-            'role'            => $role,
-            'nip_bps'         => $validated['nip_bps'] ?? null,
-            'nip'             => $validated['nip'] ?? null,
-            'wilayah'         => $validated['wilayah'] ?? null,
-            'unit_kerja'      => $validated['unit_kerja'] ?? null,
-            'jabatan'         => $validated['jabatan'] ?? null,
-            'golongan'        => $validated['golongan'] ?? null,
-            'pangkat'         => $pangkat,
+            'name' => $validated['nama_gelar'],
+            'nama_gelar' => $validated['nama_gelar'],
+            'email' => $validated['email'],
+            'role' => $role,
+            'nip_bps' => $validated['nip_bps'] ?? null,
+            'nip' => $validated['nip'] ?? null,
+            'wilayah' => $validated['wilayah'] ?? null,
+            'unit_kerja' => $validated['unit_kerja'] ?? null,
+            'jabatan' => $validated['jabatan'] ?? null,
+            'golongan' => $validated['golongan'] ?? null,
+            'pangkat' => $pangkat,
         ]);
 
         return redirect()->route('user-management')->with('status', 'User berhasil diupdate!');
@@ -172,12 +175,12 @@ class UserManagementController extends Controller
             return response()->json(['rows' => []]);
         }
 
-        unset($rows[0]); // hapus header
+        unset($rows[0]);
         $pangkatMap = $this->getPangkatMap();
         $responseRows = [];
 
         foreach ($rows as $index => $r) {
-            $rowNumber = $index + 2; // nomor baris di Excel
+            $rowNumber = $index + 2;
             $email      = trim($r[0] ?? '');
             $nama_gelar = trim($r[1] ?? '');
             $nip_bps    = trim($r[2] ?? '');
@@ -189,9 +192,8 @@ class UserManagementController extends Controller
             $golongan   = strtoupper(trim($r[8] ?? ''));
             $pangkat    = $pangkatMap[$golongan] ?? null;
 
-            $warnings = []; // menampung peringatan untuk baris ini
+            $warnings = [];
 
-            // Cek email
             if (empty($email)) {
                 $responseRows[] = [
                     'row' => $rowNumber - 1,
@@ -210,39 +212,33 @@ class UserManagementController extends Controller
                 continue;
             }
 
-            // Cek role
             $validRoles = ['admin', 'supervisor'];
             if (in_array($roleInput, $validRoles)) {
-                $role = match ($roleInput) {
-                    'admin' => 'Admin',
-                    'supervisor' => 'Supervisor',
-                };
+                $role = ucfirst($roleInput);
             } else {
                 $role = 'Pegawai';
                 $warnings[] = "kolom status otomatis dibuat Pegawai karena role kosong atau salah input";
             }
 
-            // Cek golongan
             if (!empty($golongan) && !isset($pangkatMap[$golongan])) {
                 $golongan = null;
                 $pangkat = null;
                 $warnings[] = "kolom golongan dikosongkan karena salah input";
             }
 
-            // Simpan user
             User::create([
-                'name'        => $nama_gelar,
-                'nama_gelar'  => $nama_gelar,
-                'email'       => $email,
-                'nip_bps'     => $nip_bps ?: null,
-                'nip'         => $nip ?: null,
-                'role'        => $role,
-                'wilayah'     => $wilayah ?: null,
-                'unit_kerja'  => $unit_kerja ?: null,
-                'jabatan'     => $jabatan ?: null,
-                'golongan'    => $golongan ?: null,
-                'pangkat'     => $pangkat ?: null,
-                'password'    => bcrypt('password'),
+                'name' => $nama_gelar,
+                'nama_gelar' => $nama_gelar,
+                'email' => $email,
+                'nip_bps' => $nip_bps ?: null,
+                'nip' => $nip ?: null,
+                'role' => $role,
+                'wilayah' => $wilayah ?: null,
+                'unit_kerja' => $unit_kerja ?: null,
+                'jabatan' => $jabatan ?: null,
+                'golongan' => $golongan ?: null,
+                'pangkat' => $pangkat ?: null,
+                'password' => bcrypt('password'),
             ]);
 
             if (!empty($warnings)) {
@@ -290,7 +286,8 @@ class UserManagementController extends Controller
             ->orWhere('nip_bps', 'like', "%{$keyword}%")
             ->orWhere('nip', 'like', "%{$keyword}%")
             ->orderBy('nama_gelar')
-            ->paginate(10);
+            ->paginate(10)
+            ->onEachSide(1); // batasi 3 halaman juga
 
         return view('pages.laravel-examples.user-search-result', compact('users'));
     }

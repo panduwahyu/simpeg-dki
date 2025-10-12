@@ -25,6 +25,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
+
                         {{-- Header --}}
                         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                             <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
@@ -35,17 +36,21 @@
                         {{-- Toolbar --}}
                         <div class="d-flex justify-content-between align-items-center my-3 mx-3">
                             <div class="col-md-4 p-0">
-                                <input type="text" id="searchUser" class="form-control border border-primary rounded" placeholder="Cari user..." />
+                                <input type="text" id="searchUser" class="form-control border border-primary rounded"
+                                    placeholder="Cari user..." />
                             </div>
 
                             <div class="me-3 text-end">
                                 <div class="btn-group">
-                                    <button type="button" class="btn bg-gradient-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <button type="button" class="btn bg-gradient-dark dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('user-management.create') }}">Tambah Manual</a></li>
-                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">Impor dari Excel</a></li>
+                                        <li><a class="dropdown-item"
+                                                href="{{ route('user-management.create') }}">Tambah Manual</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                                data-bs-target="#importModal">Impor dari Excel</a></li>
                                     </ul>
                                 </div>
 
@@ -61,58 +66,79 @@
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">NO.</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">FOTO</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAMA LENGKAP</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">EMAIL</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">STATUS</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">TANGGAL DIBUAT</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                NO.</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                FOTO</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                                NAMA LENGKAP</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                EMAIL</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                STATUS</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                TANGGAL DIBUAT</th>
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="usersTableBody">
                                         @foreach ($users as $user)
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex px-2 py-1">
-                                                    <div class="d-flex flex-column justify-content-center">
-                                                        <p class="mb-0 text-sm">{{ $loop->iteration + ($users->currentPage() - 1) * $users->perPage() }}</p>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <p class="mb-0 text-sm">
+                                                                {{ $loop->iteration + ($users->currentPage() - 1) * $users->perPage() }}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                @php
-                                                    $photo = $user->photo 
-                                                        ? (Str::startsWith($user->photo, ['http://','https://']) 
-                                                            ? $user->photo 
-                                                            : asset('storage/' . $user->photo)) 
-                                                        : asset('assets/img/bruce-mars.jpg');
-                                                @endphp
-                                                <img src="{{ $photo }}" class="avatar avatar-sm me-3 border-radius-lg" alt="{{ $user->nama_gelar }}">
-                                            </td>
-                                            <td>
-                                                <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $user->nama_gelar }}</h6>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center text-sm">
-                                                <p class="text-xs text-secondary mb-0">{{ $user->email }}</p>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">{{ optional($user->created_at)->format('d/m/Y') }}</span>
-                                            </td>
-                                            <td class="align-middle">
-                                                <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link"><i class="material-icons">edit</i></a>
-                                                <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})"><i class="material-icons">close</i></button>
-                                                <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                </form>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $photo = $user->photo
+                                                            ? (Str::startsWith($user->photo, ['http://', 'https://'])
+                                                                ? $user->photo
+                                                                : asset('storage/' . $user->photo))
+                                                            : asset('assets/img/bruce-mars.jpg');
+                                                    @endphp
+                                                    <img src="{{ $photo }}"
+                                                        class="avatar avatar-sm me-3 border-radius-lg"
+                                                        alt="{{ $user->nama_gelar }}">
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-column justify-content-center">
+                                                        <h6 class="mb-0 text-sm">{{ $user->nama_gelar }}</h6>
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle text-center text-sm">
+                                                    <p class="text-xs text-secondary mb-0">{{ $user->email }}</p>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span
+                                                        class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span
+                                                        class="text-secondary text-xs font-weight-bold">{{ optional($user->created_at)->format('d/m/Y') }}</span>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <a href="{{ route('user-management.edit', $user->id) }}"
+                                                        class="btn btn-success btn-link"><i
+                                                            class="material-icons">edit</i></a>
+                                                    <button type="button" class="btn btn-danger btn-link"
+                                                        onclick="deleteUser({{ $user->id }})"><i
+                                                            class="material-icons">close</i></button>
+                                                    <form id="delete-form-{{ $user->id }}"
+                                                        action="{{ route('user-management.destroy', $user->id) }}"
+                                                        method="POST" style="display:none;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -140,16 +166,18 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="importModalLabel">Import Users dari Excel / CSV</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="file" class="form-label">Pilih File (.xlsx / .csv)</label>
                             <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
                         </div>
-                        <div class="alert alert-secondary" role="alert">
-                            <span class="text-white">Pastikan format sesuai template.</span>  
-                            <a href="{{ asset('storage/template/users_template.xlsx') }}" class="fw-bold text-primary" target="_blank">
+                        <div class="alert alert-secondary text-white" style="background-color:#6c757d;" role="alert">
+                            <span class="text-white">Pastikan format sesuai template.</span>
+                            <a href="{{ asset('storage/template/users_template.xlsx') }}"
+                                class="fw-bold text-primary" target="_blank">
                                 Download Template Unggah User
                             </a>
                         </div>
@@ -163,7 +191,7 @@
         </div>
     </div>
 
-    {{-- SweetAlert & AJAX --}}
+    {{-- Script SweetAlert & AJAX --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -175,14 +203,16 @@
                 $.ajax({
                     url: "{{ route('user-management.search') }}",
                     type: "GET",
-                    data: { keyword: query },
+                    data: {
+                        keyword: query
+                    },
                     success: function(response) {
                         $('#usersTableBody').html(response);
                     }
                 });
             });
 
-            // Import AJAX dengan SweetAlert tabel berwarna
+            // Import AJAX + SweetAlert
             $('#importForm').on('submit', function(e) {
                 e.preventDefault();
 
@@ -213,23 +243,27 @@
                         Swal.close();
 
                         let warnings = res.rows.filter(r => r.status === 'warning');
-                        let errors   = res.rows.filter(r => r.status === 'error');
-                        let success  = res.rows.filter(r => r.status === 'success');
+                        let errors = res.rows.filter(r => r.status === 'error');
+                        let success = res.rows.filter(r => r.status === 'success');
 
-                        // Buat tabel HTML scrollable dengan lebar kolom
-                        let htmlMsg = `<div style="overflow-x:auto"><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%">`;
-                        htmlMsg += `<tr style="background-color:#f1f1f1"><th style="width:33%">Status</th><th style="width:67%">Pesan</th></tr>`;
+                        let htmlMsg =
+                            `<div style="overflow-x:auto"><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%">`;
+                        htmlMsg +=
+                            `<tr style="background-color:#f1f1f1"><th style="width:33%">Status</th><th style="width:67%">Pesan</th></tr>`;
 
                         success.forEach(s => {
-                            htmlMsg += `<tr style="background-color:#d4edda"><td>Berhasil</td><td>Baris ${s.row}: ${s.message}</td></tr>`;
+                            htmlMsg +=
+                                `<tr style="background-color:#d4edda"><td>Berhasil</td><td>Baris ${s.row}: ${s.message}</td></tr>`;
                         });
 
                         warnings.forEach(w => {
-                            htmlMsg += `<tr style="background-color:#fff3cd"><td>Peringatan</td><td>Baris ${w.row}: ${w.message}</td></tr>`;
+                            htmlMsg +=
+                                `<tr style="background-color:#fff3cd"><td>Peringatan</td><td>Baris ${w.row}: ${w.message}</td></tr>`;
                         });
 
                         errors.forEach(e => {
-                            htmlMsg += `<tr style="background-color:#f8d7da"><td>Gagal</td><td>Baris ${e.row}: ${e.message}</td></tr>`;
+                            htmlMsg +=
+                                `<tr style="background-color:#f8d7da"><td>Gagal</td><td>Baris ${e.row}: ${e.message}</td></tr>`;
                         });
 
                         htmlMsg += `</table></div>`;
