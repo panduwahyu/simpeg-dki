@@ -143,6 +143,7 @@ Route::middleware('auth')->group(function () {
     // Tanda tangan PDF
     Route::get('/sign-pdf', [PdfController::class, 'index'])->name('pdf.sign.form');
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
+    Route::post('/sign-pdf/update/{dokumen}', [PdfController::class, 'updatePdf'])->name('pdf.update');
 
     // AJAX untuk dropdown Dokumen pegawai
     Route::get('/pegawai/ajax-dokumen/{userId}', [PdfController::class, 'getDokumenPegawai'])

@@ -106,6 +106,11 @@
             const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
             const signatureControls = document.getElementById('signature-controls');
 
+            // --- Baca parameter dari URL ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectDokumenId = urlParams.get('jenis_dokumen_id');
+            const preselectPeriodeId = urlParams.get('periode_id');
+
             if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
             }
@@ -134,6 +139,14 @@
                         opt.textContent = d.nama_dokumen;
                         dokumenSelect.appendChild(opt);
                     });
+
+                    // --- Pilih dokumen jika ada parameter ---
+                    if (preselectDokumenId) {
+                        dokumenSelect.value = preselectDokumenId;
+                        // Secara manual picu event 'change' untuk memuat periode
+                        dokumenSelect.dispatchEvent(new Event('change'));
+                    }
+
                 } catch(err) {
                     Swal.fire('Error','Gagal memuat dokumen','error');
                     console.error(err);
@@ -160,6 +173,13 @@
                         opt.textContent = p.periode_key;
                         periodeSelect.appendChild(opt);
                     });
+
+                    // --- Pilih periode jika ada parameter ---
+                    // Cek apakah dokumen yang aktif adalah dokumen yang dikirim dari URL
+                    if (dokumenId === preselectDokumenId && preselectPeriodeId) {
+                        periodeSelect.value = preselectPeriodeId;
+                    }
+
                     periodeSelect.disabled = false;
                 } catch(err){
                     Swal.fire('Error','Gagal memuat periode','error');

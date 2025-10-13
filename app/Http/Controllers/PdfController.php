@@ -373,4 +373,120 @@ class PdfController extends Controller
 
         return response()->json($periode);
     }
+
+     public function updatePdf(Request $request, $dokumen_id)
+    {
+        // Validasi input
+        $request->validate([
+            'pdf'               => 'sometimes|file|mimes:pdf|max:10240', // sometimes = tidak wajib
+            'signatures'        => 'nullable|array',
+            'signatures.*.page' => 'required_with:signatures|integer|min:1',
+            'signatures.*.x'    => 'required_with:signatures|numeric|min:0|max:1',
+            'signatures.*.y'    => 'required_with:signatures|numeric|min:0|max:1',
+            'signatures.*.w'    => 'required_with:signatures|numeric|min:0|max:1',
+            'files'             => 'nullable|array',
+            'files.*'           => 'required_with:files|file|image|mimes:png,jpg,jpeg|max:5120',
+        ]);
+
+        // Cari dokumen yang akan diupdate
+        $dokumen = DB::table('dokumen')->where('id', $dokumen_id)->first();
+        if (!$dokumen) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        }
+
+        // Jika tidak ada file PDF baru DAN tidak ada signature baru, tidak ada yang perlu dilakukan
+        if (!$request->hasFile('pdf') && !$request->has('signatures')) {
+            return response()->json(['success' => true, 'message' => 'Tidak ada perubahan yang disimpan.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $pdfPathToProcess = Storage::path($dokumen->path);
+            $newPdfUploaded = false;
+
+            // 1. Jika ada PDF baru diupload
+            if ($request->hasFile('pdf')) {
+                $pdfFile = $request->file('pdf');
+                $pdfName = 'temp_update_' . time() . '.pdf';
+                $storedPath = $pdfFile->storeAs('public/tmp', $pdfName);
+                $pdfPathToProcess = Storage::path($storedPath);
+                $newPdfUploaded = true;
+            }
+
+            // 2. Proses penambahan signature (jika ada)
+            $pdf = new Fpdi();
+            $pageCount = $pdf->setSourceFile($pdfPathToProcess);
+
+            // (Logika untuk menyimpan file signature sementara sama seperti di signPdf)
+            // ...
+            $sigStoredPaths = [];
+            $sigTempPaths = [];
+            foreach ($request->file('files', []) as $i => $sigFile) {
+                $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
+                $sigStored = $sigFile->storeAs('public/tmp', $sigName);
+                $sigStoredPaths[$i] = $sigStored;
+                $sigTempPaths[$i] = Storage::path($sigStored);
+            }
+
+            $signatures = $request->input('signatures', []);
+            
+            for ($p = 1; $p <= $pageCount; $p++) {
+                $tplId = $pdf->importPage($p);
+                $size = $pdf->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplId);
+
+                // (Logika untuk menempelkan signature sama seperti di signPdf)
+                // ...
+                foreach ($signatures as $idx => $sig) {
+                    if ((int)$sig['page'] === $p && isset($sigTempPaths[$idx])) {
+                        $x = floatval($sig['x']) * $size['width'];
+                        $y = floatval($sig['y']) * $size['height'];
+                        $w = floatval($sig['w']) * $size['width'];
+                        $pdf->Image($sigTempPaths[$idx], $x, $y, $w);
+                    }
+                }
+            }
+
+            // 3. Hapus file PDF lama dari storage
+            if (Storage::exists($dokumen->path)) {
+                Storage::delete($dokumen->path);
+            }
+
+            // 4. Simpan file PDF baru yang sudah ditandatangani
+            $jenisDokumen = DB::table('jenis_dokumen')->where('id', $dokumen->jenis_dokumen_id)->first();
+            $periode = DB::table('periode')->where('id', $dokumen->periode_id)->first();
+            
+            $outName = 'Ditandatangani_' . Str::slug($jenisDokumen->nama_dokumen) . '_' . $periode->periode_key . '.pdf';
+            $outStoredRelativePath = 'uploads/' . $outName; // Simpan path relatif untuk DB
+            $outFullPath = Storage::path($outStoredRelativePath);
+            
+            $pdf->Output($outFullPath, 'F');
+
+            // 5. Update record di database
+            DB::table('dokumen')
+                ->where('id', $dokumen->id)
+                ->update([
+                    'path' => $outStoredRelativePath, // Simpan path relatif
+                    'tanggal_unggah' => now(),
+                    'updated_at' => now()
+                ]);
+
+            // Hapus file temp jika ada
+            if ($newPdfUploaded) {
+                Storage::delete($storedPath);
+            }
+            // (Hapus juga file signature temp)
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Dokumen berhasil diperbarui.']);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("Error saat update PDF: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server: ' . $e->getMessage()], 500);
+        }
+    }
 }
