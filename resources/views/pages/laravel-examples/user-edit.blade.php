@@ -5,88 +5,174 @@
         <x-navbars.navs.auth titlePage="Edit User"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <form action="{{ route('user-management.update', $user->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
+                        {{-- Nama --}}
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" value="{{ $user->name }}" disabled>
-                            <input type="hidden" name="name" value="{{ $user->name }}">
+                            <label class="form-label">Nama Lengkap (beserta gelar)</label>
+                            <input type="text" name="nama_gelar" class="form-control" value="{{ old('nama_gelar', $user->nama_gelar) }}" required>
+                            @error('nama_gelar')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
+                        {{-- Email (readonly) --}}
                         <div class="mb-3">
                             <label class="form-label">Email</label>
                             <input type="email" class="form-control" value="{{ $user->email }}" disabled>
                             <input type="hidden" name="email" value="{{ $user->email }}">
                         </div>
 
+                        {{-- NIP BPS --}}
                         <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select name="role" class="form-control">
-                                <option value="Pegawai" {{ old('role', $user->role) == 'Pegawai' ? 'selected' : '' }}>Pegawai</option>
-                                <option value="Supervisor" {{ old('role', $user->role) == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
-                                <option value="Admin" {{ old('role', $user->role) == 'Admin' ? 'selected' : '' }}>Admin</option>
-                            </select>
-                            @error('role')<p class="text-danger">{{ $message }}</p>@enderror
+                            <label class="form-label">NIP BPS</label>
+                            <input type="text" name="nip_bps" class="form-control" value="{{ old('nip_bps', $user->nip_bps) }}">
+                            @error('nip_bps')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
-                        {{-- Tambahan field baru --}}
+                        {{-- NIP --}}
                         <div class="mb-3">
                             <label class="form-label">NIP</label>
                             <input type="text" name="nip" class="form-control" value="{{ old('nip', $user->nip) }}">
-                            @error('nip')<p class="text-danger">{{ $message }}</p>@enderror
+                            @error('nip')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
+                        {{-- Wilayah --}}
+                        <div class="mb-3">
+                            <label class="form-label">Wilayah</label>
+                            <input type="text" name="wilayah" class="form-control" value="{{ old('wilayah', $user->wilayah) }}">
+                            @error('wilayah')<small class="text-danger">{{ $message }}</small>@enderror
+                        </div>
+
+                        {{-- Unit Kerja --}}
                         <div class="mb-3">
                             <label class="form-label">Unit Kerja</label>
                             <input type="text" name="unit_kerja" class="form-control" value="{{ old('unit_kerja', $user->unit_kerja) }}">
-                            @error('unit_kerja')<p class="text-danger">{{ $message }}</p>@enderror
+                            @error('unit_kerja')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
+                        {{-- Jabatan --}}
                         <div class="mb-3">
                             <label class="form-label">Jabatan</label>
                             <input type="text" name="jabatan" class="form-control" value="{{ old('jabatan', $user->jabatan) }}">
-                            @error('jabatan')<p class="text-danger">{{ $message }}</p>@enderror
+                            @error('jabatan')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
+                        {{-- Role / Status --}}
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            @php $roles = ['Pegawai','Supervisor','Admin']; @endphp
+                            <select name="role" class="form-control">
+                                @foreach($roles as $role)
+                                    <option value="{{ $role }}" {{ old('role', $user->role) == $role ? 'selected' : '' }}>
+                                        {{ $role }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('role')<small class="text-danger">{{ $message }}</small>@enderror
+                        </div>
+
+                        {{-- Pangkat --}}
                         <div class="mb-3">
                             <label class="form-label">Pangkat</label>
-                            <select name="pangkat" class="form-control">
+                            <select name="pangkat" id="pangkat" class="form-control">
                                 <option value="">-- Pilih Pangkat --</option>
-                                @foreach([
-                                  'Juru Muda','Juru Muda Tingkat I','Juru','Juru Tingkat I',
-                                  'Pengatur Muda','Pengatur Muda Tingkat I','Pengatur','Pengatur Tingkat I',
-                                  'Penata Muda','Penata Muda Tingkat I','Penata','Penata Tingkat I',
-                                  'Pembina','Pembina Tingkat I','Pembina Utama Muda','Pembina Utama Madya','Pembina Utama'
-                                ] as $pangkat)
-                                    <option value="{{ $pangkat }}" {{ old('pangkat', $user->pangkat) == $pangkat ? 'selected' : '' }}>{{ $pangkat }}</option>
+                                @php
+                                    $pangkats = [
+                                        'Juru Muda','Juru Muda Tingkat I','Juru','Juru Tingkat I',
+                                        'Pengatur Muda','Pengatur Muda Tingkat I','Pengatur','Pengatur Tingkat I',
+                                        'Penata Muda','Penata Muda Tingkat I','Penata','Penata Tingkat I',
+                                        'Pembina','Pembina Tingkat I','Pembina Utama Muda','Pembina Utama Madya','Pembina Utama',
+                                        'Pemula','Terampil','Mahir','Penyelia','Ahli Pertama','Ahli Muda','Ahli Madya','Ahli Utama',
+                                        'Fungsional Tingkat Lanjut I','Fungsional Tingkat Lanjut II','Fungsional Tingkat Lanjut III',
+                                        'Koordinator','Pengawas','Pejabat Fungsional Utama','Pejabat Pimpinan Tinggi Pratama',
+                                        'Pejabat Pimpinan Tinggi Madya','Pejabat Pimpinan Tinggi Utama'
+                                    ];
+                                @endphp
+                                @foreach($pangkats as $p)
+                                    <option value="{{ $p }}" {{ old('pangkat', $user->pangkat) == $p ? 'selected' : '' }}>
+                                        {{ $p }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('pangkat')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
+                        {{-- Golongan --}}
                         <div class="mb-3">
                             <label class="form-label">Golongan</label>
-                            <select name="golongan" class="form-control">
+                            <select name="golongan" id="golongan" class="form-control">
                                 <option value="">-- Pilih Golongan --</option>
-                                @foreach(['I/a','I/b','I/c','I/d','II/a','II/b','II/c','II/d','III/a','III/b','III/c','III/d','IV/a','IV/b','IV/c','IV/d','IV/e'] as $gol)
-                                    <option value="{{ $gol }}" {{ old('golongan', $user->golongan) == $gol ? 'selected' : '' }}>{{ $gol }}</option>
+                                @php
+                                    $golongans = [
+                                        'I/A','I/B','I/C','I/D','II/A','II/B','II/C','II/D',
+                                        'III/A','III/B','III/C','III/D','IV/A','IV/B','IV/C','IV/D','IV/E',
+                                        'I','II','III','IV','V','VI','VII','VIII',
+                                        'IX','X','XI','XII','XIII','XIV','XV','XVI','XVII'
+                                    ];
+                                @endphp
+                                @foreach($golongans as $gol)
+                                    <option value="{{ $gol }}" {{ old('golongan', $user->golongan) == $gol ? 'selected' : '' }}>
+                                        {{ $gol }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('golongan')<small class="text-danger">{{ $message }}</small>@enderror
                         </div>
 
-                        {{-- Tombol --}}
-                        <button type="submit" class="btn btn-primary">Update User</button>
-                        <a href="{{ route('user-management') }}" class="btn btn-secondary">Cancel</a>
+                        {{-- Tombol aksi --}}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Update User</button>
+                            <a href="{{ route('user-management') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- SCRIPT PANGKAT ↔ GOLONGAN OTOMATIS --}}
+    <script>
+        const mapping = {
+            "I/A": "Juru Muda","I/B": "Juru Muda Tingkat I","I/C": "Juru","I/D": "Juru Tingkat I",
+            "II/A": "Pengatur Muda","II/B": "Pengatur Muda Tingkat I","II/C": "Pengatur","II/D": "Pengatur Tingkat I",
+            "III/A": "Penata Muda","III/B": "Penata Muda Tingkat I","III/C": "Penata","III/D": "Penata Tingkat I",
+            "IV/A": "Pembina","IV/B": "Pembina Tingkat I","IV/C": "Pembina Utama Muda","IV/D": "Pembina Utama Madya","IV/E": "Pembina Utama",
+            "I": "Pemula","II": "Terampil","III": "Mahir","IV": "Penyelia","V": "Ahli Pertama","VI": "Ahli Muda","VII": "Ahli Madya","VIII": "Ahli Utama",
+            "IX": "Fungsional Tingkat Lanjut I","X": "Fungsional Tingkat Lanjut II","XI": "Fungsional Tingkat Lanjut III",
+            "XII": "Koordinator","XIII": "Pengawas","XIV": "Pejabat Fungsional Utama","XV": "Pejabat Pimpinan Tinggi Pratama",
+            "XVI": "Pejabat Pimpinan Tinggi Madya","XVII": "Pejabat Pimpinan Tinggi Utama"
+        };
+
+        const golonganSelect = document.getElementById('golongan');
+        const pangkatSelect = document.getElementById('pangkat');
+
+        // Sync saat user memilih salah satu
+        golonganSelect.addEventListener('change', () => {
+            pangkatSelect.value = mapping[golonganSelect.value] || "";
+        });
+
+        pangkatSelect.addEventListener('change', () => {
+            const found = Object.entries(mapping).find(([gol, pang]) => pang === pangkatSelect.value);
+            golonganSelect.value = found ? found[0] : "";
+        });
+
+        // Otomatis set dropdown saat load halaman
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentGol = "{{ old('golongan', $user->golongan) }}";
+            if (currentGol && mapping[currentGol]) {
+                pangkatSelect.value = mapping[currentGol];
+            } else {
+                const currentPangkat = "{{ old('pangkat', $user->pangkat) }}";
+                if (currentPangkat) {
+                    const found = Object.entries(mapping).find(([gol, pang]) => pang === currentPangkat);
+                    golonganSelect.value = found ? found[0] : "";
+                }
+            }
+        });
+    </script>
 
     <x-plugins></x-plugins>
 </x-layout>

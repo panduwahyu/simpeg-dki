@@ -49,16 +49,31 @@
                 <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Laman</h6>
             </li>
 
-            {{-- Monitoring --}}
+            {{-- Monitoring untuk Pegawai --}}
+            @if(auth()->user()->role === 'Pegawai')
             <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'monitoring' || $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
-                   href="{{ auth()->user()->role === 'Pegawai' ? route('pegawai-dashboard') : route('dashboard') }}">
+                <a class="nav-link text-white {{ $activePage == 'pegawai_dashboard' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('pegawai-dashboard') }}">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">dashboard</i>
                     </div>
                     <span class="nav-link-text ms-1">Monitoring</span>
                 </a>
             </li>
+            @endif
+
+            {{-- Monitoring untuk Admin/Supervisor --}}
+            @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $activePage == 'monitoring-pegawai' ? 'active bg-gradient-primary' : '' }}"
+                    href="{{ route('monitoring.index') }}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">insights</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Monitoring</span>
+                </a>
+            </li>
+            @endif
 
             {{-- Dokumen Baru hanya untuk Admin & Supervisor --}}
             @if(auth()->user()->role === 'Admin' || auth()->user()->role === 'Supervisor')
@@ -71,16 +86,6 @@
                         <span class="nav-link-text ms-1">Dokumen Baru</span>
                     </a>
                 </li>
-
-                <li class="nav-item">
-                <a class="nav-link text-white {{ $activePage == 'monitoring-pegawai' ? 'active bg-gradient-primary' : '' }}"
-                   href="{{ route('monitoring.index') }}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">insights</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Monitoring Pegawai</span>
-                </a>
-            </li>
             @endif
 
             {{-- Dokumen --}}

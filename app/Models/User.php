@@ -19,12 +19,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'nama_gelar',
         'email',
+        'nip_bps',
+        'wilayah',
         'password',
+        'pangkat',
         'nip',
         'unit_kerja',
         'jabatan',
-        'pangkat',
         'golongan',
         'role',           // tambahkan role
         'photo',          // tambahkan photo
@@ -58,5 +61,10 @@ class User extends Authenticatable
         if ($password) {
             $this->attributes['password'] = bcrypt($password);
         }
+    }
+
+    public function dokumen()
+    {
+        return $this->hasMany(Dokumen::class, 'user_id');
     }
 }

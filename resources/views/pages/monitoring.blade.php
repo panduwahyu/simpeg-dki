@@ -2,7 +2,7 @@
     <x-navbars.sidebar activePage="monitoring-pegawai"></x-navbars.sidebar>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-navbars.navs.auth titlePage="Monitoring Dokumen"></x-navbars.navs.auth>
+        <x-navbars.navs.auth titlePage="Monitoring"></x-navbars.navs.auth>
 
         <div class="container-fluid py-4">
             <div class="card mb-4 shadow-sm">
@@ -36,6 +36,35 @@
                         </div>
                     </form>
 
+                    {{-- PROGRESS BAR --}}
+                    <div id="progressBars" class="mb-4" style="display:none;">
+                        <div class="mb-2">
+                            <label>Progres Pegawai Unggah Dokumen: <span id="progressUploadedText">0%</span></label>
+                            <div class="progress">
+                                <div id="progressUploadedBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label>Progres Penandatanganan Dokumen oleh Pejabat: <span id="progressSignedText">0%</span></label>
+                            <div class="progress">
+                                <div id="progressSignedBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- FILTER STATUS TAMBAHAN --}}
+                    <div id="filterStatusContainer" class="row g-3 mb-4 ps-2 pe-2" style="display:none;">
+                        <div class="col-md-4">
+                            <label for="statusFilter" class="form-label">Filter Status Dokumen</label>
+                            <select id="statusFilter" class="form-select p-2">
+                                <option value="">-- Semua Pegawai --</option>
+                                <option value="belum-unggah">Pegawai belum unggah dokumen</option>
+                                <option value="belum-tandatangan">Dokumen belum ditandatangani pejabat</option>
+                                <option value="lengkap">Dokumen telah lengkap</option>
+                            </select>
+                        </div>
+                    </div>
+
                     {{-- TABEL MONITORING --}}
                     <div class="mb-4">
                         <div class="table-responsive custom-table-wrapper">
@@ -45,6 +74,12 @@
                                 <p class="text-center text-muted">Silakan pilih nama dokumen terlebih dahulu.</p>
                             @endif
                         </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-4 align-items-center justify-content-center">
+                        <div><i class="fas fa-times-circle text-danger"></i> Pegawai belum unggah dokumen</div>
+                        <div><i class="fas fa-exclamation-circle text-warning"></i> Dokumen belum ditandatangani pejabat</div>
+                        <div><i class="fas fa-check-circle text-success"></i> Dokumen telah lengkap</div>
                     </div>
                 </div>
             </div>
@@ -59,24 +94,24 @@
     {{-- CSS Sticky --}}
     <style>
         .custom-table-wrapper {
-            overflow-x:auto;
-            max-height:500px;
-            border:1px solid #dee2e6;
-            border-radius:8px;
+            overflow-x: auto;
+            max-height: 500px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
         }
 
         .table thead th {
             position: sticky;
-            top:0;
-            background:#f8f9fa;
-            z-index:3;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 3;
         }
 
         .sticky-col {
             position: sticky;
-            left:0;
-            z-index:5;
-            background:#fff;
+            left: 0;
+            z-index: 5;
+            background: #fff;
         }
 
         .table th, .table td {
@@ -85,6 +120,8 @@
         }
 
         .table thead tr:nth-child(2) th {
+            position: sticky;
+            top: 50px;
             background: #f8f9fa;
             z-index: 3;
         }
@@ -95,7 +132,7 @@
 
         .table thead th:first-child {
             z-index: 6;
-            background:#e9ecef;
+            background: #e9ecef;
         }
 
         .status-upload {
@@ -103,116 +140,143 @@
         }
     </style>
 
-    {{-- JS Auto Update Tabel --}}
+    {{-- JS Auto Update Tabel + Progress + Filter --}}
     <script>
-        const tableWrapper = document.querySelector('.custom-table-wrapper');
-        const bulanIndonesia = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        const triwulanLabel = ['Triwulan 1', 'Triwulan 2', 'Triwulan 3', 'Triwulan 4'];
+    document.getElementById('nama_dokumen').addEventListener('change', function() {
+        const namaDokumen = this.value;
+        if (!namaDokumen) return;
 
-        document.getElementById('nama_dokumen').addEventListener('change', function() {
-            const namaDokumen = this.value;
-            if (!namaDokumen) return;
+        const tahunVal = document.getElementById('tahun').value || '';
+        fetch(`/monitoring/data/${encodeURIComponent(namaDokumen)}?tahun=${encodeURIComponent(tahunVal)}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('tahun').value = data.tahun;
+                document.getElementById('periode').value = data.periode_tipe;
 
-            const tahunVal = document.getElementById('tahun').value || '';
-            fetch(`/monitoring/data/${encodeURIComponent(namaDokumen)}?tahun=${encodeURIComponent(tahunVal)}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('tahun').value = data.tahun;
-                    document.getElementById('periode').value = data.periode_tipe;
+                // tampilkan progress bar
+                document.getElementById('progressBars').style.display = 'block';
+                document.getElementById('progressUploadedText').innerText = data.progressUploadedText;
+                document.getElementById('progressSignedText').innerText = data.progressSignedText;
 
-                    if (data.monitoring.tabel.length === 0) {
-                        tableWrapper.innerHTML = '<p class="text-center text-muted">Data monitoring kosong.</p>';
-                        return;
-                    }
+                // update progress visual
+                const totalUploaded = parseInt(data.progressUploadedText.split(' ')[0]);
+                const totalDocs = parseInt(data.progressUploadedText.split(' ')[2]);
+                document.getElementById('progressUploadedBar').style.width = totalDocs > 0 ? (totalUploaded / totalDocs * 100) + '%' : '0%';
 
-                    let html = '<table class="table border border-1 border-secondary-subtle text-center align-middle">';
-                    html += '<thead class="bg-light"><tr>';
-                    let periode = data.periode_tipe.toLowerCase();
+                const totalSigned = parseInt(data.progressSignedText.split(' ')[0]);
+                const totalUploadedForSigned = parseInt(data.progressSignedText.split(' ')[2]);
+                document.getElementById('progressSignedBar').style.width = totalUploadedForSigned > 0 ? (totalSigned / totalUploadedForSigned * 100) + '%' : '0%';
 
-                    html += '<th class="sticky-col bg-white fw-bold" ' + (periode==='tahunan' ? 'rowspan="1"' : 'rowspan="2"') + '>Nama Pegawai</th>';
+                const tableWrapper = document.querySelector('.custom-table-wrapper');
+                if (data.monitoring.tabel.length === 0) {
+                    tableWrapper.innerHTML = '<p class="text-center text-muted">Data monitoring kosong.</p>';
+                    document.getElementById('filterStatusContainer').style.display = 'none';
+                    return;
+                }
 
-                    if(periode === 'bulanan'){
-                        html += `<th colspan="12">${data.tahun}</th>`;
-                    } else if(periode === 'triwulanan'){
-                        html += `<th colspan="4">${data.tahun}</th>`;
-                    } else if(periode === 'tahunan'){
-                        html += `<th>${data.tahun}</th>`;
+                let html = '<table class="table border border-1 border-secondary-subtle text-center align-middle">';
+                html += '<thead class="bg-light"><tr>';
+                let periode = data.periode_tipe.toLowerCase();
+
+                html += '<th class="sticky-col bg-white fw-bold" ' + (periode === 'tahunan' ? 'rowspan="1"' : 'rowspan="2"') + '>Nama Pegawai</th>';
+
+                if (periode === 'bulanan') {
+                    html += `<th colspan="12">${data.tahun}</th>`;
+                } else if (periode === 'triwulanan') {
+                    html += `<th colspan="4">${data.tahun}</th>`;
+                } else if (periode === 'tahunan') {
+                    html += `<th>${data.tahun}</th>`;
+                }
+
+                html += '</tr>';
+
+                if (periode === 'bulanan') {
+                    html += '<tr>';
+                    ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].forEach(b => html += `<th>${b}</th>`);
+                    html += '</tr>';
+                } else if (periode === 'triwulanan') {
+                    html += '<tr>';
+                    ['Triwulan 1','Triwulan 2','Triwulan 3','Triwulan 4'].forEach(t => html += `<th>${t}</th>`);
+                    html += '</tr>';
+                }
+
+                html += '</thead><tbody>';
+
+                data.monitoring.tabel.forEach(row => {
+                    html += '<tr>';
+                    html += `<td class="sticky-col bg-white fw-bold">${row.nama}</td>`;
+
+                    const renderCell = (status, penilaian, userId, jenisId, periodeId) => {
+                        if (status == 0 && penilaian == 0) {
+                            return '<td><i class="fas fa-times-circle text-danger"></i></td>';
+                        } else if (status == 1 && penilaian == 0) {
+                            return `<td class="status-upload" data-user="${userId}" data-jenis="${jenisId}" data-periode="${periodeId}">
+                                        <i class="fas fa-exclamation-circle text-warning"></i>
+                                    </td>`;
+                        } else if (status == 1 && penilaian == 1) {
+                            return `<td class="status-upload" data-user="${userId}" data-jenis="${jenisId}" data-periode="${periodeId}">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </td>`;
+                        }
+                        return '<td></td>';
+                    };
+
+                    if (periode === 'bulanan') {
+                        for (let i = 1; i <= 12; i++) {
+                            html += renderCell(row[i] ?? 0, row[i+'_penilaian'] ?? 0, row.user_id, row[i+'_jenis_id'], row[i+'_periode_id']);
+                        }
+                    } else if (periode === 'triwulanan') {
+                        for (let i = 1; i <= 4; i++) {
+                            html += renderCell(row['Triwulan '+i] ?? 0, row['Triwulan_'+i+'_penilaian'] ?? 0, row.user_id, row['Triwulan_'+i+'_jenis_id'], row['Triwulan_'+i+'_periode_id']);
+                        }
+                    } else if (periode === 'tahunan') {
+                        html += renderCell(row.tahun ?? 0, row.tahun_penilaian ?? 0, row.user_id, row.tahun_jenis_id, row.tahun_periode_id);
                     }
 
                     html += '</tr>';
+                });
 
-                    if(periode === 'bulanan'){
-                        html += '<tr>';
-                        bulanIndonesia.forEach(b => html += `<th>${b}</th>`);
-                        html += '</tr>';
-                    } else if(periode === 'triwulanan'){
-                        html += '<tr>';
-                        triwulanLabel.forEach(t => html += `<th>${t}</th>`);
-                        html += '</tr>';
-                    }
+                html += '</tbody></table>';
+                tableWrapper.innerHTML = html;
 
-                    html += '</thead><tbody>';
+                // tampilkan filter status setelah tabel tampil
+                document.getElementById('filterStatusContainer').style.display = 'block';
 
-                    data.monitoring.tabel.forEach(row => {
-                        html += '<tr>';
-                        html += `<td class="sticky-col bg-white fw-bold">${row.nama}</td>`;
-
-                        if(periode === 'bulanan'){
-                            for(let i=1;i<=12;i++){
-                                let status = row[i] ?? 0;
-                                let jenisId = row[i+'_jenis_id'] ?? '';
-                                let periodeId = row[i+'_periode_id'] ?? '';
-                                if(status==1){
-                                    html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            </td>`;
-                                } else {
-                                    html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
-                                }
-                            }
-                        } else if(periode === 'triwulanan'){
-                            for(let i=1;i<=4;i++){
-                                let status = row['Triwulan '+i] ?? 0;
-                                let jenisId = row['Triwulan_'+i+'_jenis_id'] ?? '';
-                                let periodeId = row['Triwulan_'+i+'_periode_id'] ?? '';
-                                if(status==1){
-                                    html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            </td>`;
-                                } else {
-                                    html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
-                                }
-                            }
-                        } else if(periode === 'tahunan'){
-                            let status = row.tahun ?? 0;
-                            let jenisId = row.tahun_jenis_id ?? '';
-                            let periodeId = row.tahun_periode_id ?? '';
-                            if(status==1){
-                                html += `<td class="status-upload" data-user="${row.user_id}" data-jenis="${jenisId}" data-periode="${periodeId}">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        </td>`;
-                            } else {
-                                html += '<td><i class="fas fa-times-circle text-danger"></i></td>';
-                            }
-                        }
-
-                        html += '</tr>';
-                    });
-
-                    html += '</tbody></table>';
-                    tableWrapper.innerHTML = html;
-
-                    document.querySelectorAll('.status-upload').forEach(td => {
-                        td.addEventListener('click', function() {
-                            const userId = this.dataset.user;
-                            const jenisId = this.dataset.jenis;
-                            const periodeId = this.dataset.periode;
-                            if(!userId || !jenisId || !periodeId) return;
-                            const url = `/monitoring/preview/${userId}/${jenisId}/${periodeId}`;
-                            window.open(url, '_blank');
-                        });
+                // event klik icon status
+                document.querySelectorAll('.status-upload').forEach(td => {
+                    td.addEventListener('click', function() {
+                        const userId = this.dataset.user;
+                        const jenisId = this.dataset.jenis;
+                        const periodeId = this.dataset.periode;
+                        if (!userId || !jenisId || !periodeId) return;
+                        const url = `/monitoring/preview/${userId}/${jenisId}/${periodeId}`;
+                        window.open(url, '_blank');
                     });
                 });
-        });
+
+                // === FILTER STATUS DOKUMEN ===
+                const allRows = Array.from(document.querySelectorAll('tbody tr'));
+                const statusFilter = document.getElementById('statusFilter');
+
+                statusFilter.addEventListener('change', function() {
+                    const val = this.value;
+                    allRows.forEach(row => {
+                        let show = false;
+                        const icons = row.querySelectorAll('i');
+                        const hasDanger = Array.from(icons).some(i => i.classList.contains('fa-times-circle'));
+                        const hasWarning = Array.from(icons).some(i => i.classList.contains('fa-exclamation-circle'));
+                        const hasSuccess = Array.from(icons).some(i => i.classList.contains('fa-check-circle'));
+
+                        if (val === 'belum-unggah' && hasDanger) show = true;
+                        else if (val === 'belum-tandatangan' && hasWarning) show = true;
+                        else if (val === 'lengkap' && hasSuccess) show = true;
+                        else if (val === '') show = true;
+
+                        row.style.display = show ? '' : 'none';
+                    });
+                });
+            });
+    });
     </script>
+
 </x-layout>

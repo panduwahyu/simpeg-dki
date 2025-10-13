@@ -55,7 +55,6 @@ class MonitoringController extends Controller
 
     private function getMonitoringData($jenisDokumen, $tahun)
     {
-        // id jenis dokumen relevan (mis. untuk nama dokumen yang dipilih & tahun yang dipilih)
         $ids = $jenisDokumen->pluck('id')->toArray();
         $types = $jenisDokumen->pluck('periode_tipe')->unique();
 
@@ -64,34 +63,25 @@ class MonitoringController extends Controller
         $tahunPeriode = $periodeQuery->clone()->where('tipe', 'tahunan')->get();
         $triwulan = $periodeQuery->clone()->where('tipe', 'triwulanan')->orderBy('label')->get();
 
-        $pegawai = DB::table('users')
-            ->whereIn('role', ['pegawai', 'supervisor'])
-            ->select('id', 'name')
-            ->orderBy('name')
-            ->get();
-
-        // Ambil semua mandatory_uploads untuk jenis_dokumen yang relevan
         $uploads = DB::table('mandatory_uploads')
             ->whereIn('jenis_dokumen_id', $ids)
-            ->select('user_id', 'periode_id', 'jenis_dokumen_id', 'is_uploaded')
+            ->select('user_id', 'periode_id', 'jenis_dokumen_id', 'is_uploaded', 'penilaian')
             ->get();
 
-        // Ambil daftar user_id yang ada di mandatory_uploads
         $userIds = $uploads->pluck('user_id')->unique();
 
-        // Ambil pegawai hanya yang ada di mandatory_uploads
         $pegawai = DB::table('users')
             ->whereIn('id', $userIds)
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        // Build map untuk lookup cepat: $uploadsMap[user_id][periode_id] = ['jenis' => ..., 'is_uploaded' => ...]
         $uploadsMap = [];
         foreach ($uploads as $u) {
             $uploadsMap[$u->user_id][$u->periode_id] = [
                 'jenis' => $u->jenis_dokumen_id,
-                'is_uploaded' => (int)$u->is_uploaded
+                'is_uploaded' => (int)$u->is_uploaded,
+                'penilaian' => (int)($u->penilaian ?? 0)
             ];
         }
 
@@ -99,48 +89,44 @@ class MonitoringController extends Controller
         foreach ($pegawai as $p) {
             $row = ['nama' => $p->name, 'user_id' => $p->id];
 
+            // TRIWULAN
             if ($types->contains('triwulanan')) {
-                foreach ($triwulan as $idx => $tw) {
-                    $spaceLabel = preg_replace('/\s+\d{4}$/', '', $tw->label); // fix: hapus tahun di akhir label
+                foreach ($triwulan as $tw) {
+                    $spaceLabel = preg_replace('/\s+\d{4}$/', '', $tw->label);
                     $underscoreLabel = str_replace(' ', '_', $spaceLabel);
-
                     $uploadEntry = $uploadsMap[$p->id][$tw->id] ?? null;
-                    $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
-                    $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
-
-                    $row[$spaceLabel] = $isUploaded;
+                    $row[$spaceLabel] = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                    $row[$underscoreLabel . '_penilaian'] = $uploadEntry ? $uploadEntry['penilaian'] : 0;
                     $row[$underscoreLabel . '_periode_id'] = $tw->id;
-                    $row[$underscoreLabel . '_jenis_id'] = $jenisId;
+                    $row[$underscoreLabel . '_jenis_id'] = $uploadEntry ? $uploadEntry['jenis'] : null;
                 }
-            } else {
-                // BULANAN
+            }
+
+            // BULANAN
+            if ($types->contains('bulanan')) {
                 foreach ($bulan as $idx => $b) {
                     $monthIndex = is_numeric($b->bulan) ? (int)$b->bulan : ($idx + 1);
                     $monthKey = (string)$monthIndex;
-
                     $uploadEntry = $uploadsMap[$p->id][$b->id] ?? null;
-                    $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
-                    $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
-
-                    $row[$monthKey] = $isUploaded;
+                    $row[$monthKey] = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                    $row[$monthKey . '_penilaian'] = $uploadEntry ? $uploadEntry['penilaian'] : 0;
                     $row[$monthKey . '_periode_id'] = $b->id;
-                    $row[$monthKey . '_jenis_id'] = $jenisId;
+                    $row[$monthKey . '_jenis_id'] = $uploadEntry ? $uploadEntry['jenis'] : null;
                 }
             }
 
-            // 🧩 TAHUNAN (DIPINDAH KE LUAR IF)
+            // TAHUNAN
             foreach ($tahunPeriode as $t) {
                 $uploadEntry = $uploadsMap[$p->id][$t->id] ?? null;
-                $isUploaded = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
-                $jenisId = $uploadEntry ? $uploadEntry['jenis'] : null;
-
-                $row['tahun'] = $isUploaded;
+                $row['tahun'] = $uploadEntry ? $uploadEntry['is_uploaded'] : 0;
+                $row['tahun_penilaian'] = $uploadEntry ? $uploadEntry['penilaian'] : 0;
                 $row['tahun_periode_id'] = $t->id;
-                $row['tahun_jenis_id'] = $jenisId;
+                $row['tahun_jenis_id'] = $uploadEntry ? $uploadEntry['jenis'] : null;
             }
+
             $tableData[] = $row;
         }
-            
+
         return [
             'bulan' => $bulan,
             'tahun' => $tahunPeriode,
@@ -149,7 +135,6 @@ class MonitoringController extends Controller
         ];
     }
 
-    // NOTE: terima param tahun via query string (opsional). Pastikan kita pakai jenis_dokumen untuk tahun yang benar.
     public function getMonitoringDataAjax(Request $request, $namaDokumen)
     {
         $jenisDokumen = DB::table('jenis_dokumen')
@@ -161,14 +146,29 @@ class MonitoringController extends Controller
 
         $monitoring = $this->getMonitoringData($jenisDokumen, $tahun);
 
+        // ===== Hitung progress bar (revisi) =====
+        $ids = $jenisDokumen->pluck('id')->toArray();
+
+        $uploads = DB::table('mandatory_uploads')
+            ->whereIn('jenis_dokumen_id', $ids)
+            ->get();
+
+        $totalCells = $uploads->count(); // total dokumen yang wajib diupload
+        $uploadedCells = $uploads->where('is_uploaded', 1)->count();
+        $signedCells = $uploads->where('is_uploaded', 1)->where('penilaian', 1)->count();
+
+        $progressUploadedText = "$uploadedCells dari $totalCells dokumen";
+        $progressSignedText = $uploadedCells > 0 ? "$signedCells dari $uploadedCells dokumen" : "0 dari 0 dokumen";
+
         return response()->json([
             'tahun' => $tahun,
             'periode_tipe' => $periode_tipe,
-            'monitoring' => $monitoring
+            'monitoring' => $monitoring,
+            'progressUploadedText' => $progressUploadedText,
+            'progressSignedText' => $progressSignedText
         ]);
     }
 
-    // Preview tetap cek mandatory_uploads (validasi wajib upload), tetapi file path diambil dari table dokumen
     public function previewFile($userId, $jenisDokumenId, $periodeId)
     {
         $upload = DB::table('mandatory_uploads')

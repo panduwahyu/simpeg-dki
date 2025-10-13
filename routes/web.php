@@ -64,7 +64,15 @@ Route::middleware('auth')->group(function () {
     
     // Dashboard
     Route::get('pegawai/dashboard', [PegawaiController::class, 'index'])->name('pegawai-dashboard')->middleware('role:Pegawai');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard / redirect sesuai role
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user->role === 'Pegawai') {
+            return redirect()->route('pegawai-dashboard');
+        }
+        return redirect()->route('monitoring.index'); // Admin & Supervisor
+    })->name('dashboard');
     
     // Dokumen
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
@@ -81,6 +89,12 @@ Route::middleware('auth')->group(function () {
         Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+        Route::get('/user-management/search', [UserManagementController::class, 'search'])->name('user-management.search');
+
+        Route::get('/user/template', function () {
+            $path = storage_path('app/public/template/users_template.xlsx');
+            return response()->download($path, 'template_user.xlsx');
+        })->name('user.template');
         
         // Monitoring dokumen
         Route::get('/dashboard/filter', [DashboardController::class, 'filter'])->name('monitoring.filter');

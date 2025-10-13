@@ -6,7 +6,7 @@
 
         <div class="container-fluid py-4">
 
-            {{-- SweetAlert untuk notifikasi sukses --}}
+            {{-- SweetAlert notifikasi sukses --}}
             @if (session('status'))
                 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                 <script>
@@ -25,30 +25,39 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card my-4">
+
+                        {{-- Header --}}
                         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                             <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                                <h6 class="text-white mx-3">
-                                    <strong>Kelola Akun User</strong>
-                                </h6>
+                                <h6 class="text-white mx-3"><strong>Kelola Akun User</strong></h6>
                             </div>
                         </div>
 
-                        {{-- Tombol Tambah User --}}
-                        <div class="me-3 my-3 text-end">
-                            <a class="btn bg-gradient-dark mb-0" href="{{ route('user-management.create') }}">
-                                <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User Baru
-                            </a>
-                        </div>
+                        {{-- Toolbar --}}
+                        <div class="d-flex justify-content-between align-items-center my-3 mx-3">
+                            <div class="col-md-4 p-0">
+                                <input type="text" id="searchUser" class="form-control border border-primary rounded"
+                                    placeholder="Cari user..." />
+                            </div>
 
-                        {{-- Tombol Export & Import --}}
-                        <div class="mb-3 ms-3">
-                            <a href="{{ route('user.export') }}" class="btn btn-success">Export Users</a>
+                            <div class="me-3 text-end">
+                                <div class="btn-group">
+                                    <button type="button" class="btn bg-gradient-dark dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Tambah User
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item"
+                                                href="{{ route('user-management.create') }}">Tambah Manual</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                                data-bs-target="#importModal">Impor dari Excel</a></li>
+                                    </ul>
+                                </div>
 
-                            <form action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data" style="display:inline-block;">
-                                @csrf
-                                <input type="file" name="file" required>
-                                <button type="submit" class="btn btn-primary">Import Users</button>
-                            </form>
+                                <a href="{{ route('user.export') }}" class="btn btn-success ms-2">
+                                    <i class="material-icons text-sm">download</i>&nbsp;&nbsp;Ekspor User
+                                </a>
+                            </div>
                         </div>
 
                         {{-- Tabel Users --}}
@@ -57,77 +66,87 @@
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">FOTO</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">NAMA LENGKAP</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">EMAIL</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">STATUS</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">TANGGAL DIBUAT</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                NO.</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                FOTO</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                                NAMA LENGKAP</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                EMAIL</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                STATUS</th>
+                                            <th
+                                                class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                                TANGGAL DIBUAT</th>
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="usersTableBody">
                                         @foreach ($users as $user)
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex px-2 py-1">
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <p class="mb-0 text-sm">
+                                                                {{ $loop->iteration + ($users->currentPage() - 1) * $users->perPage() }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $photo = $user->photo
+                                                            ? (Str::startsWith($user->photo, ['http://', 'https://'])
+                                                                ? $user->photo
+                                                                : asset('storage/' . $user->photo))
+                                                            : asset('assets/img/bruce-mars.jpg');
+                                                    @endphp
+                                                    <img src="{{ $photo }}"
+                                                        class="avatar avatar-sm me-3 border-radius-lg"
+                                                        alt="{{ $user->nama_gelar }}">
+                                                </td>
+                                                <td>
                                                     <div class="d-flex flex-column justify-content-center">
-                                                        <p class="mb-0 text-sm">{{ $user->id }}</p>
+                                                        <h6 class="mb-0 text-sm">{{ $user->nama_gelar }}</h6>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex px-2 py-1">
-                                                    <div>
-                                                        @php
-                                                            $photo = $user->photo 
-                                                                ? (Str::startsWith($user->photo, ['http://','https://']) 
-                                                                    ? $user->photo 
-                                                                    : asset('storage/' . $user->photo)) 
-                                                                : asset('assets/img/bruce-mars.jpg');
-                                                        @endphp
-                                                        <img src="{{ $photo }}" 
-                                                            class="avatar avatar-sm me-3 border-radius-lg" 
-                                                            alt="{{ $user->name }}">
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $user->name }}</h6>
-                                                </div>
-                                            </td>
-                                            <td class="align-middle text-center text-sm">
-                                                <p class="text-xs text-secondary mb-0">{{ $user->email }}</p>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
-                                            </td>
-                                            <td class="align-middle text-center">
-                                                <span class="text-secondary text-xs font-weight-bold">
-                                                    {{ optional($user->created_at)->format('d/m/Y') }}
-                                                </span>
-                                            </td>
-                                            <td class="align-middle">
-                                                {{-- Tombol Edit --}}
-                                                <a href="{{ route('user-management.edit', $user->id) }}" class="btn btn-success btn-link">
-                                                    <i class="material-icons">edit</i>
-                                                </a>
-
-                                                {{-- Tombol Delete dengan SweetAlert --}}
-                                                <button type="button" class="btn btn-danger btn-link" onclick="deleteUser({{ $user->id }})">
-                                                    <i class="material-icons">close</i>
-                                                </button>
-
-                                                <form id="delete-form-{{ $user->id }}" action="{{ route('user-management.destroy', $user->id) }}" method="POST" style="display:none;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                </form>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td class="align-middle text-center text-sm">
+                                                    <p class="text-xs text-secondary mb-0">{{ $user->email }}</p>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span
+                                                        class="text-secondary text-xs font-weight-bold">{{ $user->role }}</span>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span
+                                                        class="text-secondary text-xs font-weight-bold">{{ optional($user->created_at)->format('d/m/Y') }}</span>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <a href="{{ route('user-management.edit', $user->id) }}"
+                                                        class="btn btn-success btn-link"><i
+                                                            class="material-icons">edit</i></a>
+                                                    <button type="button" class="btn btn-danger btn-link"
+                                                        onclick="deleteUser({{ $user->id }})"><i
+                                                            class="material-icons">close</i></button>
+                                                    <form id="delete-form-{{ $user->id }}"
+                                                        action="{{ route('user-management.destroy', $user->id) }}"
+                                                        method="POST" style="display:none;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                {{-- Pagination --}}
+                                <div class="d-flex justify-content-end mt-3 me-3">
+                                    {{ $users->links('vendor.pagination.bootstrap-5') }}
+                                </div>
                             </div>
                         </div>
 
@@ -139,9 +158,128 @@
 
     <x-plugins></x-plugins>
 
-    {{-- SweetAlert Delete --}}
+    {{-- Modal Import --}}
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="importForm" action="{{ route('user.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="importModalLabel">Import Users dari Excel / CSV</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Pilih File (.xlsx / .csv)</label>
+                            <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.csv" required>
+                        </div>
+                        <div class="alert alert-secondary text-white" style="background-color:#6c757d;" role="alert">
+                            <span class="text-white">Pastikan format sesuai template.</span>
+                            <a href="{{ asset('storage/template/users_template.xlsx') }}"
+                                class="fw-bold text-primary" target="_blank">
+                                Download Template Unggah User
+                            </a>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Script SweetAlert & AJAX --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
+        $(document).ready(function() {
+            // Search AJAX
+            $('#searchUser').on('keyup', function() {
+                let query = $(this).val();
+                $.ajax({
+                    url: "{{ route('user-management.search') }}",
+                    type: "GET",
+                    data: {
+                        keyword: query
+                    },
+                    success: function(response) {
+                        $('#usersTableBody').html(response);
+                    }
+                });
+            });
+
+            // Import AJAX + SweetAlert
+            $('#importForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const fileInput = $('#file')[0].files[0];
+                if (!fileInput) return Swal.fire('Error', 'Silakan pilih file', 'error');
+
+                let allowedExtensions = /(\.xlsx|\.csv)$/i;
+                if (!allowedExtensions.exec(fileInput.name)) {
+                    return Swal.fire('Format tidak valid', 'Pilih file .xlsx atau .csv', 'error');
+                }
+
+                let formData = new FormData(this);
+
+                Swal.fire({
+                    title: 'Sedang mengimpor...',
+                    html: 'JANGAN KLIK APAPUN! Mohon tunggu proses impor.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(res) {
+                        Swal.close();
+
+                        let warnings = res.rows.filter(r => r.status === 'warning');
+                        let errors = res.rows.filter(r => r.status === 'error');
+                        let success = res.rows.filter(r => r.status === 'success');
+
+                        let htmlMsg =
+                            `<div style="overflow-x:auto"><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%">`;
+                        htmlMsg +=
+                            `<tr style="background-color:#f1f1f1"><th style="width:33%">Status</th><th style="width:67%">Pesan</th></tr>`;
+
+                        success.forEach(s => {
+                            htmlMsg +=
+                                `<tr style="background-color:#d4edda"><td>Berhasil</td><td>Baris ${s.row}: ${s.message}</td></tr>`;
+                        });
+
+                        warnings.forEach(w => {
+                            htmlMsg +=
+                                `<tr style="background-color:#fff3cd"><td>Peringatan</td><td>Baris ${w.row}: ${w.message}</td></tr>`;
+                        });
+
+                        errors.forEach(e => {
+                            htmlMsg +=
+                                `<tr style="background-color:#f8d7da"><td>Gagal</td><td>Baris ${e.row}: ${e.message}</td></tr>`;
+                        });
+
+                        htmlMsg += `</table></div>`;
+
+                        Swal.fire({
+                            title: 'Import Selesai',
+                            html: htmlMsg,
+                            width: '800px',
+                            icon: errors.length > 0 ? 'warning' : 'success'
+                        }).then(() => location.reload());
+                    }
+                });
+            });
+        });
+
+        // Konfirmasi hapus user
         function deleteUser(id) {
             Swal.fire({
                 title: 'Yakin?',

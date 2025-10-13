@@ -1,5 +1,6 @@
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="user-management"></x-navbars.sidebar>
+
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
         <x-navbars.navs.auth titlePage="User Baru"></x-navbars.navs.auth>
 
@@ -12,8 +13,8 @@
                                 <h6 class="text-white mx-3">Tambah User Baru</h6>
                             </div>
                         </div>
+
                         <div class="card-body px-4 pb-2">
-                            {{-- tampilkan error validasi --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul class="mb-0">
@@ -27,114 +28,142 @@
                             <form action="{{ route('user-management.store') }}" method="POST">
                                 @csrf
 
+                                {{-- Nama Lengkap --}}
                                 <div class="mb-3">
-                                    <label class="form-label">Nama</label>
-                                    <input type="text" name="name" class="form-control"
-                                           value="{{ old('name') }}" required>
-                                    @error('name')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
+                                    <label class="form-label">Nama Lengkap (beserta gelar)</label>
+                                    <input type="text" name="nama_gelar" class="form-control" value="{{ old('nama_gelar') }}" required>
                                 </div>
 
+                                {{-- Email --}}
                                 <div class="mb-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control"
-                                           value="{{ old('email') }}" required>
-                                    @error('email')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
+                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
                                 </div>
 
+                                {{-- NIP BPS --}}
                                 <div class="mb-3">
-                                    <label class="form-label">Status</label>
-                                    <select name="role" class="form-control" required>
-                                        <option value="Pegawai" {{ old('role') == 'Pegawai' ? 'selected' : '' }}>Pegawai</option>
-                                        <option value="Supervisor" {{ old('role') == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
-                                        <option value="Admin" {{ old('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
-                                    </select>
-                                    @error('role')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
+                                    <label class="form-label">NIP BPS</label>
+                                    <input type="text" name="nip_bps" class="form-control" value="{{ old('nip_bps') }}">
                                 </div>
 
-                                {{-- Tambahan field baru --}}
+                                {{-- NIP --}}
                                 <div class="mb-3">
                                     <label class="form-label">NIP</label>
                                     <input type="text" name="nip" class="form-control" value="{{ old('nip') }}">
-                                    @error('nip')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
                                 </div>
 
+                                {{-- Role --}}
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="role" class="form-control" required>
+                                        <option value="Pegawai">Pegawai</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+
+                                {{-- Wilayah --}}
+                                <div class="mb-3">
+                                    <label class="form-label">Wilayah</label>
+                                    <input type="text" name="wilayah" class="form-control" value="{{ old('wilayah') }}">
+                                </div>
+
+                                {{-- Unit Kerja --}}
                                 <div class="mb-3">
                                     <label class="form-label">Unit Kerja</label>
                                     <input type="text" name="unit_kerja" class="form-control" value="{{ old('unit_kerja') }}">
-                                    @error('unit_kerja')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
                                 </div>
 
+                                {{-- Jabatan --}}
                                 <div class="mb-3">
                                     <label class="form-label">Jabatan</label>
                                     <input type="text" name="jabatan" class="form-control" value="{{ old('jabatan') }}">
-                                    @error('jabatan')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
                                 </div>
 
-                                {{-- dropdown pangkat --}}
+                                {{-- Pangkat --}}
                                 <div class="mb-3">
                                     <label class="form-label">Pangkat</label>
-                                    <select name="pangkat" class="form-control">
+                                    <select name="pangkat" id="pangkat" class="form-control">
                                         <option value="">-- Pilih Pangkat --</option>
-                                        <option value="Juru Muda" {{ old('pangkat') == 'Juru Muda' ? 'selected' : '' }}>Juru Muda</option>
-                                        <option value="Juru Muda Tingkat I" {{ old('pangkat') == 'Juru Muda Tingkat I' ? 'selected' : '' }}>Juru Muda Tingkat I</option>
-                                        <option value="Juru" {{ old('pangkat') == 'Juru' ? 'selected' : '' }}>Juru</option>
-                                        <option value="Juru Tingkat I" {{ old('pangkat') == 'Juru Tingkat I' ? 'selected' : '' }}>Juru Tingkat I</option>
-                                        <option value="Pengatur Muda" {{ old('pangkat') == 'Pengatur Muda' ? 'selected' : '' }}>Pengatur Muda</option>
-                                        <option value="Pengatur Muda Tingkat I" {{ old('pangkat') == 'Pengatur Muda Tingkat I' ? 'selected' : '' }}>Pengatur Muda Tingkat I</option>
-                                        <option value="Pengatur" {{ old('pangkat') == 'Pengatur' ? 'selected' : '' }}>Pengatur</option>
-                                        <option value="Pengatur Tingkat I" {{ old('pangkat') == 'Pengatur Tingkat I' ? 'selected' : '' }}>Pengatur Tingkat I</option>
-                                        <option value="Penata Muda" {{ old('pangkat') == 'Penata Muda' ? 'selected' : '' }}>Penata Muda</option>
-                                        <option value="Penata Muda Tingkat I" {{ old('pangkat') == 'Penata Muda Tingkat I' ? 'selected' : '' }}>Penata Muda Tingkat I</option>
-                                        <option value="Penata" {{ old('pangkat') == 'Penata' ? 'selected' : '' }}>Penata</option>
-                                        <option value="Penata Tingkat I" {{ old('pangkat') == 'Penata Tingkat I' ? 'selected' : '' }}>Penata Tingkat I</option>
-                                        <option value="Pembina" {{ old('pangkat') == 'Pembina' ? 'selected' : '' }}>Pembina</option>
-                                        <option value="Pembina Tingkat I" {{ old('pangkat') == 'Pembina Tingkat I' ? 'selected' : '' }}>Pembina Tingkat I</option>
-                                        <option value="Pembina Utama Muda" {{ old('pangkat') == 'Pembina Utama Muda' ? 'selected' : '' }}>Pembina Utama Muda</option>
-                                        <option value="Pembina Utama Madya" {{ old('pangkat') == 'Pembina Utama Madya' ? 'selected' : '' }}>Pembina Utama Madya</option>
-                                        <option value="Pembina Utama" {{ old('pangkat') == 'Pembina Utama' ? 'selected' : '' }}>Pembina Utama</option>
+                                        {{-- PNS Klasik --}}
+                                        <option value="Juru Muda">Juru Muda</option>
+                                        <option value="Juru Muda Tingkat I">Juru Muda Tingkat I</option>
+                                        <option value="Juru">Juru</option>
+                                        <option value="Juru Tingkat I">Juru Tingkat I</option>
+                                        <option value="Pengatur Muda">Pengatur Muda</option>
+                                        <option value="Pengatur Muda Tingkat I">Pengatur Muda Tingkat I</option>
+                                        <option value="Pengatur">Pengatur</option>
+                                        <option value="Pengatur Tingkat I">Pengatur Tingkat I</option>
+                                        <option value="Penata Muda">Penata Muda</option>
+                                        <option value="Penata Muda Tingkat I">Penata Muda Tingkat I</option>
+                                        <option value="Penata">Penata</option>
+                                        <option value="Penata Tingkat I">Penata Tingkat I</option>
+                                        <option value="Pembina">Pembina</option>
+                                        <option value="Pembina Tingkat I">Pembina Tingkat I</option>
+                                        <option value="Pembina Utama Muda">Pembina Utama Muda</option>
+                                        <option value="Pembina Utama Madya">Pembina Utama Madya</option>
+                                        <option value="Pembina Utama">Pembina Utama</option>
+                                        {{-- PPPK / ASN Modern --}}
+                                        <option value="Pemula">Pemula</option>
+                                        <option value="Terampil">Terampil</option>
+                                        <option value="Mahir">Mahir</option>
+                                        <option value="Penyelia">Penyelia</option>
+                                        <option value="Ahli Pertama">Ahli Pertama</option>
+                                        <option value="Ahli Muda">Ahli Muda</option>
+                                        <option value="Ahli Madya">Ahli Madya</option>
+                                        <option value="Ahli Utama">Ahli Utama</option>
+                                        <option value="Koordinator">Koordinator</option>
+                                        <option value="Pengawas">Pengawas</option>
+                                        <option value="Pejabat Fungsional Utama">Pejabat Fungsional Utama</option>
+                                        <option value="Pejabat Pimpinan Tinggi Pratama">Pejabat Pimpinan Tinggi Pratama</option>
+                                        <option value="Pejabat Pimpinan Tinggi Madya">Pejabat Pimpinan Tinggi Madya</option>
+                                        <option value="Pejabat Pimpinan Tinggi Utama">Pejabat Pimpinan Tinggi Utama</option>
                                     </select>
-                                    @error('pangkat') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
 
-                                {{-- dropdown golongan --}}
+                                {{-- Golongan --}}
                                 <div class="mb-3">
                                     <label class="form-label">Golongan</label>
-                                    <select name="golongan" class="form-control">
+                                    <select name="golongan" id="golongan" class="form-control">
                                         <option value="">-- Pilih Golongan --</option>
-                                        <option value="I/a" {{ old('golongan') == 'I/a' ? 'selected' : '' }}>I/a</option>
-                                        <option value="I/b" {{ old('golongan') == 'I/b' ? 'selected' : '' }}>I/b</option>
-                                        <option value="I/c" {{ old('golongan') == 'I/c' ? 'selected' : '' }}>I/c</option>
-                                        <option value="I/d" {{ old('golongan') == 'I/d' ? 'selected' : '' }}>I/d</option>
-                                        <option value="II/a" {{ old('golongan') == 'II/a' ? 'selected' : '' }}>II/a</option>
-                                        <option value="II/b" {{ old('golongan') == 'II/b' ? 'selected' : '' }}>II/b</option>
-                                        <option value="II/c" {{ old('golongan') == 'II/c' ? 'selected' : '' }}>II/c</option>
-                                        <option value="II/d" {{ old('golongan') == 'II/d' ? 'selected' : '' }}>II/d</option>
-                                        <option value="III/a" {{ old('golongan') == 'III/a' ? 'selected' : '' }}>III/a</option>
-                                        <option value="III/b" {{ old('golongan') == 'III/b' ? 'selected' : '' }}>III/b</option>
-                                        <option value="III/c" {{ old('golongan') == 'III/c' ? 'selected' : '' }}>III/c</option>
-                                        <option value="III/d" {{ old('golongan') == 'III/d' ? 'selected' : '' }}>III/d</option>
-                                        <option value="IV/a" {{ old('golongan') == 'IV/a' ? 'selected' : '' }}>IV/a</option>
-                                        <option value="IV/b" {{ old('golongan') == 'IV/b' ? 'selected' : '' }}>IV/b</option>
-                                        <option value="IV/c" {{ old('golongan') == 'IV/c' ? 'selected' : '' }}>IV/c</option>
-                                        <option value="IV/d" {{ old('golongan') == 'IV/d' ? 'selected' : '' }}>IV/d</option>
-                                        <option value="IV/e" {{ old('golongan') == 'IV/e' ? 'selected' : '' }}>IV/e</option>
+                                        {{-- PNS Klasik --}}
+                                        <option value="I/A">I/A</option>
+                                        <option value="I/B">I/B</option>
+                                        <option value="I/C">I/C</option>
+                                        <option value="I/D">I/D</option>
+                                        <option value="II/A">II/A</option>
+                                        <option value="II/B">II/B</option>
+                                        <option value="II/C">II/C</option>
+                                        <option value="II/D">II/D</option>
+                                        <option value="III/A">III/A</option>
+                                        <option value="III/B">III/B</option>
+                                        <option value="III/C">III/C</option>
+                                        <option value="III/D">III/D</option>
+                                        <option value="IV/A">IV/A</option>
+                                        <option value="IV/B">IV/B</option>
+                                        <option value="IV/C">IV/C</option>
+                                        <option value="IV/D">IV/D</option>
+                                        <option value="IV/E">IV/E</option>
+                                        {{-- PPPK / ASN Modern --}}
+                                        <option value="I">I</option>
+                                        <option value="II">II</option>
+                                        <option value="III">III</option>
+                                        <option value="IV">IV</option>
+                                        <option value="V">V</option>
+                                        <option value="VI">VI</option>
+                                        <option value="VII">VII</option>
+                                        <option value="VIII">VIII</option>
+                                        <option value="IX">IX</option>
+                                        <option value="X">X</option>
+                                        <option value="XI">XI</option>
+                                        <option value="XII">XII</option>
+                                        <option value="XIII">XIII</option>
+                                        <option value="XIV">XIV</option>
+                                        <option value="XV">XV</option>
+                                        <option value="XVI">XVI</option>
+                                        <option value="XVII">XVII</option>
                                     </select>
-                                    @error('golongan') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
-
-                                {{-- End tambahan field --}}
 
                                 <button type="submit" class="btn bg-gradient-primary">Simpan</button>
                                 <a href="{{ route('user-management') }}" class="btn btn-secondary">Batal</a>
@@ -144,6 +173,64 @@
                 </div>
             </div>
         </div>
+
+        {{-- SCRIPT PANGKAT ↔ GOLONGAN OTOMATIS --}}
+        <script>
+            const mapping = {
+                // PNS Klasik
+                "I/A": "Juru Muda",
+                "I/B": "Juru Muda Tingkat I",
+                "I/C": "Juru",
+                "I/D": "Juru Tingkat I",
+                "II/A": "Pengatur Muda",
+                "II/B": "Pengatur Muda Tingkat I",
+                "II/C": "Pengatur",
+                "II/D": "Pengatur Tingkat I",
+                "III/A": "Penata Muda",
+                "III/B": "Penata Muda Tingkat I",
+                "III/C": "Penata",
+                "III/D": "Penata Tingkat I",
+                "IV/A": "Pembina",
+                "IV/B": "Pembina Tingkat I",
+                "IV/C": "Pembina Utama Muda",
+                "IV/D": "Pembina Utama Madya",
+                "IV/E": "Pembina Utama",
+
+                // PPPK / ASN Modern
+                "I": "Pemula",
+                "II": "Terampil",
+                "III": "Mahir",
+                "IV": "Penyelia",
+                "V": "Ahli Pertama",
+                "VI": "Ahli Muda",
+                "VII": "Ahli Madya",
+                "VIII": "Ahli Utama",
+                "IX": "Fungsional Tingkat Lanjut I",
+                "X": "Fungsional Tingkat Lanjut II",
+                "XI": "Fungsional Tingkat Lanjut III",
+                "XII": "Koordinator",
+                "XIII": "Pengawas",
+                "XIV": "Pejabat Fungsional Utama",
+                "XV": "Pejabat Pimpinan Tinggi Pratama",
+                "XVI": "Pejabat Pimpinan Tinggi Madya",
+                "XVII": "Pejabat Pimpinan Tinggi Utama"
+            };
+
+            const golonganSelect = document.getElementById('golongan');
+            const pangkatSelect = document.getElementById('pangkat');
+
+            golonganSelect.addEventListener('change', function () {
+                const selectedGol = this.value;
+                pangkatSelect.value = mapping[selectedGol] || "";
+            });
+
+            pangkatSelect.addEventListener('change', function () {
+                const selectedPangkat = this.value;
+                const found = Object.entries(mapping).find(([gol, pangkat]) => pangkat === selectedPangkat);
+                golonganSelect.value = found ? found[0] : "";
+            });
+        </script>
     </main>
+
     <x-plugins></x-plugins>
 </x-layout>
