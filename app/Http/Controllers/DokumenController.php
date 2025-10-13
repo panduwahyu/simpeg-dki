@@ -136,15 +136,15 @@ class DokumenController extends Controller
                 return back()->with('error', 'Periode tidak ditemukan')->withInput();
             }
             
-            $mandatory = DB::table('mandatory_uploads')
-                ->where('user_id', $request->nama_pegawai)
-                ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
-                ->where('periode_id', $request->periode)
-                ->first();
+            // $mandatory = DB::table('mandatory_uploads')
+            //     ->where('user_id', $request->nama_pegawai)
+            //     ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+            //     ->where('periode_id', $request->periode)
+            //     ->first();
     
-            if (!$mandatory) {
-                return back()->withErrors(['msg' => 'Mandatory upload tidak ditemukan.']);
-            }
+            // if (!$mandatory) {
+            //     return back()->withErrors(['msg' => 'Mandatory upload tidak ditemukan.']);
+            // }
 
             // Simpan ke database
             $dokumen = Dokumen::create([
@@ -158,22 +158,22 @@ class DokumenController extends Controller
                 'tanggal_unggah' => now(),
             ]);
             
-            DB::transaction(function () use ($mandatory, $filePath, $request) {
-                    DB::table('mandatory_uploads')
-                        ->where('id', $mandatory->id)
-                        ->update(['is_uploaded' => 1, 'updated_at' => now()]);
+            // DB::transaction(function () use ($mandatory, $filePath, $request) {
+            //         DB::table('mandatory_uploads')
+            //             ->where('id', $mandatory->id)
+            //             ->update(['is_uploaded' => 1, 'updated_at' => now()]);
     
-                    // DB::table('dokumen')->insert([
-                    //     'penilai_id' => $request->penilai_id,
-                    //     'path' => $filePath,
-                    //     'user_id' => $mandatory->user_id,
-                    //     'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
-                    //     'periode_id' => $mandatory->periode_id,
-                    //     'tanggal_unggah' => now(),
-                    //     'created_at' => now(),
-                    //     'updated_at' => now(),
-                    // ]);
-            });
+            //         // DB::table('dokumen')->insert([
+            //         //     'penilai_id' => $request->penilai_id,
+            //         //     'path' => $filePath,
+            //         //     'user_id' => $mandatory->user_id,
+            //         //     'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
+            //         //     'periode_id' => $mandatory->periode_id,
+            //         //     'tanggal_unggah' => now(),
+            //         //     'created_at' => now(),
+            //         //     'updated_at' => now(),
+            //         // ]);
+            // });
             return response()->json([
                 'success' => true,
                 'message' => 'Dokumen berhasil disimpan!',
