@@ -22,7 +22,7 @@ class RoleMiddleware
 
         // Jika tidak login atau role tidak sesuai, batalkan akses
         if (!$user || !in_array($user->role, $roles)) {
-            abort(403, 'Unauthorized'); // Bisa diganti redirect('/dashboard')->with('error', 'Access denied')
+            abort(403, 'Mohon maaf, anda tidak memiliki akses ke laman ini'); // Bisa diganti redirect('/dashboard')->with('error', 'Access denied')
         }
 
         return $next($request);

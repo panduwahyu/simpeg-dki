@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
     // Dokumen
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
     Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
+    Route::post('/dokumen', [DokumenController::class, 'store'])->name('dokumen.store');
 
     // Preview file PDF private
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');
