@@ -31,7 +31,6 @@ class GoogleController extends Controller
                     'name'     => $googleUser->getName(),
                     'photo'    => $googleUser->getAvatar(),      // simpan foto ke kolom photo
                     'password' => bcrypt(Str::random(16)),       // password random
-                    // 'role'     => 'Admin'                       // default role = Pegawai
                 ]
             );
 
