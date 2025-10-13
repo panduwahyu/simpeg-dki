@@ -12,6 +12,8 @@ class Dokumen extends Model
 
     protected $table = 'dokumen';
     protected $fillable = [
+        'penilai_id',
+        'path',
         'user_id',
         'jenis_dokumen_id',
         'periode_id',
@@ -37,5 +39,10 @@ class Dokumen extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function getFileUrlAttribute()
+    {
+        return asset('storage/' . $this->file_path);
     }
 }

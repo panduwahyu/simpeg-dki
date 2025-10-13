@@ -47,9 +47,9 @@
                                         </div>
 
                                         <div>
-                                            <label for="tipe" class="form-label small mb-1">Tipe</label>
+                                            <label for="tipe" class="form-label small mb-1">Periode</label>
                                             <select name="tipe" id="tipe" class="form-select" style="min-width: 130px;">
-                                                <option value="">-- Semua Tipe --</option>
+                                                <option value="">-- Semua Periode --</option>
                                                 @foreach($periode->unique('tipe') as $p)
                                                     <option value="{{ $p->tipe }}" {{ request('tipe') == $p->tipe ? 'selected' : '' }}>
                                                         {{ $p->tipe }}
@@ -93,7 +93,7 @@
                                         <tr>
                                             <th>Nama Pegawai</th>
                                             <th>Jenis Dokumen</th>
-                                            <th>Tipe Periode</th>
+                                            <th>Periode</th>
                                             <th>Tahun</th>
                                             <th>Tanggal Upload</th>
                                             <th>Aksi</th>
@@ -140,55 +140,136 @@
                                 </div>
                                 {{-- modal upload dokumen popup --}}
                                 <div class="modal-body">
-                                    <form id="formTambahDokumen">
+                                    <form id="formTambahDokumen" action="{{ route('dokumen.store') }}" method="POST" enctype="multipart/form-data">
                                         @csrf
+                                        
+                                        {{-- Menampilkan pesan sukses --}}
+                                        @if(session('success'))
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            {{ session('success') }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                        @endif
+
+                                        {{-- Menampilkan pesan error --}}
+                                        @if(session('error'))
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            {{ session('error') }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                        @endif
+
                                         <div class="mb-3">
-                                            <label for="jenis_dokumen" class="form-label">
-                                                Jenis Dokumen
+                                            <label for="nama_pegawai" class="form-label">
+                                                Nama Pegawai
                                             </label>
-                                            <select name="jenis_dokumen_id" id="jenis_dokumen_id" class="form-select">
+                                            @if (in_array(Auth::user()->role, ['Admin', 'Supervisor']))
+                                            <select name="nama_pegawai" id="nama_pegawai" class="form-select @error('nama_pegawai') is-invalid @enderror" required>
                                                 <option value="">
-                                                    -- Semua Jenis Dokumen --
+                                                    -- Pilih Pegawai --
+                                                </option>
+                                                @foreach ($pegawai as $u)
+                                                    <option value="{{ $u->id }}" {{ old('nama_pegawai', request('user_id')) == $u->id ? 'selected' : '' }}>
+                                                        {{ $u->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('nama_pegawai')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                            @else
+                                            <input type="hidden" name="nama_pegawai" value="{{ Auth::user()->id }}">
+                                            <input type="text" class="form-control" value="{{ Auth::user()->name }}" disabled>
+                                            @endif
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="jenis_dokumen_id" class="form-label">
+                                                Nama Dokumen
+                                            </label>
+                                            <select name="jenis_dokumen_id" id="jenis_dokumen_id" class="form-select @error('jenis_dokumen_id') is-invalid @enderror" required>
+                                                <option value="">
+                                                    -- Pilih nama dokumen --
                                                 </option>
                                                 @foreach($jenisDokumen as $jenis)
-                                                <option value="{{ $jenis->id }} " {{ request('jenis_dokumen_id') == $jenis->id ? 'selected' : '' }}>
+                                                <option value="{{ $jenis->id }}" {{ old('jenis_dokumen_id', request('jenis_dokumen_id')) == $jenis->id ? 'selected' : '' }}>
                                                     {{ $jenis->nama_dokumen }}
                                                 </option>
                                                 @endforeach
                                             </select>
+                                            @error('jenis_dokumen_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
                                         </div>
+
                                         <div class="mb-3">
                                             <label for="periode" class="form-label">
-                                                Periode
-                                            </label>
-                                            <input type="text" class="form-control" id="periode" name="periode">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tahun" class="form-label">
                                                 Tahun
                                             </label>
-                                            <input type="text" class="form-control" id="tahun" name="tahun">
+                                            <select name="periode" id="periode" class="form-select @error('periode') is-invalid @enderror" required>
+                                                <option value="">
+                                                    -- Pilih tahun --
+                                                </option>
+                                                @foreach($periode->unique('tahun') as $p)
+                                                    <option value="{{ $p->tahun }}" {{ old('periode', request('tahun')) == $p->tahun ? 'selected' : '' }}>
+                                                        {{ $p->tahun }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('periode')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
                                         </div>
-                                        {{-- <div class="mb-3">
-                                            <label for="inputGroupFile01" class="form-label fw-semibold">Upload File</label>
-                                            <input type="file" class="form-control border border-secondary rounded-3 shadow-sm" id="inputGroupFile01">
-                                        </div> --}}
+
+                                        <div class="mb-3">
+                                            <label for="tipe" class="form-label">
+                                                Periode
+                                            </label>
+                                            <select name="tipe" id="tipe" class="form-select @error('tipe') is-invalid @enderror" required>
+                                                <option value="">
+                                                    -- Pilih periode --
+                                                </option>
+                                                @foreach($periode->unique('tipe') as $p)
+                                                    <option value="{{ $p->tipe }}" {{ old('tipe', request('tipe')) == $p->tipe ? 'selected' : '' }}>
+                                                        {{ $p->tipe }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('tipe')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="penilai_id" class="form-label">
+                                                Ditandatangani oleh
+                                            </label>
+                                            <select name="penilai_id" id="penilai_id" class="form-select @error('penilai_id') is-invalid @enderror" required>
+                                                <option value="">
+                                                    -- Pilih penandatangan --
+                                                </option>
+                                                <option value="" {{ old('penilai_id') == '' ? 'selected' : '' }}>Pegawai</option>
+                                                <option value="1" {{ old('penilai_id') == '1' ? 'selected' : '' }}>Pegawai dan Pejabat</option>
+                                            </select>
+                                            @error('penilai_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
                                         <div class="mb-3">
                                             <label for="inputGroupFile01" class="form-label fw-semibold">Upload File</label>
-                                            <input 
-                                                type="file" 
-                                                class="form-control border border-secondary rounded-3 shadow-sm" 
-                                                id="inputGroupFile01" 
-                                                name="file" 
-                                                accept=".pdf"
-                                            >
+                                            <input type="file" class="form-control border border-secondary rounded-3 shadow-sm @error('pdf_file') is-invalid @enderror" id="inputGroupFile01" name="pdf_file" accept=".pdf" required>
                                             <div class="form-text text-muted">
                                                 📄 Pastikan file berformat <strong>PDF</strong> dengan ukuran <strong>&lt; 5MB</strong>.
                                             </div>
-                                            <div class="invalid-feedback mt-1" id="fileError"></div>
+                                            @error('pdf_file')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
                                         </div>
-                                        <button type="submit" class="btn btn-success w-100">
-                                            &#128190;Simpan
+
+                                        <button type="submit" class="btn btn-success w-100" id="btnSubmit">
+                                            <span id="btnText">&#128190; Simpan</span>
+                                            <span id="btnSpinner" class="d-none"> <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menyimpan... </span>
                                         </button>
                                     </form>
                                 </div>
@@ -261,6 +342,82 @@
                 // Jika lolos semua
                 input.classList.remove('is-invalid');
                 errorDiv.textContent = '';
+            });
+            @if(session('success'))
+                document.getElementById('formTambahDokumen').reset();
+            @endif
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('formTambahDokumen');
+                const btnSubmit = document.getElementById('btnSubmit');
+                const btnText = document.getElementById('btnText');
+                const btnSpinner = document.getElementById('btnSpinner');
+
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // cegah reload halaman
+
+                    // ganti tampilan tombol
+                    btnText.classList.add('d-none');
+                    btnSpinner.classList.remove('d-none');
+                    btnSubmit.disabled = true;
+
+                    // ambil data form
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // kembalikan tombol ke semula
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                        btnSubmit.disabled = false;
+
+                        // hapus alert lama
+                        const oldAlerts = form.querySelectorAll('.alert');
+                        oldAlerts.forEach(a => a.remove());
+
+                        // tampilkan feedback sukses/gagal
+                        let alertDiv = document.createElement('div');
+                        alertDiv.classList.add('alert', 'alert-dismissible', 'fade', 'show', 'mt-2');
+                        alertDiv.setAttribute('role', 'alert');
+
+                        if (data.success) {
+                            alertDiv.classList.add('alert-success');
+                            alertDiv.innerHTML = data.message || '✅ Dokumen berhasil disimpan.';
+                            form.reset(); // kosongkan form setelah berhasil
+                        } else {
+                            alertDiv.classList.add('alert-danger');
+                            alertDiv.innerHTML = data.message || '❌ Gagal menyimpan dokumen.';
+                        }
+
+                        // tombol tutup alert
+                        alertDiv.innerHTML += `
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        form.prepend(alertDiv);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                        btnSubmit.disabled = false;
+                        
+                        // tampilkan pesan error
+                        let alertDiv = document.createElement('div');
+                        alertDiv.classList.add('alert', 'alert-danger', 'alert-dismissible', 'fade', 'show', 'mt-2');
+                        alertDiv.innerHTML = 'Terjadi kesalahan pada server.';
+                        alertDiv.innerHTML += `
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        form.prepend(alertDiv);
+                    });
+                });
             });
             </script>
 

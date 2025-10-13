@@ -10,6 +10,7 @@ use App\Models\Periode;
 use App\Models\NamaPegawai;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class DokumenController extends Controller
 {
@@ -86,6 +87,104 @@ class DokumenController extends Controller
         return response($file, 200)
             ->header('Content-Type', $mime)
             ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"');
+    }
+
+    /**
+     * Menyimpan dokumen ke database
+     */
+    public function store(Request $request)
+    {
+        // Validasi input
+        $validated = $request->validate([
+            'nama_pegawai' => 'nullable|exists:users,id',
+            'jenis_dokumen_id' => 'required|exists:jenis_dokumen,id',
+            'periode' => 'required',
+            'tipe' => 'required',
+            'penilai_id' => 'nullable',
+            'pdf_file' => 'required|file|mimes:pdf|max:5120', // max 5MB
+        ], [
+            'jenis_dokumen_id.required' => 'Nama dokumen harus dipilih',
+            'jenis_dokumen_id.exists' => 'Nama dokumen tidak valid',
+            'periode.required' => 'Tahun harus dipilih',
+            'tipe.required' => 'Periode harus dipilih',
+            // 'penilai_id.required' => 'Penandatangan harus dipilih',
+            'file.required' => 'File PDF harus diupload',
+            'file.mimes' => 'File harus berformat PDF',
+            'file.max' => 'Ukuran file maksimal 5MB',
+        ]);
+
+        
+        try {
+            // Tentukan user_id berdasarkan role
+            if (in_array(Auth::user()->role, ['Admin', 'Supervisor'])) {
+                $userId = $request->nama_pegawai;
+            } else {
+                $userId = Auth::user()->id;
+            }
+            
+            // Upload file
+            $file = $request->file('pdf_file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('private/uploads', $fileName);
+
+            // Ambil periode_id berdasarkan tahun dan tipe
+            $periode = Periode::where('tahun', $request->periode)
+            ->where('tipe', $request->tipe)
+            ->first();
+            
+            if (!$periode) {
+                return back()->with('error', 'Periode tidak ditemukan')->withInput();
+            }
+            
+            // $mandatory = DB::table('mandatory_uploads')
+            //     ->where('user_id', $request->nama_pegawai)
+            //     ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+            //     ->where('periode_id', $request->periode)
+            //     ->first();
+    
+            // if (!$mandatory) {
+            //     return back()->withErrors(['msg' => 'Mandatory upload tidak ditemukan.']);
+            // }
+
+            // Simpan ke database
+            $dokumen = Dokumen::create([
+                'penilai_id' => $request->penilai_id,
+                'path' => $filePath,
+                'user_id' => $userId,
+                'jenis_dokumen_id' => trim($request->jenis_dokumen_id), // trim untuk menghapus spasi
+                'periode_id' => $periode->id,
+                // 'file_name' => $fileName,
+                // 'status' => 'pending', // atau sesuai kebutuhan
+                'tanggal_unggah' => now(),
+            ]);
+            
+            // DB::transaction(function () use ($mandatory, $filePath, $request) {
+            //         DB::table('mandatory_uploads')
+            //             ->where('id', $mandatory->id)
+            //             ->update(['is_uploaded' => 1, 'updated_at' => now()]);
+    
+            //         // DB::table('dokumen')->insert([
+            //         //     'penilai_id' => $request->penilai_id,
+            //         //     'path' => $filePath,
+            //         //     'user_id' => $mandatory->user_id,
+            //         //     'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
+            //         //     'periode_id' => $mandatory->periode_id,
+            //         //     'tanggal_unggah' => now(),
+            //         //     'created_at' => now(),
+            //         //     'updated_at' => now(),
+            //         // ]);
+            // });
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil disimpan!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+
     }
 
 }

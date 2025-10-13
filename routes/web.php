@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\StorageController;
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
 
@@ -77,6 +78,7 @@ Route::middleware('auth')->group(function () {
     // Dokumen
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
     Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
+    Route::post('/dokumen', [DokumenController::class, 'store'])->name('dokumen.store');
 
     // Preview file PDF private
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');
@@ -114,6 +116,8 @@ Route::middleware('auth')->group(function () {
         
         // Delete user
         Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+
+        Route::post('/storage/refresh', [StorageController::class, 'refresh'])->name('storage.refresh');
 
         // Form input pegawai
         Route::get('/form', [FormController::class, 'index'])->name('form.index');
