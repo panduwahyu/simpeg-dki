@@ -2,51 +2,84 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class PegawaiController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $userId = Auth::id(); // Ambil ID user yang login
+        $userId = Auth::id();
 
-        $uploads = DB::table('mandatory_uploads')
+        // Ambil data untuk filter dropdown
+        $periodeOptions = DB::table('periode')->orderBy('periode_key', 'desc')->get();
+        $jenisDokumenOptions = DB::table('jenis_dokumen')->orderBy('nama_dokumen')->get();
+
+        // Query dasar
+        $query = DB::table('mandatory_uploads')
             ->join('jenis_dokumen', 'mandatory_uploads.jenis_dokumen_id', '=', 'jenis_dokumen.id')
             ->join('periode', 'mandatory_uploads.periode_id', '=', 'periode.id')
-            ->leftJoin('dokumen', function ($join) {
+            ->leftJoin('dokumen', function ($join) use ($userId) {
                 $join->on('dokumen.jenis_dokumen_id', '=', 'mandatory_uploads.jenis_dokumen_id')
-                    ->on('dokumen.periode_id', '=', 'mandatory_uploads.periode_id')
-                    ->on('dokumen.user_id', '=', 'mandatory_uploads.user_id');
+                     ->on('dokumen.periode_id', '=', 'mandatory_uploads.periode_id')
+                     ->where('dokumen.user_id', '=', $userId);
             })
             ->where('mandatory_uploads.user_id', $userId)
             ->select(
-                'jenis_dokumen.id as dokumen_id',
+                'jenis_dokumen.id as jenis_dokumen_id',
                 'jenis_dokumen.nama_dokumen',
                 'periode.id as periode_id',
                 'periode.periode_key',
                 'mandatory_uploads.is_uploaded',
-                'dokumen.tanggal_unggah as tanggal_upload'
-            )
-            ->orderBy('periode.periode_key')
-            ->orderBy('jenis_dokumen.nama_dokumen')
-            ->get();
+                'dokumen.tanggal_unggah as tanggal_upload',
+                'dokumen.id as dokumen_id',
+                'dokumen.path' // Asumsikan ada kolom file_path di tabel dokumen
+            );
 
+        // Terapkan Filter
+        // Filter by Periode
+        $query->when($request->filled('periode_id'), function ($q) use ($request) {
+            return $q->where('periode.id', $request->periode_id);
+        });
 
-        // Hitung file yang belum diupload
-        $belumUpload = $uploads->where('is_uploaded', 0);
+        // Filter by Jenis Dokumen
+        $query->when($request->filled('jenis_dokumen_id'), function ($q) use ($request) {
+            return $q->where('jenis_dokumen.id', $request->jenis_dokumen_id);
+        });
 
-        // Hitung ringkasan
+        // Filter by Status
+        $query->when($request->filled('status'), function ($q) use ($request) {
+            return $q->where('mandatory_uploads.is_uploaded', $request->status);
+        });
+
+        // Fitur Pencarian
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            return $q->where('jenis_dokumen.nama_dokumen', 'like', '%' . $request->search . '%');
+        });
+
+        // Ambil data sebelum paginasi untuk ringkasan
+        $allUploadsForSummary = $query->get();
+
+        // Hitung ringkasan dari data yang sudah difilter
         $ringkasan = [
-            'total' => $uploads->count(),
-            'sudah' => $uploads->where('is_uploaded', 1)->count(),
-            'belum' => $belumUpload->count(),
+            'total' => $allUploadsForSummary->count(),
+            'sudah' => $allUploadsForSummary->where('is_uploaded', 1)->count(),
+            'belum' => $allUploadsForSummary->where('is_uploaded', 0)->count(),
         ];
+
+        // Paginasi
+        $perPage = $request->input('per_page', 10);
+        $uploads = $query->orderBy('periode.periode_key', 'desc')
+                         ->orderBy('jenis_dokumen.nama_dokumen')
+                         ->paginate($perPage)
+                         ->withQueryString(); // Agar filter tetap ada saat pindah halaman
 
         return view('dashboard.pegawai_dashboard', [
             'uploads' => $uploads,
-            'belumUpload' => $belumUpload,
-            'ringkasan' => $ringkasan
+            'ringkasan' => $ringkasan,
+            'periodeOptions' => $periodeOptions,
+            'jenisDokumenOptions' => $jenisDokumenOptions,
         ]);
     }
 }

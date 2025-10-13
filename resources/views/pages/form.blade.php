@@ -16,6 +16,13 @@
                         </div>
                         <div class="card-body px-4 pb-2">
 
+                            {{-- Tombol refresh isi storage --}}
+                            <form action="{{ route('storage.refresh') }}" method="POST" onsubmit="return confirm('Yakin ingin menyegarkan isi penyimpanan?')">
+                                @csrf
+                                <button type="submit" class="btn btn-danger">Refresh Isi Penyimpanan</button>
+                            </form>
+                            {{--  --}}
+
                             <form id="dokumenForm" action="{{ route('form.store') }}" method="POST">
                                 @csrf
 

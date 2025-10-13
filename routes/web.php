@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\StorageController;
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
 
@@ -115,6 +116,8 @@ Route::middleware('auth')->group(function () {
         // Delete user
         Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
 
+        Route::post('/storage/refresh', [StorageController::class, 'refresh'])->name('storage.refresh');
+
         // Form input pegawai
         Route::get('/form', [FormController::class, 'index'])->name('form.index');
         Route::post('/form', [FormController::class, 'store'])->name('form.store');
@@ -158,6 +161,7 @@ Route::middleware('auth')->group(function () {
     // Tanda tangan PDF
     Route::get('/sign-pdf', [PdfController::class, 'index'])->name('pdf.sign.form');
     Route::post('/sign-pdf', [PdfController::class, 'signPdf'])->name('pdf.sign');
+    Route::post('/sign-pdf/update/{dokumen}', [PdfController::class, 'updatePdf'])->name('pdf.update');
 
     // AJAX untuk dropdown Dokumen pegawai
     Route::get('/pegawai/ajax-dokumen/{userId}', [PdfController::class, 'getDokumenPegawai'])
