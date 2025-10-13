@@ -41,7 +41,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pilih file PDF</label>
-                                        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
+                                        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" >
                                     </div>
                                 </div>
 
@@ -129,19 +129,26 @@
         const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
         const signatureControls = document.getElementById('signature-controls');
 
+        // **BARU**: Ambil data pra-seleksi dari controller
+        const preselected = @json($preselected ?? []);
+
         let pdfDocument = null;
         let pageViews = [];
         let signatures = [];
         let uploadToast;
 
-        // === SweetAlert2 helpers ===
+        // === PDF.js Worker Setup ===
+        if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
+        }
+
+        // === Helper Functions (SweetAlert, Reset, dll.) ===
         async function swalAlert(msg) {
             await Swal.fire({ icon: 'error', title: 'Peringatan', text: msg });
         }
 
-        function showUploadStatus(msg, duration=10000) {
+         function showUploadStatus(msg, duration=10000) {
             if (uploadToast) uploadToast.close();
-
             uploadToast = Swal.fire({
                 title: msg,
                 toast: true,
@@ -154,46 +161,130 @@
             });
         }
 
-        if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
-        }
-
         function resetPreview() {
-            pdfContainer.innerHTML = '';
+            pdfContainer.innerHTML = '<p class="text-muted text-center p-5">Pilih file PDF untuk melihat preview.</p>';
             signatureControls.innerHTML = '';
             pageViews = [];
             pdfDocument = null;
             signatures = [];
         }
 
-        // === PDF Preview ===
-        pdfFileInput.addEventListener('change', async (e) => {
+        // === Fungsi Render PDF (bisa menerima file atau URL) ===
+        async function renderPdfPreview(fileOrUrl) {
             resetPreview();
-            const file = e.target.files[0];
-            if (!file) return;
-            const url = URL.createObjectURL(file);
-            const loadingTask = pdfjsLib.getDocument(url);
-            pdfDocument = await loadingTask.promise;
-            const containerWidth = Math.max(800, pdfContainer.clientWidth - 40);
-            for (let i = 1; i <= pdfDocument.numPages; i++) {
-                const page = await pdfDocument.getPage(i);
-                const viewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(1000, containerWidth) / viewport.width;
-                const scaledViewport = page.getViewport({ scale });
-                const pageWrap = document.createElement('div');
-                pageWrap.className = 'page-wrap';
-                pageWrap.style.width = scaledViewport.width + 'px';
-                pageWrap.style.height = scaledViewport.height + 'px';
-                pageWrap.dataset.pageNumber = i;
-                const canvas = document.createElement('canvas');
-                canvas.className = 'page-canvas';
-                canvas.width = scaledViewport.width;
-                canvas.height = scaledViewport.height;
-                pageWrap.appendChild(canvas);
-                pdfContainer.appendChild(pageWrap);
-                const ctx = canvas.getContext('2d');
-                await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-                pageViews.push({ pageNumber: i, elem: pageWrap });
+            pdfContainer.innerHTML = '<p class="text-center p-5">Memuat preview...</p>';
+            let url = (typeof fileOrUrl === 'string') ? fileOrUrl : URL.createObjectURL(fileOrUrl);
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDocument = await loadingTask.promise;
+                pdfContainer.innerHTML = ''; // Hapus pesan loading
+
+                const containerWidth = Math.max(800, pdfContainer.clientWidth - 40);
+                for (let i = 1; i <= pdfDocument.numPages; i++) {
+                    const page = await pdfDocument.getPage(i);
+                    const viewport = page.getViewport({ scale: 1 });
+                    const scale = containerWidth / viewport.width;
+                    const scaledViewport = page.getViewport({ scale });
+
+                    const pageWrap = document.createElement('div');
+                    pageWrap.className = 'page-wrap';
+                    pageWrap.style.width = scaledViewport.width + 'px';
+                    pageWrap.style.height = scaledViewport.height + 'px';
+                    pageWrap.dataset.pageNumber = i;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = scaledViewport.width;
+                    canvas.height = scaledViewport.height;
+                    pageWrap.appendChild(canvas);
+                    pdfContainer.appendChild(pageWrap);
+
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport }).promise;
+                    pageViews.push({ pageNumber: i, elem: pageWrap });
+                }
+            } catch (error) {
+                console.error("Gagal memuat PDF:", error);
+                pdfContainer.innerHTML = '<p class="text-center p-5 text-danger">Gagal memuat preview PDF.</p>';
+            }
+        }
+
+        // === Logika Dropdown Bertingkat (dibuat async) ===
+        async function populateDokumen(userId) {
+            dokumenSelect.innerHTML = '<option value="">Memuat...</option>';
+            periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
+            dokumenSelect.disabled = true;
+            periodeSelect.disabled = true;
+            if (!userId) return;
+
+            const response = await fetch(`/ajax-dokumen/${userId}`);
+            const data = await response.json();
+
+            dokumenSelect.innerHTML = '<option value="">-- Pilih Dokumen --</option>';
+            data.forEach(d => {
+                dokumenSelect.add(new Option(d.nama_dokumen, d.id)); 
+            });
+            dokumenSelect.disabled = false;
+        }
+
+        async function populatePeriode(userId, dokumenId) {
+            periodeSelect.innerHTML = '<option value="">Memuat...</option>';
+            periodeSelect.disabled = true;
+            if (!userId || !dokumenId) return;
+
+            const response = await fetch(`/ajax-periode/${userId}/${dokumenId}`);
+            const data = await response.json();
+
+            periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
+            data.forEach(p => {
+                periodeSelect.add(new Option(p.periode_key, p.id));
+            });
+            periodeSelect.disabled = false;
+        }
+
+        // === Event Listeners untuk Dropdown Manual ===
+        userSelect.addEventListener('change', function() { populateDokumen(this.value); });
+        dokumenSelect.addEventListener('change', function() { populatePeriode(userSelect.value, this.value); });
+
+        // === **BARU**: Logika untuk menangani Pra-seleksi ===
+        async function handlePreselection() {
+            if (preselected && preselected.user_id) {
+                userSelect.value = preselected.user_id;
+                await populateDokumen(preselected.user_id); // Tunggu dokumen selesai dimuat
+
+                if (preselected.jenis_dokumen_id) {
+                    dokumenSelect.value = preselected.jenis_dokumen_id;
+                    await populatePeriode(preselected.user_id, preselected.jenis_dokumen_id); // Tunggu periode
+
+                    if (preselected.periode_id) {
+                        periodeSelect.value = preselected.periode_id;
+                    }
+                }
+
+                // Jika perlu preview otomatis
+                if (preselected.needs_preview) {
+                    try {
+                        const response = await fetch(`/ajax-preview-url/${preselected.user_id}/${preselected.jenis_dokumen_id}/${preselected.periode_id}`);
+                        const data = await response.json();
+                        if (data.success && data.url) {
+                            await renderPdfPreview(data.url);
+                            // Karena PDF sudah ada, input file tidak lagi wajib
+                            pdfFileInput.required = false;
+                        } else {
+                            await swalAlert(data.message || 'Gagal mengambil URL preview.');
+                        }
+                    } catch (e) {
+                        await swalAlert('Terjadi kesalahan saat mengambil data preview.');
+                    }
+                }
+            }
+        }
+        
+        // --- Event Listeners untuk File Input ---
+        pdfFileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                renderPdfPreview(e.target.files[0]);
+                // Jika user memilih file baru, jadikan lagi wajib
+                pdfFileInput.required = true;
             }
         });
 
@@ -327,7 +418,10 @@
             if (!userSelect.value){ await swalAlert('Pilih pegawai'); return; }
             if (!dokumenSelect.value){ await swalAlert('Pilih dokumen'); return; }
             if (!periodeSelect.value){ await swalAlert('Pilih periode'); return; }
-            if (!pdfFileInput.files[0]){ await swalAlert('Pilih file PDF'); return; }
+            if (pdfFileInput.files.length === 0 && !pdfDocument) {
+                await swalAlert('Pilih file PDF');
+                return;
+            }
             if (signatures.length===0){ await swalAlert('Pilih minimal 1 tanda tangan'); return; }
             if (pageViews.length===0){ await swalAlert('Preview PDF belum siap'); return; }
 
@@ -399,7 +493,7 @@
                 console.error(err);
             }
         });
-
+        handlePreselection();
     });
     </script>
 </x-layout>

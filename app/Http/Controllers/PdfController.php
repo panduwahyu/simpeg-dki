@@ -192,7 +192,7 @@ class PdfController extends Controller
     // =======================
     // Halaman Supervisor/Admin
     // =======================
-    public function indexSupervisorAdmin()
+    public function indexSupervisorAdmin(Request $request)
     {
         $semuaDokumen = DB::table('mandatory_uploads')
             ->join('jenis_dokumen', 'jenis_dokumen.id', '=', 'mandatory_uploads.jenis_dokumen_id')
@@ -213,11 +213,44 @@ class PdfController extends Controller
             ->orderBy('periode.periode_key')
             ->orderBy('jenis_dokumen.nama_dokumen')
             ->get();
+        
+        $preselected = [
+            'user_id' => $request->query('user_id'),
+            'jenis_dokumen_id' => $request->query('jenis_dokumen_id'),
+            'periode_id' => $request->query('periode_id'),
+            // 'preview' akan digunakan oleh JavaScript untuk fetch URL
+            'needs_preview' => $request->query('preview', 'false') === 'true',
+        ];
+
 
         return view('pdf.sign-supervisoradmin', [
-            'semuaDokumen' => $semuaDokumen
+            'semuaDokumen' => $semuaDokumen,
+            'preselected' => $preselected 
         ]);
     }
+
+    public function redirectIndexSupervisorAdmin(Request $request) // DIUBAH: tambahkan Request
+    {
+        // Data utama tetap diambil untuk mengisi dropdown jika tidak ada pra-seleksi
+        $semuaDokumen = DB::table('mandatory_uploads')
+            // ... query yang sudah ada ...
+            ->get();
+
+        // Ambil parameter dari URL untuk pra-seleksi
+        $preselected = [
+            'user_id' => $request->query('user_id'),
+            'jenis_dokumen_id' => $request->query('jenis_dokumen_id'),
+            'periode_id' => $request->query('periode_id'),
+            // 'preview' akan digunakan oleh JavaScript untuk fetch URL
+            'needs_preview' => $request->query('preview', 'false') === 'true',
+        ];
+
+        return view('pdf.sign-supervisoradmin', [
+            'semuaDokumen' => $semuaDokumen,
+            'preselected' => $preselected // DIUBAH: Kirim data pra-seleksi ke view
+        ]);
+    }
+        
 
     public function signPdfSupervisor(Request $request)
     {
@@ -227,7 +260,7 @@ class PdfController extends Controller
             'user_id' => 'required|exists:users,id',
             'jenis_dokumen_id' => 'required|exists:jenis_dokumen,id',
             'periode_id' => 'required|exists:periode,id',
-            'pdf' => 'required|file|mimes:pdf|max:10240',
+            'pdf' => 'sometimes|file|mimes:pdf|max:10240',
             'signatures' => 'required|array|min:1',
             'signatures.*.page' => 'required|integer|min:1',
             'signatures.*.x' => 'required|numeric|min:0|max:1',
@@ -241,16 +274,40 @@ class PdfController extends Controller
             ->where('user_id', $request->user_id)
             ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
             ->where('periode_id', $request->periode_id)
-            ->where('penilaian', 0)
+            // ->where('penilaian', 0)
             ->first();
 
         if (!$mandatory) return back()->withErrors(['msg' => 'Mandatory upload tidak ditemukan.']);
 
         // Simpan PDF sementara
-        $pdfFile = $request->file('pdf');
-        $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
-        $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
-        $pdfFullPath = Storage::path($pdfStoredPath);
+        if (!($request->hasFile('pdf'))) {
+            $existingDoc = DB::table('dokumen')
+                ->where('user_id', $request->user_id)
+                ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+                ->where('periode_id', $request->periode_id)
+                ->first();
+
+            if (!$existingDoc) {
+                return back()->withErrors(['msg' => 'Dokumen asli dari pegawai tidak ditemukan untuk ditandatangani.']);
+            }
+            $pdfFullPath = storage_path('app/private/' . $existingDoc->path);
+            
+
+            if (!file_exists($pdfFullPath)) {
+                return back()->withErrors(['msg' => 'File dokumen asli dari pegawai tidak ditemukan di storage.']);
+            }
+
+        } else {
+            // Logika lama jika admin mengunggah file PDF baru
+            $pdfFile = $request->file('pdf');
+            $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
+            $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
+            $pdfFullPath = Storage::path($pdfStoredPath);
+        }
+        // $pdfFile = $request->file('pdf');
+        // $pdfName = 'orig_' . time() . '_' . Str::random(6) . '.' . $pdfFile->getClientOriginalExtension();
+        // $pdfStoredPath = $pdfFile->storeAs('public/tmp', $pdfName);
+        // $pdfFullPath = Storage::path($pdfStoredPath);
 
         $pdf = new Fpdi();
         $pageCount = $pdf->setSourceFile($pdfFullPath);
@@ -487,6 +544,135 @@ class PdfController extends Controller
             DB::rollBack();
             Log::error("Error saat update PDF: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server: ' . $e->getMessage()], 500);
+        }
+    }
+
+     public function signExistingPdfAjax(Request $request)
+    {
+        $userLogin = Auth::user();
+
+        // 1. Validasi Input (Tidak ada perubahan)
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'jenis_dokumen_id' => 'required|exists:jenis_dokumen,id',
+            'periode_id' => 'required|exists:periode,id',
+            'signatures' => 'required|array|min:1',
+            'signatures.*.page' => 'required|integer|min:1',
+            'signatures.*.x' => 'required|numeric|min:0|max:1',
+            'signatures.*.y' => 'required|numeric|min:0|max:1',
+            'signatures.*.w' => 'required|numeric|min:0|max:1',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
+        ]);
+
+        $mandatory = DB::table('mandatory_uploads')
+            ->where('user_id', $request->user_id)
+            ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+            ->where('periode_id', $request->periode_id)
+            ->first();
+
+        if (!$mandatory) {
+            return response()->json(['success' => false, 'message' => 'Data wajib unggah tidak ditemukan.'], 404);
+        }
+
+        $tempSigPathsForCleanup = [];
+
+        try {
+            // 2. Selalu gunakan file yang sudah ada di storage
+            $existingDoc = DB::table('dokumen')
+                ->where('user_id', $request->user_id)
+                ->where('jenis_dokumen_id', $request->jenis_dokumen_id)
+                ->where('periode_id', $request->periode_id)
+                ->first();
+
+            // Gunakan Storage::exists() yang merujuk ke default disk (storage/app)
+            if (!$existingDoc || !Storage::exists($existingDoc->path)) {
+                throw new Exception('File PDF asli dari pegawai tidak ditemukan.');
+            }
+            
+            // Gunakan helper storage_path() untuk mendapatkan path absolut
+            $pdfFullPath = storage_path('app/private/' . $existingDoc->path);
+
+            $pdf = new Fpdi();
+            $pageCount = $pdf->setSourceFile($pdfFullPath);
+
+            // 3. Simpan file signature sementara
+            $sigStoredPaths = [];
+            $sigTempPaths = [];
+            foreach ($request->file('files', []) as $i => $sigFile) {
+                $sigName = 'sig_' . time() . '_' . Str::random(6) . '.' . $sigFile->getClientOriginalExtension();
+                $sigStored = $sigFile->storeAs('public/tmp', $sigName);
+                $sigStoredPaths[$i] = $sigStored;
+                $sigTempPaths[$i] = Storage::path($sigStored);
+            }
+
+            $signatures = $request->input('signatures', []);
+
+            // 4. Proses penempelan tanda tangan (FPDI)
+            for ($p = 1; $p <= $pageCount; $p++) {
+                $tplId = $pdf->importPage($p);
+                $size = $pdf->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplId);
+
+                // (Logika untuk menempelkan signature sama seperti di signPdf)
+                // ...
+                foreach ($signatures as $idx => $sig) {
+                    if ((int)$sig['page'] === $p && isset($sigTempPaths[$idx])) {
+                        $x = floatval($sig['x']) * $size['width'];
+                        $y = floatval($sig['y']) * $size['height'];
+                        $w = floatval($sig['w']) * $size['width'];
+                        $pdf->Image($sigTempPaths[$idx], $x, $y, $w);
+                    }
+                }
+            }
+
+            
+
+            // 5. Siapkan file output dan simpan
+            $pegawai = DB::table('users')->where('id', $request->user_id)->first();
+            $jenisDokumen = DB::table('jenis_dokumen')->where('id', $request->jenis_dokumen_id)->first();
+            $periode = DB::table('periode')->where('id', $request->periode_id)->first();
+            
+            $outName = 'Disetujui_' . Str::slug($pegawai->name) . '_' . Str::slug($jenisDokumen->nama_dokumen) . '_' . Str::slug($periode->periode_key) . '.pdf';
+            $outRelativePath = 'uploads/' . $outName;
+            $outFullPath = storage_path('app/private/' . $outRelativePath);
+
+            // Hapus file lama sebelum menyimpan yang baru
+            Storage::delete($existingDoc->path);
+            
+            // Simpan file baru menggunakan path absolut
+            $pdf->Output($outFullPath, 'F');
+
+            // 6. Update database
+            DB::transaction(function () use ($mandatory, $existingDoc, $outRelativePath, $userLogin) {
+                DB::table('mandatory_uploads')
+                    ->where('id', $mandatory->id)
+                    ->update(['penilaian' => 1, 'updated_at' => now()]);
+
+                DB::table('dokumen')->where('id', $existingDoc->id)->update([
+                    'path' => $outRelativePath,
+                    'penilai_id' => $userLogin->id,
+                    'updated_at' => now(),
+                ]);
+            });
+
+            // 7. Bersihkan file-file signature sementara
+            if (!empty($tempSigPathsForCleanup)) {
+                Storage::delete($tempSigPathsForCleanup);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Dokumen berhasil ditandatangani!']);
+
+        } catch (Exception $e) {
+            Log::error("GAGAL TTD AJAX: " . $e->getMessage());
+            
+            if (!empty($tempSigPathsForCleanup)) {
+                Storage::delete($tempSigPathsForCleanup);
+            }
+            
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -32,12 +32,12 @@ class PegawaiController extends Controller
                 'periode.id as periode_id',
                 'periode.periode_key',
                 'mandatory_uploads.is_uploaded',
+                'mandatory_uploads.penilaian', // <-- PERUBAHAN 1: Tambahkan kolom penilaian
                 'dokumen.tanggal_unggah as tanggal_upload',
                 'dokumen.id as dokumen_id',
-                'dokumen.path' // Asumsikan ada kolom file_path di tabel dokumen
+                'dokumen.path'
             );
 
-        // Terapkan Filter
         // Filter by Periode
         $query->when($request->filled('periode_id'), function ($q) use ($request) {
             return $q->where('periode.id', $request->periode_id);
@@ -48,9 +48,18 @@ class PegawaiController extends Controller
             return $q->where('jenis_dokumen.id', $request->jenis_dokumen_id);
         });
 
-        // Filter by Status
+        // <--  logika filter status
         $query->when($request->filled('status'), function ($q) use ($request) {
-            return $q->where('mandatory_uploads.is_uploaded', $request->status);
+            switch ($request->status) {
+                case 'belum': // Belum Upload
+                    return $q->where('mandatory_uploads.is_uploaded', 0);
+                case 'menunggu': // Menunggu Persetujuan
+                    return $q->where('mandatory_uploads.is_uploaded', 1)
+                             ->where('mandatory_uploads.penilaian', 0);
+                case 'selesai': // Selesai
+                    return $q->where('mandatory_uploads.is_uploaded', 1)
+                             ->where('mandatory_uploads.penilaian', 1);
+            }
         });
 
         // Fitur Pencarian
@@ -59,21 +68,23 @@ class PegawaiController extends Controller
         });
 
         // Ambil data sebelum paginasi untuk ringkasan
-        $allUploadsForSummary = $query->get();
+        $allUploadsForSummary = $query->clone()->get(); // Gunakan clone() agar tidak mempengaruhi query paginasi
 
-        // Hitung ringkasan dari data yang sudah difilter
+        // <-- logika ringkasan
+        $total = $allUploadsForSummary->count();
+        $selesai = $allUploadsForSummary->where('is_uploaded', 1)->count();
         $ringkasan = [
-            'total' => $allUploadsForSummary->count(),
-            'sudah' => $allUploadsForSummary->where('is_uploaded', 1)->count(),
-            'belum' => $allUploadsForSummary->where('is_uploaded', 0)->count(),
+            'total' => $total,
+            'sudah' => $selesai, // 'sudah' sekarang berarti sudah selesai (dinilai)
+            'belum' => $total - $selesai,
         ];
-
+        
         // Paginasi
         $perPage = $request->input('per_page', 10);
         $uploads = $query->orderBy('periode.periode_key', 'desc')
-                         ->orderBy('jenis_dokumen.nama_dokumen')
-                         ->paginate($perPage)
-                         ->withQueryString(); // Agar filter tetap ada saat pindah halaman
+                          ->orderBy('jenis_dokumen.nama_dokumen')
+                          ->paginate($perPage)
+                          ->withQueryString();
 
         return view('dashboard.pegawai_dashboard', [
             'uploads' => $uploads,

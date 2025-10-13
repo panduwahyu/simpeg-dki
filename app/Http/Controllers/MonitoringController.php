@@ -203,4 +203,25 @@ class MonitoringController extends Controller
             ->header('Content-Type', $mime)
             ->header('Content-Disposition', 'inline; filename="' . basename($filePath) . '"');
     }
+
+    public function getPreviewUrlForSupervisor($userId, $jenisDokumenId, $periodeId)
+    {
+        $dokumen = DB::table('dokumen')
+            ->where('user_id', $userId)
+            ->where('jenis_dokumen_id', $jenisDokumenId)
+            ->where('periode_id', $periodeId)
+            ->first();
+
+        if ($dokumen && $dokumen->path) {
+            // Menggunakan route 'monitoring.preview' yang sudah ada
+            $url = route('monitoring.preview', [
+                'userId' => $userId,
+                'jenisDokumenId' => $jenisDokumenId,
+                'periodeId' => $periodeId
+            ]);
+            return response()->json(['success' => true, 'url' => $url]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+    }
 }

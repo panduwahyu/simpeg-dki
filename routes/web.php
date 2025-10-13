@@ -105,7 +105,8 @@ Route::middleware('auth')->group(function () {
             ->name('monitoring.ajax');
         Route::get('/monitoring/file-path/{user}/{periode}', [MonitoringController::class, 'getFilePath'])
             ->name('monitoring.file-path');
-        Route::get('/monitoring/preview/{userId}/{jenisDokumenId}/{periodeId}', [MonitoringController::class, 'previewFile']);
+        Route::get('/monitoring/preview/{userId}/{jenisDokumenId}/{periodeId}', [MonitoringController::class, 'previewFile'])
+            ->name('monitoring.preview');;
 
         // Edit user
         Route::get('user-management/{user}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
@@ -149,6 +150,14 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/ajax-periode/{user}/{dokumen}', [PdfController::class, 'getPeriodeByUserDokumen'])
             ->name('ajax.periode');
+
+        // Get Preview Url
+        Route::get('/ajax-preview-url/{userId}/{jenisDokumenId}/{periodeId}', [MonitoringController::class, 'getPreviewUrlForSupervisor'])
+        ->name('ajax.preview.url');
+
+        //  Rute untuk menangani submit tanda tangan dari modal via AJAX
+        Route::post('/sign-pdf/ajax-submit', [PdfController::class, 'signExistingPdfAjax'])->name('pdf.sign.ajax');
+
     });
     
     // Contoh halaman profil user

@@ -111,8 +111,9 @@
                                     <label class="form-label">Status</label>
                                     <select name="status" class="form-control form-control-sm">
                                         <option value="">-- Semua Status --</option>
-                                        <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Sudah</option>
-                                        <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Belum</option>
+                                        <option value="belum" {{ request('status') == 'belum' ? 'selected' : '' }}>Belum Upload</option>
+                                        <option value="menunggu" {{ request('status') == 'menunggu' ? 'selected' : '' }}>Menunggu Persetujuan</option>
+                                        <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -186,10 +187,12 @@
                                             <p class="text-sm font-weight-bold mb-0">{{ $item->periode_key }}</p>
                                         </td>
                                         <td class="align-middle text-center text-sm">
-                                            @if($item->is_uploaded == 1)
-                                                <span class="badge badge-sm bg-gradient-success">Sudah</span>
+                                            @if($item->is_uploaded == 1 && $item->penilaian == 1)
+                                                <span class="badge badge-sm bg-gradient-success">Selesai</span>
+                                            @elseif($item->is_uploaded == 1 && $item->penilaian == 0)
+                                                <span class="badge badge-sm bg-gradient-warning">Menunggu Persetujuan</span>
                                             @else
-                                                <span class="badge badge-sm bg-gradient-danger">Belum</span>
+                                                <span class="badge badge-sm bg-gradient-danger">Belum Upload</span>
                                             @endif
                                         </td>
                                         <td class="align-middle text-center">
@@ -198,7 +201,16 @@
                                             </span>
                                         </td>
                                         <td class="align-middle text-center">
-                                            @if($item->is_uploaded == 1)
+                                             @if($item->is_uploaded == 1 && $item->penilaian == 1)
+                                                {{-- Status Selesai: Hanya bisa lihat --}}
+                                                <!-- <a href="{{ route('dokumen.preview', $item->dokumen_id) }}" target="_blank" class="btn btn-action text-info p-2 mx-1 mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat Preview">
+                                                    <i class="fas fa-eye"></i>
+                                                </a> -->
+                                                <a href="{{ route('dokumen.preview', $item->dokumen_id) }}" target="_blank" class="btn btn-sm btn-info  mb-0">
+                                                    <i class="fas fa-eye me-1"></i> Preview
+                                                </a>
+                                            @elseif($item->is_uploaded == 1 && $item->penilaian == 0)
+                                                {{-- Status Menunggu: Bisa lihat dan edit --}}
                                                 <a href="{{ route('dokumen.preview', $item->dokumen_id) }}" target="_blank" class="btn btn-action text-info p-2 mx-1 mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat Preview">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
@@ -244,13 +256,6 @@
 
     <x-plugins></x-plugins>
     
-    <script>
-        // Inisialisasi Tooltip Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
-    </script>
     
     
     {{-- Font Awesome --}}
@@ -262,11 +267,13 @@
 
     {{-- BARU: MODAL UNTUK EDIT DOKUMEN --}}
     <div class="modal fade" id="editDokumenModal" tabindex="-1" aria-labelledby="editDokumenModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editDokumenModalLabel">Edit Dokumen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <form id="editSignForm" method="POST" enctype="multipart/form-data">
@@ -325,6 +332,18 @@
         /* Opsional: buat warna placeholder sedikit lebih pucat */
         select.form-select option[value=""] {
             color: #6c757d; /* abu-abu */
+        }
+
+        .modal-header .btn-close {
+            background: none;
+            border: none;
+            box-shadow: none;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            color: #ff0000ff;
+        }
+        .modal-header .btn-close:hover {
+            opacity: 1;
         }
     </style>
 
@@ -629,6 +648,3 @@
         });
     </script>
 </x-layout>
-
-
-
