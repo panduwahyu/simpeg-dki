@@ -105,7 +105,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="sigFileModal" class="form-label">Pilih Tanda Tangan (PNG/JPG)</label>
-                            <input type="file" id="sigFileModal" class="form-control" accept="image/*" multiple required>
+                            <input type="file" id="sigFileModal" class="form-control" accept="image/*" multiple>
                         </div>
                         <div id="viewerWrapModal" class="border" style="height:60vh; overflow:auto; position:relative; background:#efefef;">
                             <div id="pdfViewerModal" style="position:relative; width:fit-content; margin:auto;"></div>
@@ -348,18 +348,37 @@
         }
 
         sigFileModalInput.addEventListener('change', (e) => {
-            Array.from(e.target.files).forEach(file => {
+            const files = Array.from(e.target.files);
+            const maxSizeKB = 5120; // 5 MB
+
+            files.forEach(file => {
+                const fileType = file.type.toLowerCase();
+                const fileSizeKB = file.size / 1024;
+
+                // Validasi ukuran & tipe file
+                if (!['image/png', 'image/jpeg', 'image/jpg'].includes(fileType)) {
+                    Swal.fire('Format Tidak Didukung', 'Hanya file JPG atau PNG yang diperbolehkan.', 'error');
+                    return;
+                }
+                if (fileSizeKB > maxSizeKB) {
+                    Swal.fire('Ukuran Terlalu Besar', 'Ukuran file maksimal 5MB per tanda tangan.', 'error');
+                    return;
+                }
+
+                // Kalau valid → tampilkan gambar di atas PDF
                 const url = URL.createObjectURL(file);
                 const img = document.createElement('img');
-                img.src = url; img.className = 'sign-img';
-                img.style.width = '180px'; img.style.top = '16px'; img.style.left = '16px';
+                img.src = url;
+                img.className = 'sign-img';
+                img.style.width = '180px';
+                img.style.top = '16px';
+                img.style.left = '16px';
                 pdfViewerModal.appendChild(img);
                 enableDragFor(img, pdfViewerModal);
 
-                // Tombol close ×
-
                 const idx = modalSignatures.length;
 
+                // Tombol close × untuk hapus tanda tangan
                 const btn = document.createElement('button');
                 btn.innerText = '×';
                 btn.style.position = 'absolute';
@@ -385,13 +404,20 @@
                 });
                 pdfViewerModal.appendChild(btn);
 
+                // Slider kontrol ukuran
                 const sliderDiv = document.createElement('div');
-                sliderDiv.id = `slider-modal-${idx}`; sliderDiv.className = 'mt-2';
-                sliderDiv.innerHTML = `<label>Atur Ukuran TTD ${idx+1}: </label><input type="range" min="30" max="600" value="180">`;
+                sliderDiv.id = `slider-modal-${idx}`;
+                sliderDiv.className = 'mt-2';
+                sliderDiv.innerHTML = `<label>Atur Ukuran TTD ${idx + 1}: </label><input type="range" min="30" max="600" value="180">`;
                 sigControlsModal.appendChild(sliderDiv);
-                sliderDiv.querySelector('input').addEventListener('input', (e) => { img.style.width = e.target.value + 'px'; });
+                sliderDiv.querySelector('input').addEventListener('input', (e) => {
+                    img.style.width = e.target.value + 'px';
+                });
+
                 modalSignatures.push({ file, imgElem: img });
             });
+
+            // Reset input agar bisa upload ulang file sama
             e.target.value = '';
         });
 
