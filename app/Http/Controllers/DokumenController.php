@@ -11,6 +11,8 @@ use App\Models\NamaPegawai;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use ZipArchive;
 
 class DokumenController extends Controller
 {
@@ -30,7 +32,7 @@ class DokumenController extends Controller
         // Filter berdasarkan tipe periode
         if ($request->filled('tipe')) {
             $query->whereHas('periode', function ($q) use ($request) {
-                $q->where('tipe', $request->tipe);
+                $q->where('label', $request->tipe);
             });
         }
         
@@ -158,22 +160,6 @@ class DokumenController extends Controller
                 'tanggal_unggah' => now(),
             ]);
             
-            // DB::transaction(function () use ($mandatory, $filePath, $request) {
-            //         DB::table('mandatory_uploads')
-            //             ->where('id', $mandatory->id)
-            //             ->update(['is_uploaded' => 1, 'updated_at' => now()]);
-    
-            //         // DB::table('dokumen')->insert([
-            //         //     'penilai_id' => $request->penilai_id,
-            //         //     'path' => $filePath,
-            //         //     'user_id' => $mandatory->user_id,
-            //         //     'jenis_dokumen_id' => $mandatory->jenis_dokumen_id,
-            //         //     'periode_id' => $mandatory->periode_id,
-            //         //     'tanggal_unggah' => now(),
-            //         //     'created_at' => now(),
-            //         //     'updated_at' => now(),
-            //         // ]);
-            // });
             return response()->json([
                 'success' => true,
                 'message' => 'Dokumen berhasil disimpan!',
@@ -185,6 +171,178 @@ class DokumenController extends Controller
             ], 500);
         }
 
+    }
+    public function downloadMultiple(Request $request)
+    {
+        try {
+            $request->validate([
+                'dokumen_ids' => 'required|array',
+                'dokumen_ids.*' => 'exists:dokumen,id'
+            ]);
+
+            $dokumenIds = $request->dokumen_ids;
+            $dokumen = Dokumen::with(['pegawai', 'jenisDokumen', 'periode'])
+                            ->whereIn('id', $dokumenIds)
+                            ->get();
+
+            if ($dokumen->isEmpty()) {
+                return response()->json(['error' => 'Tidak ada dokumen yang ditemukan'], 404);
+            }
+
+            // Jika hanya 1 file, download langsung
+            if ($dokumen->count() === 1) {
+                $file = $dokumen->first();
+                $filePath = storage_path('app/private/' . $file->path);
+                
+                Log::info('Mencoba download file: ' . $filePath);
+                
+                if (!file_exists($filePath)) {
+                    Log::error('File tidak ditemukan: ' . $filePath);
+                    return response()->json(['error' => 'File tidak ditemukan di server'], 404);
+                }
+
+                return response()->download($filePath);
+            }
+
+            // Jika lebih dari 1 file, buat ZIP
+            $zipFileName = 'dokumen_' . date('Ymd_His') . '.zip';
+            $zipPath = storage_path('app/temp/' . $zipFileName);
+
+            // Buat folder temp jika belum ada
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $zip = new ZipArchive;
+
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                $fileCount = 0;
+                
+                foreach ($dokumen as $index => $dok) {
+                    $filePath = storage_path('app/private/' . $dok->path);
+                    
+                    Log::info('Menambahkan file ke ZIP: ' . $filePath);
+                    
+                    if (file_exists($filePath)) {
+                        // Buat nama file yang unik
+                        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                        $fileName = $dok->pegawai->name . '_' . 
+                                $dok->jenisDokumen->nama_dokumen . '_' . 
+                                $dok->periode->tipe . '_' . 
+                                $dok->periode->tahun . '_' . 
+                                ($index + 1) . '.' . $extension;
+                        
+                        // Bersihkan nama file dari karakter tidak valid
+                        $fileName = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $fileName);
+                        
+                        $zip->addFile($filePath, $fileName);
+                        $fileCount++;
+                    } else {
+                        Log::warning('File tidak ditemukan: ' . $filePath);
+                    }
+                }
+                
+                $zip->close();
+
+                if ($fileCount === 0) {
+                    Log::error('Tidak ada file yang berhasil ditambahkan ke ZIP');
+                    if (file_exists($zipPath)) {
+                        unlink($zipPath);
+                    }
+                    return response()->json(['error' => 'Tidak ada file yang ditemukan'], 404);
+                }
+
+                Log::info('ZIP berhasil dibuat dengan ' . $fileCount . ' file');
+
+                // Download dan hapus file temp
+                return response()->download($zipPath)->deleteFileAfterSend(true);
+            }
+
+            Log::error('Gagal membuat ZIP file');
+            return response()->json(['error' => 'Gagal membuat file ZIP'], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Error saat download multiple: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
+    }
+    public function deleteMultiple(Request $request)
+    {
+        try {
+            $request->validate([
+                'dokumen_ids' => 'required|array',
+                'dokumen_ids.*' => 'exists:dokumen,id'
+            ]);
+
+            $dokumenIds = $request->dokumen_ids;
+            
+            // Ambil data dokumen yang akan dihapus
+            $dokumen = Dokumen::whereIn('id', $dokumenIds)->get();
+
+            if ($dokumen->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada dokumen yang ditemukan'
+                ], 404);
+            }
+
+            DB::beginTransaction();
+            
+            try {
+                $deletedCount = 0;
+                $failedFiles = [];
+
+                foreach ($dokumen as $dok) {
+                    // Hapus file fisik dari server
+                    $filePath = storage_path('app/private/uploads/' . $dok->path);
+                    
+                    if (file_exists($filePath)) {
+                        if (unlink($filePath)) {
+                            Log::info('File berhasil dihapus: ' . $filePath);
+                        } else {
+                            Log::warning('Gagal menghapus file: ' . $filePath);
+                            $failedFiles[] = $dok->path;
+                        }
+                    } else {
+                        Log::warning('File tidak ditemukan: ' . $filePath);
+                    }
+
+                    // Hapus record dari database
+                    $dok->delete();
+                    $deletedCount++;
+                }
+
+                DB::commit();
+
+                $message = "Berhasil menghapus {$deletedCount} dokumen";
+                
+                if (!empty($failedFiles)) {
+                    $message .= ", namun " . count($failedFiles) . " file tidak dapat dihapus dari server";
+                }
+
+                Log::info('Delete multiple success: ' . $deletedCount . ' dokumen dihapus');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'deleted_count' => $deletedCount,
+                    'failed_files' => $failedFiles
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error saat delete multiple: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
 }
