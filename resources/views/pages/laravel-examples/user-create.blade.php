@@ -28,6 +28,16 @@
                             <form action="{{ route('user-management.store') }}" method="POST">
                                 @csrf
 
+                                {{-- Status Hidup --}}
+                                <div class="mb-3">
+                                    <label class="form-label">Status Hidup</label>
+                                    <select name="keaktifan" class="form-control" required>
+                                        <option value="Aktif" selected>Aktif</option>
+                                        <option value="Tidak Aktif - Pensiun">Tidak Aktif - Pensiun</option>
+                                        <option value="Tidak Aktif - Meninggal Dunia">Tidak Aktif - Meninggal Dunia</option>
+                                    </select>
+                                </div>
+
                                 {{-- Nama Lengkap --}}
                                 <div class="mb-3">
                                     <label class="form-label">Nama Lengkap (beserta gelar)</label>

@@ -60,7 +60,7 @@
                                     {{-- Submit --}}
                                     <div class="text-center">
                                         <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">
-                                            Masuk
+                                            Masuk sebagai Tamu
                                         </button>
                                         <a href="{{ route('google.login') }}" class="btn btn-light w-100 my-2">
                                             <i class="fa fa-google text-danger text-lg me-2"></i>

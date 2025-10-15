@@ -11,6 +11,16 @@
                         @csrf
                         @method('PUT')
 
+                        {{-- Status Hidup --}}
+                        <div class="mb-3">
+                            <label class="form-label">Status Hidup</label>
+                            <select name="keaktifan" class="form-control" required>
+                                <option value="Aktif" {{ $user->keaktifan == 'Aktif' ? 'selected' : '' }}>Aktif</option>
+                                <option value="Tidak Aktif - Pensiun" {{ $user->keaktifan == 'Tidak Aktif - Pensiun' ? 'selected' : '' }}>Tidak Aktif - Pensiun</option>
+                                <option value="Tidak Aktif - Meninggal Dunia" {{ $user->keaktifan == 'Tidak Aktif - Meninggal Dunia' ? 'selected' : '' }}>Tidak Aktif - Meninggal Dunia</option>
+                            </select>
+                        </div>
+
                         {{-- Nama --}}
                         <div class="mb-3">
                             <label class="form-label">Nama Lengkap (beserta gelar)</label>
