@@ -16,13 +16,6 @@
                         </div>
                         <div class="card-body px-4 pb-2">
 
-                            {{-- Tombol refresh isi storage --}}
-                            <form action="{{ route('storage.refresh') }}" method="POST" onsubmit="return confirm('Yakin ingin menyegarkan isi penyimpanan?')">
-                                @csrf
-                                <button type="submit" class="btn btn-danger">Refresh Isi Penyimpanan</button>
-                            </form>
-                            {{--  --}}
-
                             <form id="dokumenForm" action="{{ route('form.store') }}" method="POST">
                                 @csrf
 
@@ -111,12 +104,20 @@
                             </div>
                         </div>
                         <div class="card-body px-4 pb-2">
-                            <div class="mb-3">
-                                <input type="text" id="searchDokumen" class="form-control" 
+
+                            <!-- Search dan Tombol Refresh di Satu Baris -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <input type="text" id="searchDokumen" class="form-control me-3" 
                                     placeholder="Cari dokumen..." 
-                                    style="border: 2px solid #3498db; border-radius: 5px; padding: 8px;">
+                                    style="border: 2px solid #3498db; border-radius: 5px; padding: 8px; max-width: 400px;">
+
+                                <form id="refreshForm" action="{{ route('storage.refresh') }}" method="POST">
+                                    @csrf
+                                    <button type="button" id="btnRefresh" class="btn btn-danger">Refresh Isi Penyimpanan</button>
+                                </form>
                             </div>
 
+                            <!-- Tabel Dokumen -->
                             <div id="dokumenTableContainer">
                                 <table class="table table-bordered table-striped" id="dokumenTable">
                                     <thead>
@@ -153,10 +154,13 @@
                                     </tbody>
                                 </table>
                             </div>
+
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>      
+
+
 
         </div>
     </main>
@@ -352,6 +356,24 @@
                         });
                     }
                 });
+            });
+        });
+
+        // SweetAlert konfirmasi tombol Refresh
+        document.getElementById('btnRefresh').addEventListener('click', function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Lakukan refresh isi penyimpanan?',
+                text: 'Proses ini dapat dilakukan kapan pun untuk memperbarui data penyimpanan.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById('refreshForm').submit();
+                }
             });
         });
     </script>

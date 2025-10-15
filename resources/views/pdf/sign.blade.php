@@ -60,7 +60,7 @@
                                 <div id="signature-controls" class="mt-3"></div>
 
                                 <div class="mt-3 d-flex justify-content-end">
-                                    <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
+                                    <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan</button>
                                 </div>
                             </form>
 
@@ -372,14 +372,14 @@
                 try{
                     const res=await fetch('{{ route("pdf.sign") }}',{method:'POST',body:formData,credentials:'same-origin'});
                     if(!res.ok){ const text=await res.text(); throw new Error(text||'Upload gagal'); }
-                    const blob=await res.blob();
-                    const url=window.URL.createObjectURL(blob);
-                    const a=document.createElement('a');
-                    a.href=url;
-                    const dokumenName=dokumenSelect.options[dokumenSelect.selectedIndex].text;
-                    const periodeName=periodeSelect.options[periodeSelect.selectedIndex].text;
-                    a.download=`Ditandatangani_${dokumenName}_${periodeName}.pdf`;
-                    document.body.appendChild(a); a.click(); a.remove();
+                    // const blob=await res.blob();
+                    // const url=window.URL.createObjectURL(blob);
+                    // const a=document.createElement('a');
+                    // a.href=url;
+                    // const dokumenName=dokumenSelect.options[dokumenSelect.selectedIndex].text;
+                    // const periodeName=periodeSelect.options[periodeSelect.selectedIndex].text;
+                    // a.download=`Ditandatangani_${dokumenName}_${periodeName}.pdf`;
+                    // document.body.appendChild(a); a.click(); a.remove();
 
                     Swal.fire('Berhasil','File berhasil diunggah','success');
 

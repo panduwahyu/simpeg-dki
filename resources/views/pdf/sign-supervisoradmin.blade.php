@@ -76,7 +76,7 @@
                                 <div id="signature-controls" class="mt-3"></div>
 
                                 <div class="mt-3 d-flex justify-content-end">
-                                    <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
+                                    <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan</button>
                                 </div>
 
                                 <p class="mt-3 text-muted small">
@@ -462,20 +462,20 @@
                     throw new Error(text || 'Upload gagal');
                 }
 
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
+                // const blob = await res.blob();
+                // const url = window.URL.createObjectURL(blob);
+                // const a = document.createElement('a');
+                // a.href = url;
 
-                const pegawaiName = userSelect.options[userSelect.selectedIndex].text;
-                const dokumenName = dokumenSelect.options[dokumenSelect.selectedIndex].text;
-                const periodeName = periodeSelect.options[periodeSelect.selectedIndex].text;
+                // const pegawaiName = userSelect.options[userSelect.selectedIndex].text;
+                // const dokumenName = dokumenSelect.options[dokumenSelect.selectedIndex].text;
+                // const periodeName = periodeSelect.options[periodeSelect.selectedIndex].text;
 
-                a.download = `Disetujui_${pegawaiName}_${dokumenName}_${periodeName}.pdf`;
+                // a.download = `Disetujui_${pegawaiName}_${dokumenName}_${periodeName}.pdf`;
 
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
+                // document.body.appendChild(a);
+                // a.click();
+                // a.remove();
 
                 Swal.fire({ icon: 'success', title: 'Berhasil', text: 'File berhasil diunggah & disimpan' });
                 resetPreview();
