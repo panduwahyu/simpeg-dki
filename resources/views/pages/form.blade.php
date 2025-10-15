@@ -60,6 +60,13 @@
 
                                 <div class="mb-3" id="pegawai_checkbox_container">
                                     <label class="form-label">Pilih Pegawai</label>
+
+                                    <div class="mb-2">
+                                        <input type="text" id="searchPegawai" class="form-control"
+                                            placeholder="Cari pegawai berdasarkan nama/email/NIP..."
+                                            style="border: 2px solid #28a745; border-radius: 5px; padding: 8px;">
+                                    </div>
+
                                     <div class="border p-2" style="max-height:300px; overflow-y:auto;">
                                         <table class="table table-bordered table-sm mb-0">
                                             <thead>
@@ -164,6 +171,24 @@
         const btnSubmit = document.getElementById('btnSubmit');
         const periodeTipe = document.getElementById('periode_tipe');
         const namaDokumen = document.getElementById('nama_dokumen');
+        const searchPegawai = document.getElementById('searchPegawai');
+        const pegawaiRows = document.querySelectorAll('#pegawai_checkbox_container tbody tr');
+
+        searchPegawai.addEventListener('input', function () {
+            const keyword = this.value.toLowerCase().trim();
+
+            pegawaiRows.forEach(row => {
+                const nama = row.children[1].textContent.toLowerCase();
+                const email = row.children[2].textContent.toLowerCase();
+                const nip = row.children[3].textContent.toLowerCase();
+
+                if (nama.includes(keyword) || email.includes(keyword) || nip.includes(keyword)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
 
         // Pencarian otomatis
         const searchInput = document.getElementById('searchDokumen');
