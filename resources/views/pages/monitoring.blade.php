@@ -396,9 +396,6 @@
         });
 
         submitSignModalBtn.addEventListener('click', async () => {
-            if (modalSignatures.length === 0) {
-                Swal.fire('Peringatan', 'Silakan pilih minimal satu file tanda tangan.', 'warning'); return;
-            }
             submitSignModalBtn.disabled = true;
             submitSignModalBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
 

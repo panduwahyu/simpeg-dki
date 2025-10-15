@@ -422,7 +422,6 @@
                 await swalAlert('Pilih file PDF');
                 return;
             }
-            if (signatures.length===0){ await swalAlert('Pilih minimal 1 tanda tangan'); return; }
             if (pageViews.length===0){ await swalAlert('Preview PDF belum siap'); return; }
 
             showUploadStatus('File sedang diunggah...');
