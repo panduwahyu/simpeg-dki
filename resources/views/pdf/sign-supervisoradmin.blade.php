@@ -1,5 +1,5 @@
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
-    <x-navbars.sidebar activePage="pdf-sign-supervisoradmin"></x-navbars.sidebar>
+    <x-navbars.sidebar activePage="pdf-sign-supervisor"></x-navbars.sidebar>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         <x-navbars.navs.auth titlePage="Tanda Tangan PDF"></x-navbars.navs.auth>
 
@@ -17,7 +17,8 @@
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label for="userSelect" class="form-label">Pegawai</label>
-                                        <select id="userSelect" name="user_id" class="form-select" required>
+                                        {{-- Dropdown ini sekarang akan diubah oleh Select2 --}}
+                                        <select id="userSelect" name="user_id" class="form-select" required style="width: 100%;">
                                             <option value="">-- Pilih Pegawai --</option>
                                             @foreach($semuaDokumen->unique('user_id') as $doc)
                                                 <option value="{{ $doc->user_id }}">{{ $doc->nama_pegawai }} ({{ $doc->email_pegawai }})</option>
@@ -95,26 +96,39 @@
         display: none;
         z-index: 20000;
     ">Status</div>
+    
+    {{-- BARU: Tambahkan CSS untuk Select2 --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
-    <!-- PDF.js -->
+    {{-- BARU: Tambahkan jQuery (diperlukan oleh Select2) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {{-- BARU: Tambahkan JS untuk Select2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         .page-wrap { position: relative; margin-bottom: 18px; display: inline-block; }
         .page-canvas { display: block; }
         .sign-img { position: absolute; cursor: grab; user-select: none; touch-action: none; z-index: 999; }
-
-        /* Tambahkan padding agar placeholder tidak menempel ke border */
         select.form-select {
-            padding-left: 12px; /* jarak kiri */
-            padding-right: 12px; /* jarak kanan */
+            padding-left: 12px;
+            padding-right: 12px;
         }
-
-        /* Opsional: buat warna placeholder sedikit lebih pucat */
         select.form-select option[value=""] {
-            color: #6c757d; /* abu-abu */
+            color: #6c757d;
+        }
+        /* Style agar Select2 menyatu dengan tema Bootstrap 5 */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: calc(1.5em + 1rem + 2px);
+            padding: .5rem 1rem;
+            font-size: .875rem;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            top: 50%;
+            transform: translateY(-50%);
         }
     </style>
 
@@ -129,7 +143,12 @@
         const placeAndSubmitBtn = document.getElementById('placeAndSubmit');
         const signatureControls = document.getElementById('signature-controls');
 
-        // **BARU**: Ambil data pra-seleksi dari controller
+        // **BARU**: Inisialisasi Select2 pada dropdown pegawai
+        $('#userSelect').select2({
+            theme: 'bootstrap-5', // Menggunakan tema agar tampilan sesuai
+            placeholder: "-- Pilih Pegawai --"
+        });
+
         const preselected = @json($preselected ?? []);
 
         let pdfDocument = null;
@@ -137,17 +156,15 @@
         let signatures = [];
         let uploadToast;
 
-        // === PDF.js Worker Setup ===
         if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
         }
 
-        // === Helper Functions (SweetAlert, Reset, dll.) ===
         async function swalAlert(msg) {
             await Swal.fire({ icon: 'error', title: 'Peringatan', text: msg });
         }
 
-         function showUploadStatus(msg, duration=10000) {
+        function showUploadStatus(msg, duration=10000) {
             if (uploadToast) uploadToast.close();
             uploadToast = Swal.fire({
                 title: msg,
@@ -169,7 +186,6 @@
             signatures = [];
         }
 
-        // === Fungsi Render PDF (bisa menerima file atau URL) ===
         async function renderPdfPreview(fileOrUrl) {
             resetPreview();
             pdfContainer.innerHTML = '<p class="text-center p-5">Memuat preview...</p>';
@@ -178,7 +194,7 @@
             try {
                 const loadingTask = pdfjsLib.getDocument(url);
                 pdfDocument = await loadingTask.promise;
-                pdfContainer.innerHTML = ''; // Hapus pesan loading
+                pdfContainer.innerHTML = '';
 
                 const containerWidth = Math.max(800, pdfContainer.clientWidth - 40);
                 for (let i = 1; i <= pdfDocument.numPages; i++) {
@@ -208,13 +224,16 @@
             }
         }
 
-        // === Logika Dropdown Bertingkat (dibuat async) ===
         async function populateDokumen(userId) {
             dokumenSelect.innerHTML = '<option value="">Memuat...</option>';
             periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
             dokumenSelect.disabled = true;
             periodeSelect.disabled = true;
-            if (!userId) return;
+            if (!userId) {
+                // **BARU**: Reset dropdown jika tidak ada user dipilih
+                dokumenSelect.innerHTML = '<option value="">-- Pilih Dokumen --</option>';
+                return;
+            };
 
             const response = await fetch(`/ajax-dokumen/${userId}`);
             const data = await response.json();
@@ -229,7 +248,11 @@
         async function populatePeriode(userId, dokumenId) {
             periodeSelect.innerHTML = '<option value="">Memuat...</option>';
             periodeSelect.disabled = true;
-            if (!userId || !dokumenId) return;
+            if (!userId || !dokumenId) {
+                // **BARU**: Reset dropdown jika tidak ada dokumen dipilih
+                periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
+                return;
+            };
 
             const response = await fetch(`/ajax-periode/${userId}/${dokumenId}`);
             const data = await response.json();
@@ -240,34 +263,33 @@
             });
             periodeSelect.disabled = false;
         }
+        
+        // **DIUBAH**: Gunakan event listener jQuery agar kompatibel dengan Select2
+        $('#userSelect').on('change', function() { populateDokumen(this.value); });
+        $(dokumenSelect).on('change', function() { populatePeriode($('#userSelect').val(), this.value); });
 
-        // === Event Listeners untuk Dropdown Manual ===
-        userSelect.addEventListener('change', function() { populateDokumen(this.value); });
-        dokumenSelect.addEventListener('change', function() { populatePeriode(userSelect.value, this.value); });
 
-        // === **BARU**: Logika untuk menangani Pra-seleksi ===
         async function handlePreselection() {
             if (preselected && preselected.user_id) {
-                userSelect.value = preselected.user_id;
-                await populateDokumen(preselected.user_id); // Tunggu dokumen selesai dimuat
+                // **DIUBAH**: Gunakan val() dari jQuery dan trigger change untuk Select2
+                $('#userSelect').val(preselected.user_id).trigger('change'); 
+                await populateDokumen(preselected.user_id);
 
                 if (preselected.jenis_dokumen_id) {
                     dokumenSelect.value = preselected.jenis_dokumen_id;
-                    await populatePeriode(preselected.user_id, preselected.jenis_dokumen_id); // Tunggu periode
+                    await populatePeriode(preselected.user_id, preselected.jenis_dokumen_id);
 
                     if (preselected.periode_id) {
                         periodeSelect.value = preselected.periode_id;
                     }
                 }
 
-                // Jika perlu preview otomatis
                 if (preselected.needs_preview) {
                     try {
                         const response = await fetch(`/ajax-preview-url/${preselected.user_id}/${preselected.jenis_dokumen_id}/${preselected.periode_id}`);
                         const data = await response.json();
                         if (data.success && data.url) {
                             await renderPdfPreview(data.url);
-                            // Karena PDF sudah ada, input file tidak lagi wajib
                             pdfFileInput.required = false;
                         } else {
                             await swalAlert(data.message || 'Gagal mengambil URL preview.');
@@ -279,16 +301,13 @@
             }
         }
         
-        // --- Event Listeners untuk File Input ---
         pdfFileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) {
                 renderPdfPreview(e.target.files[0]);
-                // Jika user memilih file baru, jadikan lagi wajib
                 pdfFileInput.required = true;
             }
         });
 
-        // === Drag & Resize ===
         function enableDragFor(el) {
             let isDragging = false, startX=0, startY=0, origLeft=0, origTop=0;
             el.addEventListener('pointerdown', (ev)=>{
@@ -313,7 +332,6 @@
             });
         }
 
-        // === File Validation + Preview ===
         sigFileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -369,51 +387,10 @@
                 signatures.push({ file, imgElem: img, page: 1, x:0, y:0, w:0, slider });
             });
         });
+        
+        // **DIHAPUS**: Blok event listener duplikat di bawah ini telah dihapus
+        // karena fungsinya sudah ditangani oleh event listener di atas yang lebih modern (async/await)
 
-        // === Dependent Dropdowns ===
-        userSelect.addEventListener('change', function() {
-            const userId = this.value;
-            dokumenSelect.innerHTML = '<option value="">Loading...</option>';
-            periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
-            dokumenSelect.disabled = true;
-            periodeSelect.disabled = true;
-
-            if(!userId) return;
-
-            fetch(`/ajax-dokumen/${userId}`)
-                .then(res => res.json())
-                .then(data => {
-                    dokumenSelect.innerHTML = '<option value="">-- Pilih Dokumen --</option>';
-                    data.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d.id; opt.text = d.nama_dokumen;
-                        dokumenSelect.appendChild(opt);
-                    });
-                    dokumenSelect.disabled = false;
-                });
-        });
-
-        dokumenSelect.addEventListener('change', function() {
-            const dokumenId = this.value;
-            const userId = userSelect.value;
-            periodeSelect.innerHTML = '<option value="">Loading...</option>';
-            periodeSelect.disabled = true;
-            if(!userId || !dokumenId) return;
-
-            fetch(`/ajax-periode/${userId}/${dokumenId}`)
-                .then(res => res.json())
-                .then(data => {
-                    periodeSelect.innerHTML = '<option value="">-- Pilih Periode --</option>';
-                    data.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.id; opt.text = p.periode_key;
-                        periodeSelect.appendChild(opt);
-                    });
-                    periodeSelect.disabled = false;
-                });
-        });
-
-        // === Submit PDF + Signature ===
         placeAndSubmitBtn.addEventListener('click', async ()=> {
             if (!userSelect.value){ await swalAlert('Pilih pegawai'); return; }
             if (!dokumenSelect.value){ await swalAlert('Pilih dokumen'); return; }
@@ -487,12 +464,18 @@
 
                 Swal.fire({ icon: 'success', title: 'Berhasil', text: 'File berhasil diunggah & disimpan' });
                 resetPreview();
-                pdfFileInput.value=''; sigFileInput.value=''; dokumenSelect.value=''; periodeSelect.value=''; userSelect.value='';
+                
+                // **DIUBAH**: Reset value Select2
+                $('#userSelect').val('').trigger('change'); 
+                
+                pdfFileInput.value=''; sigFileInput.value=''; dokumenSelect.value=''; periodeSelect.value='';
             }catch(err){
                 Swal.fire({ icon: 'error', title: 'Error', text: err.message });
                 console.error(err);
             }
         });
+
+        // Panggil fungsi pre-seleksi di akhir
         handlePreselection();
     });
     </script>
