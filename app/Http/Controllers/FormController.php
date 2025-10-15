@@ -23,6 +23,8 @@ class FormController extends Controller
         // Ambil hanya pegawai (exclude Admin & Supervisor)
         $pegawaiList = User::select('id', 'name', 'email', 'nip')
             ->where('role', 'Pegawai')
+            ->where('keaktifan', 'Aktif')
+            ->orderBy('name')
             ->get();
 
         return view('pages.form', compact('jenisDokumen', 'pegawaiList'));
