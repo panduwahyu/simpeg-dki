@@ -37,13 +37,13 @@
                         <div class="mb-2">
                             <label>Progres Pegawai Unggah Dokumen: <span id="progressUploadedText"></span></label>
                             <div class="progress">
-                                <div id="progressUploadedBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
+                                <div id="progressUploadedBar" class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" style="width:0%"></div>
                             </div>
                         </div>
                         <div class="mb-2">
                             <label>Progres Penandatanganan Dokumen: <span id="progressSignedText"></span></label>
                             <div class="progress">
-                                <div id="progressSignedBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
+                                <div id="progressSignedBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width:0%"></div>
                             </div>
                         </div>
                     </div>
@@ -355,7 +355,36 @@
                 img.style.width = '180px'; img.style.top = '16px'; img.style.left = '16px';
                 pdfViewerModal.appendChild(img);
                 enableDragFor(img, pdfViewerModal);
+
+                // Tombol close ×
+
                 const idx = modalSignatures.length;
+
+                const btn = document.createElement('button');
+                btn.innerText = '×';
+                btn.style.position = 'absolute';
+                btn.style.top = '0';
+                btn.style.right = '0';
+                btn.style.zIndex = 10000;
+                btn.style.background = 'red';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                btn.style.borderRadius = '50%';
+                btn.style.width = '20px';
+                btn.style.height = '20px';
+                btn.style.cursor = 'pointer';
+                btn.addEventListener('click', () => {
+                    pdfViewerModal.removeChild(img);
+                    pdfViewerModal.removeChild(btn);
+                    const sidx = modalSignatures.findIndex(s => s.imgElem === img);
+                    if (sidx >= 0) {
+                        const sliderDiv = document.getElementById(`slider-modal-${sidx}`);
+                        if (sliderDiv) sliderDiv.remove();
+                        modalSignatures.splice(sidx, 1);
+                    }
+                });
+                pdfViewerModal.appendChild(btn);
+
                 const sliderDiv = document.createElement('div');
                 sliderDiv.id = `slider-modal-${idx}`; sliderDiv.className = 'mt-2';
                 sliderDiv.innerHTML = `<label>Atur Ukuran TTD ${idx+1}: </label><input type="range" min="30" max="600" value="180">`;

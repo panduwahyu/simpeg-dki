@@ -67,8 +67,8 @@
 
                     <h5>{{ $percent }}% Sudah Mengumpulkan</h5>
                     <div class="progress mb-3" style="height: 20px;">
-                        <div class="progress-bar bg-gradient-info" role="progressbar"
-                            style="width: {{ $percent }} %" aria-valuenow="{{ $percent }}"
+                        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar"
+                            style="width: {{ $percent }}%" aria-valuenow="{{ $percent }}"
                             aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
