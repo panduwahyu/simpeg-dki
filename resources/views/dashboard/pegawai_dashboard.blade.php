@@ -68,8 +68,8 @@
                     <h5>{{ $percent }}% Sudah Mengumpulkan</h5>
                     <div class="progress mb-3" style="height: 20px;">
                         <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar"
-                            style="width: {{ $percent }}%" aria-valuenow="{{ $percent }}"
-                            aria-valuemin="0" aria-valuemax="100">
+                            style="width: {{ $percent }}%; height: 20px;" aria-valuenow="{{ $percent }}"
+                            aria-valuemin="0" aria-valuemax="100" >
                         </div>
                     </div>
                     <p>Total: {{ $sudah }} / {{ $total }} file | Belum: {{ $belum }}</p>
