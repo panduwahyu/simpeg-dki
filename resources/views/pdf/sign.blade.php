@@ -14,14 +14,20 @@
                                 @csrf
                                 <div class="row g-3 mb-3">
                                     <input type="hidden" id="userSelect" value="{{ auth()->user()->id }}">
+
                                     <div class="col-md-6">
-                                        <label for="dokumenSelect" class="form-label">Dokumen</label>
+                                        <label for="dokumenSelect" class="form-label">
+                                            Dokumen <span class="text-danger">*</span>
+                                        </label>
                                         <select id="dokumenSelect" name="jenis_dokumen_id" class="form-select" required>
                                             <option value="">-- Pilih Dokumen --</option>
                                         </select>
                                     </div>
+
                                     <div class="col-md-6">
-                                        <label for="periodeSelect" class="form-label">Periode</label>
+                                        <label for="periodeSelect" class="form-label">
+                                            Periode <span class="text-danger">*</span>
+                                        </label>
                                         <select id="periodeSelect" name="periode_id" class="form-select" required disabled>
                                             <option value="">-- Pilih Periode --</option>
                                         </select>
@@ -30,11 +36,16 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Pilih file PDF</label>
+                                        <label class="form-label">
+                                            Pilih file PDF <span class="text-danger">*</span>
+                                        </label>
                                         <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
                                     </div>
+
                                     <div class="col-md-6">
-                                        <label class="form-label">Pilih tanda tangan (PNG/JPG) max. 5 mb</label>
+                                        <label class="form-label">
+                                            Pilih tanda tangan (PNG/JPG) max. 5 MB
+                                        </label>
                                         <input type="file" id="sigFile" accept="image/*" class="form-control" multiple>
                                     </div>
                                 </div>
@@ -52,6 +63,11 @@
                                     <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
                                 </div>
                             </form>
+
+                            <!-- keterangan tanda wajib -->
+                            <p class="mt-3 text-muted small">
+                                <span class="text-danger">*</span> = Wajib diisi
+                            </p>
 
                             @if ($errors->any())
                                 <div class="alert alert-danger mt-3">
@@ -317,7 +333,6 @@
                 if(!dokumenSelect.value){ Swal.fire('Peringatan','Pilih dokumen','warning'); return; }
                 if(!periodeSelect.value){ Swal.fire('Peringatan','Pilih periode','warning'); return; }
                 if(!pdfFileInput.files[0]){ Swal.fire('Peringatan','Pilih file PDF','warning'); return; }
-                if(signatures.length===0){ Swal.fire('Peringatan','Pilih minimal 1 tanda tangan','warning'); return; }
                 if(pageViews.length===0){ Swal.fire('Peringatan','Pastikan PDF telah dipreview','warning'); return; }
 
                 Swal.fire({title:'Sedang mengunggah...',allowOutsideClick:false,didOpen:()=>{Swal.showLoading();}});

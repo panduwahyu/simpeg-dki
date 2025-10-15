@@ -16,7 +16,9 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                        <label for="userSelect" class="form-label">Pegawai</label>
+                                        <label for="userSelect" class="form-label">
+                                            Pegawai <span class="text-danger">*</span>
+                                        </label>
                                         {{-- Dropdown ini sekarang akan diubah oleh Select2 --}}
                                         <select id="userSelect" name="user_id" class="form-select" required style="width: 100%;">
                                             <option value="">-- Pilih Pegawai --</option>
@@ -25,8 +27,11 @@
                                             @endforeach
                                         </select>
                                     </div>
+
                                     <div class="col-md-6">
-                                        <label for="dokumenSelect" class="form-label">Dokumen</label>
+                                        <label for="dokumenSelect" class="form-label">
+                                            Dokumen <span class="text-danger">*</span>
+                                        </label>
                                         <select id="dokumenSelect" name="jenis_dokumen_id" class="form-select" required disabled>
                                             <option value="">-- Pilih Dokumen --</option>
                                         </select>
@@ -35,21 +40,28 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                        <label for="periodeSelect" class="form-label">Periode</label>
+                                        <label for="periodeSelect" class="form-label">
+                                            Periode <span class="text-danger">*</span>
+                                        </label>
                                         <select id="periodeSelect" name="periode_id" class="form-select" required disabled>
                                             <option value="">-- Pilih Periode --</option>
                                         </select>
                                     </div>
+
                                     <div class="col-md-6">
-                                        <label class="form-label">Pilih file PDF</label>
-                                        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" >
+                                        <label class="form-label">
+                                            Pilih file PDF <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" class="form-control" required>
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-12">
-                                        <label class="form-label">Pilih tanda tangan (PNG/JPG) max. 5 MB</label>
-                                        <input type="file" id="sigFile" accept="image/*" class="form-control" multiple>
+                                        <label class="form-label">
+                                            Pilih tanda tangan (PNG/JPG) max. 5 MB
+                                        </label>
+                                        <input type="file" id="sigFile" accept="image/*" class="form-control" multiple required>
                                     </div>
                                 </div>
 
@@ -66,6 +78,10 @@
                                 <div class="mt-3 d-flex justify-content-end">
                                     <button type="button" id="placeAndSubmit" class="btn btn-dark">Simpan & Download</button>
                                 </div>
+
+                                <p class="mt-3 text-muted small">
+                                    <span class="text-danger">*</span> = wajib diisi
+                                </p>
                             </form>
 
                             @if ($errors->any())

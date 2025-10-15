@@ -55,13 +55,17 @@ class PdfController extends Controller
             'jenis_dokumen_id'   => 'required|exists:jenis_dokumen,id',
             'periode_id'         => 'required|exists:periode,id',
             'pdf'                => 'required|file|mimes:pdf|max:10240',
-            'signatures'         => 'required|array|min:1',
-            'signatures.*.page'  => 'required|integer|min:1',
-            'signatures.*.x'     => 'required|numeric|min:0|max:1',
-            'signatures.*.y'     => 'required|numeric|min:0|max:1',
-            'signatures.*.w'     => 'required|numeric|min:0|max:1',
-            'files'              => 'required|array|min:1',
-            'files.*'            => 'required|file|image|mimes:png,jpg,jpeg|max:5120',
+
+            // === tanda tangan opsional ===
+            'signatures'         => 'nullable|array',
+            'signatures.*.page'  => 'required_with:signatures|integer|min:1',
+            'signatures.*.x'     => 'required_with:signatures|numeric|min:0|max:1',
+            'signatures.*.y'     => 'required_with:signatures|numeric|min:0|max:1',
+            'signatures.*.w'     => 'required_with:signatures|numeric|min:0|max:1',
+
+            // === file tanda tangan juga opsional ===
+            'files'              => 'nullable|array',
+            'files.*'            => 'required_with:files|file|image|mimes:png,jpg,jpeg|max:5120',
         ]);
 
         $mandatory = DB::table('mandatory_uploads')
