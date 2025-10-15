@@ -83,6 +83,8 @@ Route::middleware('auth')->group(function () {
     ->name('dokumen.download-multiple');
     Route::post('/dokumen/delete-multiple', [DokumenController::class, 'deleteMultiple'])
     ->name('dokumen.delete-multiple');
+    Route::get('/dokumen/search', [DokumenController::class, 'searchPegawai'])
+    ->name('pegawai.search');
 
     // Preview file PDF private
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');
