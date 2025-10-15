@@ -79,6 +79,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/tables', [DokumenController::class, 'index'])->name('tables');
     Route::get('/dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
     Route::post('/dokumen', [DokumenController::class, 'store'])->name('dokumen.store');
+    Route::post('/dokumen/download-multiple', [DokumenController::class, 'downloadMultiple'])
+    ->name('dokumen.download-multiple');
+    Route::post('/dokumen/delete-multiple', [DokumenController::class, 'deleteMultiple'])
+    ->name('dokumen.delete-multiple');
 
     // Preview file PDF private
     Route::get('/dokumen/preview/{id}', [DokumenController::class, 'preview'])->name('dokumen.preview');

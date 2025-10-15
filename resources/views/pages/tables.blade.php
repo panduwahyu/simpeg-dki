@@ -79,11 +79,18 @@
                                         <a href="{{ route('dokumen.index') }}" class="btn btn-secondary">
                                             <i class="bi bi-arrow-clockwise me-1"></i>Reset
                                         </a>
-                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#tambahDokumenModal">
-                                            <i class="bi bi-plus-circle me-1"></i>Tambah Dokumen
-                                        </button>
                                     </div>
                                 </form>
+                            </div>
+
+                            {{-- Tombol Download & Hapus Multiple --}}
+                            <div class="mb-3 d-flex gap-2">
+                                <button type="button" id="btnDownloadSelected" class="btn btn-primary" disabled>
+                                    <i class="bi bi-download me-1"></i>Download Terpilih (<span id="countSelected">0</span>)
+                                </button>
+                                <button type="button" id="btnDeleteSelected" class="btn btn-danger" disabled>
+                                    <i class="bi bi-trash me-1"></i>Hapus Terpilih (<span id="countSelectedDelete">0</span>)
+                                </button>
                             </div>
 
                             {{-- Tabel --}}
@@ -91,6 +98,11 @@
                                 <table class="table table-bordered table-striped align-middle mb-0">
                                     <thead class="table-dark text-center">
                                         <tr>
+                                            <th style="width: 50px;">
+                                                <div class="form-check d-flex justify-content-center mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="checkAll" style="cursor: pointer;">
+                                                </div>
+                                            </th>
                                             <th>Nama Pegawai</th>
                                             <th>Jenis Dokumen</th>
                                             <th>Periode</th>
@@ -102,6 +114,14 @@
                                     <tbody>
                                         @forelse ($dokumen as $index => $d)
                                             <tr>
+                                                <td class="text-center">
+                                                    <div class="form-check d-flex justify-content-center mb-0">
+                                                        <input class="form-check-input dokumen-checkbox" type="checkbox" 
+                                                            value="{{ $d->id }}" 
+                                                            data-path="{{ $d->path }}"
+                                                            style="cursor: pointer;">
+                                                    </div>
+                                                </td>
                                                 <td>{{ $d->pegawai->name ?? '-' }}</td>
                                                 <td>{{ $d->jenisDokumen->nama_dokumen ?? '-' }}</td>
                                                 <td>{{ $d->periode->tipe ?? '-' }}</td>
@@ -115,166 +135,17 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6" class="text-center">Tidak ada data ditemukan</td>
+                                                <td colspan="7" class="text-center">Tidak ada data ditemukan</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-
                             <div class="d-flex justify-content-center mt-3">
                                 {{ $dokumen->links() }}
                             </div>
                         </div>
 
-                    </div>
-                    <div class="modal fade" id="tambahDokumenModal" tabindex="-1" aria-labelledby="tambahDokumenLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="tambahDokumenLabel">
-                                        Tambah Dokumen
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                                    </button>
-                                </div>
-                                {{-- modal upload dokumen popup --}}
-                                <div class="modal-body">
-                                    <form id="formTambahDokumen" action="{{ route('dokumen.store') }}" method="POST" enctype="multipart/form-data">
-                                        @csrf
-                                        
-                                        {{-- Menampilkan pesan sukses --}}
-                                        @if(session('success'))
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                            {{ session('success') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                        @endif
-
-                                        {{-- Menampilkan pesan error --}}
-                                        @if(session('error'))
-                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                            {{ session('error') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                        @endif
-
-                                        <div class="mb-3">
-                                            <label for="nama_pegawai" class="form-label">
-                                                Nama Pegawai
-                                            </label>
-                                            @if (in_array(Auth::user()->role, ['Admin', 'Supervisor']))
-                                            <select name="nama_pegawai" id="nama_pegawai" class="form-select @error('nama_pegawai') is-invalid @enderror" required>
-                                                <option value="">
-                                                    -- Pilih Pegawai --
-                                                </option>
-                                                @foreach ($pegawai as $u)
-                                                    <option value="{{ $u->id }}" {{ old('nama_pegawai', request('user_id')) == $u->id ? 'selected' : '' }}>
-                                                        {{ $u->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('nama_pegawai')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            @else
-                                            <input type="hidden" name="nama_pegawai" value="{{ Auth::user()->id }}">
-                                            <input type="text" class="form-control" value="{{ Auth::user()->name }}" disabled>
-                                            @endif
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="jenis_dokumen_id" class="form-label">
-                                                Nama Dokumen
-                                            </label>
-                                            <select name="jenis_dokumen_id" id="jenis_dokumen_id" class="form-select @error('jenis_dokumen_id') is-invalid @enderror" required>
-                                                <option value="">
-                                                    -- Pilih nama dokumen --
-                                                </option>
-                                                @foreach($jenisDokumen as $jenis)
-                                                <option value="{{ $jenis->id }}" {{ old('jenis_dokumen_id', request('jenis_dokumen_id')) == $jenis->id ? 'selected' : '' }}>
-                                                    {{ $jenis->nama_dokumen }}
-                                                </option>
-                                                @endforeach
-                                            </select>
-                                            @error('jenis_dokumen_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="periode" class="form-label">
-                                                Tahun
-                                            </label>
-                                            <select name="periode" id="periode" class="form-select @error('periode') is-invalid @enderror" required>
-                                                <option value="">
-                                                    -- Pilih tahun --
-                                                </option>
-                                                @foreach($periode->unique('tahun') as $p)
-                                                    <option value="{{ $p->tahun }}" {{ old('periode', request('tahun')) == $p->tahun ? 'selected' : '' }}>
-                                                        {{ $p->tahun }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('periode')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="tipe" class="form-label">
-                                                Periode
-                                            </label>
-                                            <select name="tipe" id="tipe" class="form-select @error('tipe') is-invalid @enderror" required>
-                                                <option value="">
-                                                    -- Pilih periode --
-                                                </option>
-                                                @foreach($periode->unique('tipe') as $p)
-                                                    <option value="{{ $p->tipe }}" {{ old('tipe', request('tipe')) == $p->tipe ? 'selected' : '' }}>
-                                                        {{ $p->tipe }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('tipe')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="penilai_id" class="form-label">
-                                                Ditandatangani oleh
-                                            </label>
-                                            <select name="penilai_id" id="penilai_id" class="form-select @error('penilai_id') is-invalid @enderror" required>
-                                                <option value="">
-                                                    -- Pilih penandatangan --
-                                                </option>
-                                                <option value="" {{ old('penilai_id') == '' ? 'selected' : '' }}>Pegawai</option>
-                                                <option value="1" {{ old('penilai_id') == '1' ? 'selected' : '' }}>Pegawai dan Pejabat</option>
-                                            </select>
-                                            @error('penilai_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="inputGroupFile01" class="form-label fw-semibold">Upload File</label>
-                                            <input type="file" class="form-control border border-secondary rounded-3 shadow-sm @error('pdf_file') is-invalid @enderror" id="inputGroupFile01" name="pdf_file" accept=".pdf" required>
-                                            <div class="form-text text-muted">
-                                                📄 Pastikan file berformat <strong>PDF</strong> dengan ukuran <strong>&lt; 5MB</strong>.
-                                            </div>
-                                            @error('pdf_file')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <button type="submit" class="btn btn-success w-100" id="btnSubmit">
-                                            <span id="btnText">&#128190; Simpan</span>
-                                            <span id="btnSpinner" class="d-none"> <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menyimpan... </span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -311,114 +182,177 @@
             </style>
 
             <script>
-            document.getElementById('inputGroupFile01').addEventListener('change', function() {
-                const file = this.files[0];
-                const errorDiv = document.getElementById('fileError');
-                const input = this;
-                errorDiv.textContent = ''; // reset pesan error
-                input.classList.remove('is-invalid'); // reset status error
+                document.addEventListener('DOMContentLoaded', function() {
+                    const checkAll = document.getElementById('checkAll');
+                    const checkboxes = document.querySelectorAll('.dokumen-checkbox');
+                    const btnDownload = document.getElementById('btnDownloadSelected');
+                    const countSelected = document.getElementById('countSelected');
+                    const countSelectedDelete = document.getElementById('countSelectedDelete');
+                    const btnDelete = document.getElementById('btnDeleteSelected');
 
-                if (!file) return; // kalau belum pilih file, abaikan
+                    // Function untuk update counter dan status tombol
+                    function updateDownloadButton() {
+                        const checkedBoxes = document.querySelectorAll('.dokumen-checkbox:checked');
+                        const count = checkedBoxes.length;
+                        
+                        countSelected.textContent = count;
+                        countSelectedDelete.textContent = count;
+                        btnDownload.disabled = count === 0;
+                        btnDelete.disabled = count === 0;
+                    }
 
-                const maxSize = 5 * 1024 * 1024; // 5 MB
-                const fileType = file.type;
+                    // Check/Uncheck All
+                    checkAll.addEventListener('change', function() {
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                        updateDownloadButton();
+                    });
 
-                // Cek tipe file
-                if (fileType !== 'application/pdf') {
-                    input.classList.add('is-invalid');
-                    errorDiv.textContent = '❌ Hanya file berformat PDF yang diperbolehkan.';
-                    input.value = ''; // reset input
-                    return;
-                }
+                    // Individual checkbox change
+                    checkboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            // Update check all status
+                            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+                            
+                            checkAll.checked = allChecked;
+                            checkAll.indeterminate = someChecked && !allChecked;
+                            
+                            updateDownloadButton();
+                        });
+                    });
 
-                // Cek ukuran file
-                if (file.size > maxSize) {
-                    input.classList.add('is-invalid');
-                    errorDiv.textContent = '⚠️ Ukuran file melebihi 5MB. Silakan pilih file yang lebih kecil.';
-                    input.value = ''; // reset input
-                    return;
-                }
-
-                // Jika lolos semua
-                input.classList.remove('is-invalid');
-                errorDiv.textContent = '';
-            });
-            @if(session('success'))
-                document.getElementById('formTambahDokumen').reset();
-            @endif
-
-            document.addEventListener('DOMContentLoaded', function() {
-                const form = document.getElementById('formTambahDokumen');
-                const btnSubmit = document.getElementById('btnSubmit');
-                const btnText = document.getElementById('btnText');
-                const btnSpinner = document.getElementById('btnSpinner');
-
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault(); // cegah reload halaman
-
-                    // ganti tampilan tombol
-                    btnText.classList.add('d-none');
-                    btnSpinner.classList.remove('d-none');
-                    btnSubmit.disabled = true;
-
-                    // ambil data form
-                    const formData = new FormData(form);
-
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // kembalikan tombol ke semula
-                        btnText.classList.remove('d-none');
-                        btnSpinner.classList.add('d-none');
-                        btnSubmit.disabled = false;
-
-                        // hapus alert lama
-                        const oldAlerts = form.querySelectorAll('.alert');
-                        oldAlerts.forEach(a => a.remove());
-
-                        // tampilkan feedback sukses/gagal
-                        let alertDiv = document.createElement('div');
-                        alertDiv.classList.add('alert', 'alert-dismissible', 'fade', 'show', 'mt-2');
-                        alertDiv.setAttribute('role', 'alert');
-
-                        if (data.success) {
-                            alertDiv.classList.add('alert-success');
-                            alertDiv.innerHTML = data.message || '✅ Dokumen berhasil disimpan.';
-                            form.reset(); // kosongkan form setelah berhasil
-                        } else {
-                            alertDiv.classList.add('alert-danger');
-                            alertDiv.innerHTML = data.message || '❌ Gagal menyimpan dokumen.';
+                    // Download Selected
+                    btnDownload.addEventListener('click', function() {
+                        const checkedBoxes = document.querySelectorAll('.dokumen-checkbox:checked');
+                        
+                        if (checkedBoxes.length === 0) {
+                            alert('Pilih minimal satu dokumen untuk didownload');
+                            return;
                         }
 
-                        // tombol tutup alert
-                        alertDiv.innerHTML += `
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        `;
-                        form.prepend(alertDiv);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        btnText.classList.remove('d-none');
-                        btnSpinner.classList.add('d-none');
-                        btnSubmit.disabled = false;
+                        // Tampilkan loading
+                        const originalText = btnDownload.innerHTML;
+                        btnDownload.disabled = true;
+                        btnDownload.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Downloading...';
+
+                        const dokumenIds = Array.from(checkedBoxes).map(cb => cb.value);
                         
-                        // tampilkan pesan error
-                        let alertDiv = document.createElement('div');
-                        alertDiv.classList.add('alert', 'alert-danger', 'alert-dismissible', 'fade', 'show', 'mt-2');
-                        alertDiv.innerHTML = 'Terjadi kesalahan pada server.';
-                        alertDiv.innerHTML += `
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        `;
-                        form.prepend(alertDiv);
+                        // Gunakan fetch API untuk download
+                        fetch('{{ route("dokumen.download-multiple") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                dokumen_ids: dokumenIds
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Download gagal');
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            // Buat URL untuk blob
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            
+                            // Set nama file
+                            const fileName = checkedBoxes.length === 1 
+                                ? 'dokumen.pdf' 
+                                : 'dokumen_' + new Date().getTime() + '.zip';
+                            a.download = fileName;
+                            
+                            document.body.appendChild(a);
+                            a.click();
+                            
+                            // Cleanup
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            // Reset button
+                            btnDownload.disabled = false;
+                            btnDownload.innerHTML = originalText;
+                            
+                            // Tampilkan success message
+                            alert('Download berhasil!');
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Gagal mendownload file. Silakan coba lagi.');
+                            
+                            // Reset button
+                            btnDownload.disabled = false;
+                            btnDownload.innerHTML = originalText;
+                        });
                     });
+
+                    // Delete Selected
+                    btnDelete.addEventListener('click', function() {
+    const checkedBoxes = document.querySelectorAll('.dokumen-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        alert('Pilih minimal satu dokumen untuk dihapus');
+        return;
+    }
+
+    // Tampilkan loading
+    const originalText = btnDelete.innerHTML;
+    btnDelete.disabled = true;
+    btnDelete.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+
+    const dokumenIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    // Kirim request ke server (tanpa download file)
+    fetch('{{ route("dokumen.delete-multiple") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            dokumen_ids: dokumenIds
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Delete gagal');
+        }
+        return response.json(); // ubah dari blob ke JSON
+    })
+    .then(data => {
+        // Misalnya server kirim { success: true, message: 'Dokumen berhasil dihapus' }
+        alert(data.message || 'Delete berhasil!');
+
+        // Hapus baris dokumen dari tabel (opsional)
+        checkedBoxes.forEach(cb => {
+            const row = cb.closest('tr');
+            if (row) row.remove();
+        });
+
+        // Reset tombol
+        btnDelete.disabled = false;
+        btnDelete.innerHTML = originalText;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Gagal menghapus file. Silakan coba lagi.');
+
+        // Reset tombol
+        btnDelete.disabled = false;
+        btnDelete.innerHTML = originalText;
+    });
+});
+
+
+                    // Initial update
+                    updateDownloadButton();
                 });
-            });
             </script>
 
         </div>
