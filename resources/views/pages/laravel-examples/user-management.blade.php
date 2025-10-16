@@ -41,6 +41,10 @@
                             </div>
 
                             <div class="me-3 text-end">
+                                <a href="javascript:void(0)" id="deleteAllPegawai" class="btn btn-danger ms-2">
+                                    <i class="material-icons text-sm">delete_forever</i>&nbsp;&nbsp;Hapus Seluruh Pegawai
+                                </a>
+
                                 <div class="btn-group">
                                     <button type="button" class="btn bg-gradient-dark dropdown-toggle"
                                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -296,6 +300,40 @@
                 }
             });
         }
+
+        // Hapus seluruh pegawai
+        $('#deleteAllPegawai').on('click', function() {
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: "Apakah anda yakin ingin menghapus seluruh daftar pegawai?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus semuanya!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('user-management.deleteAllPegawai') }}",
+                        type: "DELETE",
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        success: function(res) {
+                            Swal.fire({
+                                title: 'Selesai!',
+                                text: res.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        },
+                        error: function() {
+                            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
+                        }
+                    });
+                }
+            });
+        });
     </script>
 
 </x-layout>

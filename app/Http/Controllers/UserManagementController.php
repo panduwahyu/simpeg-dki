@@ -295,4 +295,25 @@ class UserManagementController extends Controller
 
         return view('pages.laravel-examples.user-search-result', compact('users'));
     }
+
+    public function deleteAllPegawai()
+    {
+        try {
+            $deleted = \App\Models\User::where('role', 'Pegawai')->delete();
+
+            if ($deleted > 0) {
+                return response()->json([
+                    'message' => "Berhasil menghapus {$deleted} pegawai."
+                ]);
+            } else {
+                return response()->json([
+                    'message' => "Tidak ada pegawai yang ditemukan."
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

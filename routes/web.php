@@ -98,6 +98,8 @@ Route::middleware('auth')->group(function () {
         Route::get('user-management/create', [UserManagementController::class, 'create'])->name('user-management.create');
         Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
         Route::get('/user-management/search', [UserManagementController::class, 'search'])->name('user-management.search');
+        Route::delete('/user-management/delete-all-pegawai', [App\Http\Controllers\UserManagementController::class, 'deleteAllPegawai'])
+            ->name('user-management.deleteAllPegawai');
 
         Route::get('/user/template', function () {
             $path = storage_path('app/public/template/users_template.xlsx');
