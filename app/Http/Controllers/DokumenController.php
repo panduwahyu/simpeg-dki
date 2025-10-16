@@ -70,6 +70,29 @@ class DokumenController extends Controller
         return view('pages.tables', compact('dokumen', 'jenisDokumen', 'periode', 'user', 'pegawai'));
     }
 
+    public function searchPegawai(Request $request)
+    {
+        $search = $request->input('search');
+        $page = $request->input('page', 1);
+        $perPage = 20;
+
+        $query = User::query();
+
+        if ($search) {
+            $query->where('name', 'LIKE', "%{$search}%");
+        }
+
+        $total = $query->count();
+        $pegawai = $query->skip(($page - 1) * $perPage)
+                        ->take($perPage)
+                        ->get(['id', 'name']);
+
+        return response()->json([
+            'items' => $pegawai,
+            'has_more' => ($page * $perPage) < $total
+        ]);
+    }
+
     /**
      * Preview dokumen PDF dari storage private
      */

@@ -22,7 +22,7 @@
                                             @if (in_array(Auth::user()->role, ['Admin', 'Supervisor']))
                                             <div class="filter-item">
                                                 <label for="user_id">Nama Pegawai</label>
-                                                <select name="user_id" class="form-select">
+                                                <select name="user_id" class="form-select select2" id="user_id">
                                                     <option value="">-- Semua Pegawai --</option>
                                                     @foreach ($pegawai as $u)
                                                         <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
@@ -496,7 +496,44 @@
             <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-material-ui/material-ui.css" rel="stylesheet">
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
             <script>
+            
+                $('.select2').select2({
+                    placeholder: '-- Pilih Nama Pegawai --',
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: '/dokumen/search', // Buat route ini di Laravel
+                        dataType: 'json',
+                        delay: 250, // Delay 250ms setelah user berhenti mengetik
+                        data: function(params) {
+                            return {
+                                search: params.term, // Keyword pencarian
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: data.items.map(function(item) {
+                                    return {
+                                        id: item.id,
+                                        text: item.name
+                                    };
+                                }),
+                                pagination: {
+                                    more: data.has_more
+                                }
+                            };
+                        },
+                        cache: true
+                    },
+                    
+                });
+            
                 document.addEventListener('DOMContentLoaded', function() {
                     const checkAll = document.getElementById('checkAll');
                     const checkboxes = document.querySelectorAll('.dokumen-checkbox');
